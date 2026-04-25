@@ -6,35 +6,9 @@
       Advisory-only portfolio construction and rebalancing with traceable evidence,
       policy checks, and manual approval controls.
     </p>
-  </section>
-
-  <section class="status-grid" aria-label="Application status">
-    <article class="status-card">
-      <span class="label">Frontend</span>
-      <strong>Angular 21</strong>
-      <p>Standalone app scaffold is ready for intake and review workflows.</p>
-    </article>
-
-    <article class="status-card">
-      <span class="label">Backend</span>
-      @if (backendHealth(); as health) {
-        <strong>Python FastAPI</strong>
-        <p>
-          Status: {{ health.status === 'ok' ? 'Healthy' : health.status }}. Running in
-          {{ health.environment }} with schema {{ health.schema_version }} and policy
-          {{ health.policy_version }}.
-        </p>
-      } @else {
-        <strong>Pending</strong>
-        <p>{{ backendHealthError() ?? 'Checking backend health...' }}</p>
-      }
-    </article>
-
-    <article class="status-card">
-      <span class="label">Mode</span>
-      <strong>A2A + MCP</strong>
-      <p>Supervisor delegates research over A2A and sentiment through an MCP tool server.</p>
-    </article>
+    <div class="hero-actions">
+      <a class="hero-link" href="/architecture.html">View System Architecture Diagram</a>
+    </div>
   </section>
 
   <section class="market-panel">
@@ -49,12 +23,12 @@
       <article>
         <span>Remote Agent</span>
         <strong>A2A Research Agent</strong>
-        <p>Runs as a separate service on port 8101 with local fallback in the main backend.</p>
+        <p>Runs as a dedicated remote service over A2A with automatic local fallback in the backend.</p>
       </article>
       <article>
         <span>MCP Tool Server</span>
         <strong>Sentiment Analysis</strong>
-        <p>Runs as a separate MCP-style JSON-RPC server on port 8201.</p>
+        <p>Runs as an MCP-compatible JSON-RPC tool service consumed by the orchestrator.</p>
       </article>
     </div>
   </section>
@@ -87,11 +61,11 @@
         <strong>{{ event.rebalance.signal }}</strong>
         <span>{{ event.rebalance.reason }}</span>
       </div>
-      @if (portfolioBalanced()) {
+      <div class="simulation-controls">
         <button class="secondary-action" type="button" (click)="simulateDriftAgain()">
-          Simulate drift
+          Simulate drift for selected client
         </button>
-      }
+      </div>
       <p>
         Max drift: {{ event.monitoring.max_abs_drift_pct }}%
         (threshold {{ event.rebalance.threshold_pct }}%)
@@ -114,7 +88,7 @@
           @for (portfolio of portfolios(); track portfolio.account_profile.account_id) {
             <option [value]="portfolio.account_profile.account_id">
               {{ portfolio.client_profile.display_label }} -
-              {{ portfolio.account_profile.account_id }}
+              {{ portfolio.account_profile.account_id }} ({{ portfolioModeLabel(portfolio.account_profile.account_id) }})
             </option>
           }
         </select>
@@ -125,12 +99,7 @@
       </label>
 
       @if (displayMarketEvent(); as event) {
-        <div class="decision-summary" [class.needs-rebalance]="event.rebalance.signal === 'REBALANCE_NEEDED'">
-          <span>Current trigger</span>
-          <strong>{{ event.rebalance.signal }}</strong>
-          <p>{{ event.rebalance.reason }}</p>
-        </div>
-        @if (portfolioBalanced()) {
+        @if (selectedPortfolioBalanced()) {
           <p class="balanced-note">
             Approved recommendation is applied in simulation. Portfolio values are held at target
             allocation until you simulate drift again.
@@ -189,9 +158,9 @@
         </label>
       </div>
 
-      <button type="submit" [disabled]="submitting()">
-        {{ submitting() ? 'Submitting...' : 'Explain Rebalance Recommendation' }}
-      </button>
+      @if (submitting()) {
+        <p class="review-note">Generating rebalance recommendation...</p>
+      }
       @if (rebalanceError()) {
         <p class="error">{{ rebalanceError() }}</p>
       }
@@ -200,46 +169,14 @@
     <article class="review-card">
       <h2>Recommendation Review</h2>
       @if (recommendation(); as response) {
-        <span class="state">{{ response.workflow_state }}</span>
-        <p>{{ response.recommendation_package?.summary }}</p>
-
-        <h3>Policy Verdict</h3>
-        <p>{{ response.recommendation_package?.risk_policy?.verdict }}</p>
-
-        <h3>Agent Stages</h3>
-        <ul class="agent-stage-list">
-          @for (stage of response.recommendation_package?.agent_stages; track stage.agent_name) {
-            <li>
-              <div>
-                <strong>{{ stage.agent_name }}</strong>
-                <span>{{ stage.protocol }} / {{ stage.execution_location }}</span>
-              </div>
-              <p>{{ stage.status }}: {{ stage.summary }}</p>
-            </li>
-          }
-        </ul>
-
-        <h3>Proposed Trades</h3>
-        @if (response.recommendation_package?.proposal?.trades?.length) {
-          <ul>
-            @for (trade of response.recommendation_package?.proposal?.trades; track trade.trade_id) {
-              <li>
-                <strong>{{ trade.action }}</strong> {{ trade.symbol }}:
-                estimated ${{ trade.estimated_value }}
-              </li>
-            }
-          </ul>
-        } @else {
-          <p>No trades proposed.</p>
-        }
-
-        <h3>Approval Artifact</h3>
-        <p>
-          {{ response.approval_artifact?.approval_id }} -
-          {{ response.approval_artifact?.approval_status }}
+        <p class="review-headline">{{ reviewHeadline(response) }}</p>
+        <p class="review-meta">
+          State: {{ response.workflow_state }} | Approval: {{ response.approval_artifact?.approval_status ?? 'PENDING' }} | Trades:
+          {{ response.recommendation_package?.proposal?.trades?.length ?? 0 }} | Policy:
+          {{ response.recommendation_package?.risk_policy?.verdict ?? 'N/A' }}
         </p>
         <div class="approval-actions">
-          @if (response.approval_artifact?.approval_status === 'PENDING') {
+          @if (canReviewDecision(response)) {
             <button
               type="button"
               [disabled]="!response.recommendation_package?.approval_eligibility"
@@ -248,18 +185,76 @@
               Approve
             </button>
             <button type="button" (click)="rejectRecommendation()">Reject</button>
+          } @else if (response.approval_artifact?.approval_status === 'PENDING') {
+            <span class="review-note">No decision required: portfolio already within target tolerance.</span>
           } @else {
-            <span class="approval-status">Decision: {{ response.approval_artifact?.approval_status }}</span>
-          }
-          @if (portfolioBalanced()) {
-            <button class="secondary-action" type="button" (click)="simulateDriftAgain()">
-              Simulate drift
-            </button>
+            <span class="review-note">Decision: {{ response.approval_artifact?.approval_status }}</span>
           }
         </div>
         @if (approvalMessage()) {
           <p>{{ approvalMessage() }}</p>
         }
+        <p>{{ decisionSummary(response.approval_artifact?.approval_status) }}</p>
+        <p>{{ response.recommendation_package?.summary }}</p>
+
+        <h3>Proposed Trades</h3>
+        @if (response.recommendation_package?.proposal?.trades?.length) {
+          <div class="trade-table">
+            <div class="trade-row trade-header">
+              <span>Action</span>
+              <span>Symbol</span>
+              <span>Estimated Value</span>
+            </div>
+            @for (trade of response.recommendation_package?.proposal?.trades; track trade.trade_id) {
+              <div class="trade-row">
+                <strong>{{ trade.action }}</strong>
+                <span>{{ trade.symbol }}</span>
+                <span>${{ trade.estimated_value }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p>No trades proposed.</p>
+        }
+
+        <h3>Policy Verdict</h3>
+        <p>{{ response.recommendation_package?.risk_policy?.verdict }}</p>
+
+        <div class="agent-stage-header">
+          <h3>Agent Stages</h3>
+          <button class="toggle-button" type="button" (click)="toggleAgentStages()">
+            {{ showAgentStages() ? 'Hide pipeline' : 'View pipeline' }}
+          </button>
+        </div>
+        @if (showAgentStages()) {
+          <div class="pipeline-graph">
+            @for (stage of response.recommendation_package?.agent_stages; track stage.agent_name; let idx = $index) {
+              <div class="graph-stage" [class.done]="stageTone(stage.status) === 'done'" [class.running]="stageTone(stage.status) === 'running'">
+                <span class="graph-stage-index">{{ idx + 1 }}</span>
+                <div class="graph-stage-content">
+                  <strong>{{ stage.agent_name }}</strong>
+                  <span>{{ stage.protocol }} / {{ stage.execution_location }}</span>
+                  <p>{{ stage.summary }}</p>
+                </div>
+              </div>
+              @if (idx < (response.recommendation_package?.agent_stages?.length ?? 0) - 1) {
+                <div class="graph-edge">
+                  <span>{{ stage.status }}</span>
+                </div>
+              }
+            }
+          </div>
+        } @else {
+          <p class="pipeline-summary">
+            {{ response.recommendation_package?.agent_stages?.length ?? 0 }} stages completed. Expand for details.
+          </p>
+        }
+
+        <h3>Approval Artifact</h3>
+        <p>
+          {{ response.approval_artifact?.approval_id }} -
+          {{ response.approval_artifact?.approval_status }}
+        </p>
       } @else {
         <p>Submit the intake form to generate a local deterministic recommendation.</p>
       }

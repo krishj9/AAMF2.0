@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Asset Management Architecture</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #020617;
+      --panel: #0f172a;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --border: rgba(148, 163, 184, 0.28);
+    }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(140deg, var(--bg), #111827 65%, #082f49);
+      color: var(--text);
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+    }
+    .link-btn {
+      display: inline-flex;
+      padding: 0.6rem 0.9rem;
+      border-radius: 999px;
+      color: #082f49;
+      background: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .panel {
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      background: rgba(15, 23, 42, 0.75);
+    }
+    .panel p {
+      margin-top: 0;
+      color: var(--muted);
+    }
+    .diagram {
+      width: 100%;
+      height: auto;
+      border-radius: 0.85rem;
+      border: 1px solid var(--border);
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="header">
+      <h1>Personal Portfolio Agentic AI Architecture</h1>
+      <a class="link-btn" href="/">Back to Portal</a>
+    </div>
+    <section class="panel">
+      <p>High-level architecture view of UI, API ingress, orchestration agents, remote protocols, and AWS data/ops layers.</p>
+      <img class="diagram" src="/assetmgmt.png" alt="Personal Portfolio Agentic AI system architecture diagram">
+    </section>
+  </main>
+</body>
+</html>

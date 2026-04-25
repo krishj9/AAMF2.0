@@ -32,7 +32,9 @@ export class App implements OnDestroy {
   protected readonly backendHealthError = signal<string | null>(null);
   protected readonly recommendation = signal<OrchestrationResponse | null>(null);
   protected readonly approvalMessage = signal<string | null>(null);
-  protected readonly portfolioBalanced = signal(false);
+  protected readonly balancedAccounts = signal<Record<string, boolean>>({});
+  private readonly forcedDriftByAccount = signal<Record<string, boolean>>({});
+  private readonly autoRecommendByAccount = signal<Record<string, boolean>>({});
   protected readonly rebalanceError = signal<string | null>(null);
   protected readonly marketEvent = signal<MarketStreamEvent | null>(null);
   protected readonly portfolios = signal<PortfolioRecord[]>([]);
@@ -43,12 +45,68 @@ export class App implements OnDestroy {
         (portfolio) => portfolio.account_profile.account_id === this.selectedAccountId()
       ) ?? null
   );
+  protected readonly selectedPortfolioBalanced = computed(() =>
+    this.isAccountBalanced(this.selectedAccountId())
+  );
+  protected portfolioModeLabel(accountId: string): string {
+    return this.isAccountBalanced(accountId) ? 'Balanced' : 'Drifting';
+  }
+
+  protected decisionSummary(status?: string): string {
+    if (status === 'APPROVED') {
+      return 'Approved and applied to the selected client portfolio.';
+    }
+    if (status === 'REJECTED') {
+      return 'Rejected. Portfolio remains in drift simulation mode.';
+    }
+    return 'Awaiting approval decision.';
+  }
+
+  protected reviewHeadline(response: OrchestrationResponse): string {
+    const trades = response.recommendation_package?.proposal?.trades ?? [];
+    const status = response.approval_artifact?.approval_status ?? 'PENDING';
+    if (status === 'APPROVED') {
+      return 'Recommendation approved and applied';
+    }
+    if (status === 'REJECTED') {
+      return 'Recommendation rejected';
+    }
+    if (trades.length > 0) {
+      return `Rebalance required - ${trades.length} trade${trades.length === 1 ? '' : 's'} ready`;
+    }
+    return 'Portfolio within tolerance - no action required';
+  }
+
+  protected canReviewDecision(response: OrchestrationResponse): boolean {
+    const status = response.approval_artifact?.approval_status;
+    if (status !== 'PENDING') {
+      return false;
+    }
+
+    const trades = response.recommendation_package?.proposal?.trades ?? [];
+    return trades.length > 0;
+  }
+  protected readonly showAgentStages = signal(false);
+
+  protected toggleAgentStages() {
+    this.showAgentStages.update((current) => !current);
+  }
+  protected stageTone(status: string): 'done' | 'running' | 'pending' {
+    const normalized = status.toLowerCase();
+    if (normalized.includes('complete') || normalized.includes('success')) {
+      return 'done';
+    }
+    if (normalized.includes('process') || normalized.includes('progress') || normalized.includes('running')) {
+      return 'running';
+    }
+    return 'pending';
+  }
   protected readonly displayMarketEvent = computed(() => {
     const event = this.marketEvent();
     if (!event) {
       return null;
     }
-    return this.portfolioBalanced() ? this.toBalancedMarketEvent(event) : event;
+    return this.selectedPortfolioBalanced() ? this.toBalancedMarketEvent(event) : event;
   });
   protected readonly marketStreamError = signal<string | null>(null);
   protected readonly submitting = signal(false);
@@ -99,7 +157,6 @@ export class App implements OnDestroy {
       return;
     }
     this.selectedAccountId.set(accountId);
-    this.portfolioBalanced.set(false);
     this.recommendation.set(null);
     this.patchFormFromPortfolio(portfolio);
     this.startMarketStream(accountId);
@@ -117,11 +174,14 @@ export class App implements OnDestroy {
       next: (response) => {
         this.recommendation.set(response);
         this.approvalMessage.set(null);
-        this.portfolioBalanced.set(false);
+        this.setAccountBalanced(this.selectedAccountId(), false);
+        this.clearForcedDriftForAccount(this.selectedAccountId());
+        this.clearAutoRecommendForAccount(this.selectedAccountId());
         this.submitting.set(false);
       },
       error: () => {
         this.rebalanceError.set('Unable to submit rebalance request.');
+        this.clearAutoRecommendForAccount(this.selectedAccountId());
         this.submitting.set(false);
       }
     });
@@ -139,7 +199,8 @@ export class App implements OnDestroy {
     this.rebalanceService.approve(approval.approval_id, approval.recommendation_hash).subscribe({
       next: (result) => {
         this.approvalMessage.set(`${result.message} Portfolio is now displayed as balanced.`);
-        this.portfolioBalanced.set(true);
+        this.setAccountBalanced(this.selectedAccountId(), true);
+        this.clearForcedDriftForAccount(this.selectedAccountId());
         this.updateApprovalStatus(result.next_status);
         const displayed = this.displayMarketEvent();
         if (displayed) {
@@ -160,7 +221,7 @@ export class App implements OnDestroy {
       .subscribe({
         next: (result) => {
           this.approvalMessage.set(`${result.message} Rebalance trigger remains active.`);
-          this.portfolioBalanced.set(false);
+          this.setAccountBalanced(this.selectedAccountId(), false);
           this.updateApprovalStatus(result.next_status);
           const event = this.marketEvent();
           if (event) {
@@ -172,7 +233,23 @@ export class App implements OnDestroy {
   }
 
   protected simulateDriftAgain() {
-    this.portfolioBalanced.set(false);
+    const accountId = this.selectedAccountId();
+    this.recommendation.set(null);
+    this.showAgentStages.set(false);
+    this.rebalanceError.set(null);
+
+    if (!this.isAccountBalanced(accountId)) {
+      this.enableForcedDriftForAccount(accountId);
+      this.enableAutoRecommendForAccount(accountId);
+      this.approvalMessage.set(
+        'Drift simulation is active. Rebalance will remain required for this client until balanced again.'
+      );
+      return;
+    }
+
+    this.setAccountBalanced(accountId, false);
+    this.enableForcedDriftForAccount(accountId);
+    this.enableAutoRecommendForAccount(accountId);
     this.approvalMessage.set('Market drift simulation resumed. Rebalance trigger can activate again.');
     const event = this.marketEvent();
     if (event) {
@@ -266,11 +343,13 @@ export class App implements OnDestroy {
     this.marketSubscription?.unsubscribe();
     this.marketSubscription = this.marketStreamService.stream(accountId).subscribe({
       next: (event) => {
-        this.marketEvent.set(event);
+        const nextEvent = this.applyForcedDriftIfNeeded(event, this.selectedAccountId());
+        this.marketEvent.set(nextEvent);
         this.marketStreamError.set(null);
-        if (!this.portfolioBalanced()) {
-          this.syncFormToMarket(event);
+        if (!this.selectedPortfolioBalanced()) {
+          this.syncFormToMarket(nextEvent);
         }
+        this.maybeAutoGenerateRecommendation(this.selectedAccountId());
       },
       error: () => this.marketStreamError.set('Market simulation stream is not reachable yet.')
     });
@@ -349,6 +428,79 @@ export class App implements OnDestroy {
         signal: 'NO_ACTION',
         reason: 'Approved recommendation has been applied in the simulation.',
         threshold_pct: event.rebalance.threshold_pct
+      }
+    };
+  }
+
+  private isAccountBalanced(accountId: string): boolean {
+    return this.balancedAccounts()[accountId] ?? false;
+  }
+
+  private setAccountBalanced(accountId: string, balanced: boolean) {
+    this.balancedAccounts.update((current) => ({ ...current, [accountId]: balanced }));
+  }
+
+  private enableForcedDriftForAccount(accountId: string) {
+    this.forcedDriftByAccount.update((current) => ({ ...current, [accountId]: true }));
+  }
+
+  private clearForcedDriftForAccount(accountId: string) {
+    this.forcedDriftByAccount.update((current) => ({ ...current, [accountId]: false }));
+  }
+
+  private enableAutoRecommendForAccount(accountId: string) {
+    this.autoRecommendByAccount.update((current) => ({ ...current, [accountId]: true }));
+  }
+
+  private clearAutoRecommendForAccount(accountId: string) {
+    this.autoRecommendByAccount.update((current) => ({ ...current, [accountId]: false }));
+  }
+
+  private maybeAutoGenerateRecommendation(accountId: string) {
+    if (!(this.autoRecommendByAccount()[accountId] ?? false)) {
+      return;
+    }
+    if (this.submitting() || this.recommendation() !== null) {
+      return;
+    }
+    if (this.displayMarketEvent()?.rebalance.signal !== 'REBALANCE_NEEDED') {
+      return;
+    }
+
+    this.clearAutoRecommendForAccount(accountId);
+    this.submitRebalance();
+  }
+
+  private applyForcedDriftIfNeeded(event: MarketStreamEvent, accountId: string): MarketStreamEvent {
+    if (!(this.forcedDriftByAccount()[accountId] ?? false)) {
+      return event;
+    }
+
+    return this.toForcedDriftEvent(event);
+  }
+
+  private toForcedDriftEvent(event: MarketStreamEvent): MarketStreamEvent {
+    return {
+      ...event,
+      monitoring: {
+        ...event.monitoring,
+        current_allocation: {
+          equity: '67.50',
+          fixed_income: '24.50',
+          cash: '8.00'
+        },
+        drift: {
+          equity: '7.50',
+          fixed_income: '-5.50',
+          cash: '-2.00'
+        },
+        max_abs_drift_pct: '7.50'
+      },
+      rebalance: {
+        ...event.rebalance,
+        signal: 'REBALANCE_NEEDED',
+        reason: 'Drift simulation intentionally pushed allocation beyond threshold.',
+        threshold_pct: '5.00'
       }
     };
   }

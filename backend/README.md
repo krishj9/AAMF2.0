@@ -35,6 +35,18 @@ DYNAMODB_ENDPOINT_URL=http://localhost:55000 \
 uv run uvicorn app.main:app --reload
 ```
 
+One command helper from repo root:
+
+```shell
+./backend/scripts/run_backend.sh
+```
+
+Optional AWS mode:
+
+```shell
+./backend/scripts/run_backend.sh aws
+```
+
 The same repository code can target AWS-hosted DynamoDB by setting `DYNAMODB_MODE=aws`
 and leaving `DYNAMODB_ENDPOINT_URL` unset.
 
