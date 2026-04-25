@@ -1,0 +1,54 @@
+{
+  "$defs": {
+    "ActorRole": {
+      "enum": [
+        "OWNER",
+        "TESTER",
+        "VIEWER"
+      ],
+      "title": "ActorRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "can_approve": {
+      "default": false,
+      "title": "Can Approve",
+      "type": "boolean"
+    },
+    "can_correct_memory": {
+      "default": false,
+      "title": "Can Correct Memory",
+      "type": "boolean"
+    },
+    "can_deploy": {
+      "default": false,
+      "title": "Can Deploy",
+      "type": "boolean"
+    },
+    "can_override": {
+      "default": false,
+      "title": "Can Override",
+      "type": "boolean"
+    },
+    "can_submit_request": {
+      "default": true,
+      "title": "Can Submit Request",
+      "type": "boolean"
+    },
+    "can_view_audit": {
+      "default": false,
+      "title": "Can View Audit",
+      "type": "boolean"
+    },
+    "role": {
+      "$ref": "#/$defs/ActorRole"
+    }
+  },
+  "required": [
+    "role"
+  ],
+  "title": "PermissionMatrix",
+  "type": "object"
+}

@@ -1,0 +1,53 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "client_id": {
+      "title": "Client Id",
+      "type": "string"
+    },
+    "display_label": {
+      "title": "Display Label",
+      "type": "string"
+    },
+    "household_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Household Id"
+    },
+    "risk_profile_id": {
+      "title": "Risk Profile Id",
+      "type": "string"
+    },
+    "synthetic": {
+      "default": true,
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "tax_profile_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tax Profile Id"
+    }
+  },
+  "required": [
+    "client_id",
+    "display_label",
+    "risk_profile_id"
+  ],
+  "title": "ClientProfile",
+  "type": "object"
+}

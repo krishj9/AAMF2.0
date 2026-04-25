@@ -1,0 +1,161 @@
+{
+  "$defs": {
+    "SeedDomainBatch": {
+      "additionalProperties": false,
+      "properties": {
+        "checksum_sha256": {
+          "title": "Checksum Sha256",
+          "type": "string"
+        },
+        "domain": {
+          "title": "Domain",
+          "type": "string"
+        },
+        "file": {
+          "title": "File",
+          "type": "string"
+        },
+        "load_order": {
+          "minimum": 1,
+          "title": "Load Order",
+          "type": "integer"
+        },
+        "record_count": {
+          "minimum": 0,
+          "title": "Record Count",
+          "type": "integer"
+        },
+        "schema_version": {
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "domain",
+        "schema_version",
+        "record_count",
+        "file",
+        "checksum_sha256",
+        "load_order"
+      ],
+      "title": "SeedDomainBatch",
+      "type": "object"
+    },
+    "SeedProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "generator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Generator"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "title": "SeedProvenance",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "created_by": {
+      "title": "Created By",
+      "type": "string"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "dataset_version": {
+      "title": "Dataset Version",
+      "type": "string"
+    },
+    "domains": {
+      "items": {
+        "$ref": "#/$defs/SeedDomainBatch"
+      },
+      "minItems": 1,
+      "title": "Domains",
+      "type": "array"
+    },
+    "environment": {
+      "title": "Environment",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "manifest_checksum_sha256": {
+      "title": "Manifest Checksum Sha256",
+      "type": "string"
+    },
+    "manifest_version": {
+      "title": "Manifest Version",
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "#/$defs/SeedProvenance"
+    },
+    "rollback_from_dataset_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rollback From Dataset Version"
+    },
+    "synthetic": {
+      "default": true,
+      "title": "Synthetic",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "manifest_version",
+    "dataset_id",
+    "dataset_version",
+    "environment",
+    "created_by",
+    "created_at",
+    "idempotency_key",
+    "manifest_checksum_sha256",
+    "provenance",
+    "domains"
+  ],
+  "title": "SeedManifest",
+  "type": "object"
+}

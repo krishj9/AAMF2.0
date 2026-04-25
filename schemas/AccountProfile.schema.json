@@ -1,0 +1,60 @@
+{
+  "$defs": {
+    "AccountType": {
+      "enum": [
+        "TAXABLE",
+        "IRA",
+        "ROTH_IRA",
+        "BROKERAGE",
+        "OTHER"
+      ],
+      "title": "AccountType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "account_id": {
+      "title": "Account Id",
+      "type": "string"
+    },
+    "account_type": {
+      "$ref": "#/$defs/AccountType",
+      "default": "BROKERAGE"
+    },
+    "base_currency": {
+      "default": "USD",
+      "maxLength": 3,
+      "minLength": 3,
+      "title": "Base Currency",
+      "type": "string"
+    },
+    "client_id": {
+      "title": "Client Id",
+      "type": "string"
+    },
+    "custodian_label": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Custodian Label"
+    },
+    "taxable": {
+      "default": true,
+      "title": "Taxable",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "account_id",
+    "client_id"
+  ],
+  "title": "AccountProfile",
+  "type": "object"
+}

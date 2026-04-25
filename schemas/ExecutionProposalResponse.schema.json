@@ -1,0 +1,133 @@
+{
+  "$defs": {
+    "TradeAction": {
+      "enum": [
+        "BUY",
+        "SELL",
+        "HOLD"
+      ],
+      "title": "TradeAction",
+      "type": "string"
+    },
+    "TradeProposal": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/TradeAction"
+        },
+        "estimated_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Estimated Value"
+        },
+        "evidence_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "symbol": {
+          "title": "Symbol",
+          "type": "string"
+        },
+        "trade_id": {
+          "title": "Trade Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trade_id",
+        "symbol",
+        "action",
+        "estimated_value",
+        "rationale"
+      ],
+      "title": "TradeProposal",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "confidence": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Confidence",
+      "type": "object"
+    },
+    "estimated_cost": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "default": "0",
+      "title": "Estimated Cost"
+    },
+    "estimated_impact": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Estimated Impact",
+      "type": "object"
+    },
+    "proposal_status": {
+      "title": "Proposal Status",
+      "type": "string"
+    },
+    "tax_notes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tax Notes",
+      "type": "array"
+    },
+    "trades": {
+      "items": {
+        "$ref": "#/$defs/TradeProposal"
+      },
+      "title": "Trades",
+      "type": "array"
+    }
+  },
+  "required": [
+    "proposal_status"
+  ],
+  "title": "ExecutionProposalResponse",
+  "type": "object"
+}

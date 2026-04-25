@@ -1,0 +1,44 @@
+{
+  "$defs": {
+    "ActorRole": {
+      "enum": [
+        "OWNER",
+        "TESTER",
+        "VIEWER"
+      ],
+      "title": "ActorRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actor_id": {
+      "title": "Actor Id",
+      "type": "string"
+    },
+    "auth_provider": {
+      "default": "local",
+      "title": "Auth Provider",
+      "type": "string"
+    },
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "is_owner": {
+      "default": true,
+      "title": "Is Owner",
+      "type": "boolean"
+    },
+    "role": {
+      "$ref": "#/$defs/ActorRole",
+      "default": "OWNER"
+    }
+  },
+  "required": [
+    "actor_id",
+    "display_name"
+  ],
+  "title": "ActorContext",
+  "type": "object"
+}

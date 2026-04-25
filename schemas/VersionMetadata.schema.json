@@ -1,0 +1,32 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "agent_version_set": {
+      "default": "local-dev",
+      "title": "Agent Version Set",
+      "type": "string"
+    },
+    "app_version": {
+      "default": "0.1.0",
+      "title": "App Version",
+      "type": "string"
+    },
+    "environment": {
+      "default": "dev",
+      "title": "Environment",
+      "type": "string"
+    },
+    "policy_version": {
+      "default": "1.0.0",
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "title": "VersionMetadata",
+  "type": "object"
+}

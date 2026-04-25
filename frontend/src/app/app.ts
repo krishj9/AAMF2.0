@@ -1,0 +1,140 @@
+import { Component, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterOutlet } from '@angular/router';
+
+import { HealthResponse, HealthService } from './core/api/health.service';
+import { OrchestrationResponse, PortfolioRebalanceRequest } from './core/api/rebalance.models';
+import { RebalanceService } from './core/api/rebalance.service';
+
+@Component({
+  selector: 'app-root',
+  imports: [ReactiveFormsModule, RouterOutlet],
+  templateUrl: './app.html',
+  styleUrl: './app.scss'
+})
+export class App {
+  private readonly formBuilder = inject(FormBuilder);
+  private readonly healthService = inject(HealthService);
+  private readonly rebalanceService = inject(RebalanceService);
+
+  protected readonly title = signal('Asset Management');
+  protected readonly backendHealth = signal<HealthResponse | null>(null);
+  protected readonly backendHealthError = signal<string | null>(null);
+  protected readonly recommendation = signal<OrchestrationResponse | null>(null);
+  protected readonly rebalanceError = signal<string | null>(null);
+  protected readonly submitting = signal(false);
+
+  protected readonly form = this.formBuilder.nonNullable.group({
+    displayLabel: ['Demo Investor', Validators.required],
+    equityValue: [7000, [Validators.required, Validators.min(0)]],
+    fixedIncomeValue: [2000, [Validators.required, Validators.min(0)]],
+    cashValue: [1000, [Validators.required, Validators.min(0)]],
+    targetEquityPct: [60, [Validators.required, Validators.min(0), Validators.max(100)]],
+    targetFixedIncomePct: [30, [Validators.required, Validators.min(0), Validators.max(100)]],
+    targetCashPct: [10, [Validators.required, Validators.min(0), Validators.max(100)]]
+  });
+
+  constructor() {
+    this.healthService.getHealth().subscribe({
+      next: (health) => this.backendHealth.set(health),
+      error: () => this.backendHealthError.set('Backend health check is not reachable yet.')
+    });
+  }
+
+  protected submitRebalance() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.submitting.set(true);
+    this.rebalanceError.set(null);
+    this.rebalanceService.submit(this.buildRequest()).subscribe({
+      next: (response) => {
+        this.recommendation.set(response);
+        this.submitting.set(false);
+      },
+      error: () => {
+        this.rebalanceError.set('Unable to submit rebalance request.');
+        this.submitting.set(false);
+      }
+    });
+  }
+
+  private buildRequest(): PortfolioRebalanceRequest {
+    const value = this.form.getRawValue();
+    const asOf = new Date().toISOString();
+    const totalValue = value.equityValue + value.fixedIncomeValue + value.cashValue;
+
+    return {
+      actor: {
+        actor_id: 'local_owner',
+        display_name: 'Local Owner',
+        role: 'OWNER',
+        auth_provider: 'local',
+        is_owner: true
+      },
+      client_profile: {
+        client_id: 'client_demo',
+        display_label: value.displayLabel,
+        risk_profile_id: 'risk_balanced',
+        synthetic: true
+      },
+      account_profile: {
+        account_id: 'acct_demo',
+        client_id: 'client_demo',
+        account_type: 'BROKERAGE',
+        base_currency: 'USD',
+        taxable: true
+      },
+      portfolio_snapshot: {
+        snapshot_id: 'snap_demo',
+        account_id: 'acct_demo',
+        as_of: asOf,
+        holdings: [
+          {
+            instrument_id: 'inst_equity',
+            symbol: 'EQUITY',
+            asset_class: 'equity',
+            quantity: '1',
+            market_price: String(value.equityValue),
+            market_value: String(value.equityValue),
+            as_of: asOf
+          },
+          {
+            instrument_id: 'inst_fixed_income',
+            symbol: 'BONDS',
+            asset_class: 'fixed_income',
+            quantity: '1',
+            market_price: String(value.fixedIncomeValue),
+            market_value: String(value.fixedIncomeValue),
+            as_of: asOf
+          }
+        ],
+        cash: String(value.cashValue),
+        total_value: String(totalValue)
+      },
+      allocation_target: {
+        target_id: 'target_demo',
+        account_id: 'acct_demo',
+        asset_class_targets: {
+          equity: String(value.targetEquityPct),
+          fixed_income: String(value.targetFixedIncomePct),
+          cash: String(value.targetCashPct)
+        },
+        tolerance_bands: {
+          equity: '5',
+          fixed_income: '5',
+          cash: '5'
+        }
+      },
+      risk_profile: {
+        risk_profile_id: 'risk_balanced',
+        risk_level: 'balanced',
+        max_single_position_pct: '85',
+        max_sector_pct: '60',
+        allowed_asset_classes: ['equity', 'fixed_income', 'cash']
+      }
+    };
+  }
+}

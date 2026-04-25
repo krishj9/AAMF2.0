@@ -1,0 +1,148 @@
+{
+  "$defs": {
+    "DriftItem": {
+      "additionalProperties": false,
+      "properties": {
+        "current_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Current Pct"
+        },
+        "drift_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Drift Pct"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "target_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Target Pct"
+        },
+        "tolerance_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Tolerance Pct"
+        },
+        "within_tolerance": {
+          "title": "Within Tolerance",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "key",
+        "current_pct",
+        "target_pct",
+        "drift_pct",
+        "tolerance_pct",
+        "within_tolerance"
+      ],
+      "title": "DriftItem",
+      "type": "object"
+    },
+    "PolicyVerdictStatus": {
+      "enum": [
+        "COMPLIANT",
+        "NON_COMPLIANT",
+        "UNRESOLVED"
+      ],
+      "title": "PolicyVerdictStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "confidence": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Confidence",
+      "type": "object"
+    },
+    "drift": {
+      "items": {
+        "$ref": "#/$defs/DriftItem"
+      },
+      "title": "Drift",
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "rule_results": {
+      "items": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "type": "object"
+      },
+      "title": "Rule Results",
+      "type": "array"
+    },
+    "verdict": {
+      "$ref": "#/$defs/PolicyVerdictStatus"
+    }
+  },
+  "required": [
+    "verdict",
+    "drift"
+  ],
+  "title": "RiskPolicyResponse",
+  "type": "object"
+}

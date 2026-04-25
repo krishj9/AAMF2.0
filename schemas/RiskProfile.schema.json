@@ -1,0 +1,56 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "allowed_asset_classes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowed Asset Classes",
+      "type": "array"
+    },
+    "max_sector_pct": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0.0,
+          "maximum": 100.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Max Sector Pct"
+    },
+    "max_single_position_pct": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0.0,
+          "maximum": 100.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Max Single Position Pct"
+    },
+    "risk_level": {
+      "title": "Risk Level",
+      "type": "string"
+    },
+    "risk_profile_id": {
+      "title": "Risk Profile Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "risk_profile_id",
+    "risk_level",
+    "max_single_position_pct",
+    "max_sector_pct"
+  ],
+  "title": "RiskProfile",
+  "type": "object"
+}

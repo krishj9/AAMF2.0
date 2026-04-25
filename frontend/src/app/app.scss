@@ -1,0 +1,154 @@
+.app-shell {
+  min-height: 100dvh;
+  padding: 4rem clamp(1rem, 4vw, 4rem);
+  color: #dbeafe;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.35), transparent 32rem),
+    linear-gradient(135deg, #020617 0%, #0f172a 55%, #111827 100%);
+}
+
+.hero {
+  max-width: 56rem;
+  margin-bottom: 2rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: #93c5fd;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 0.95;
+}
+
+.lede {
+  max-width: 44rem;
+  margin: 1.25rem 0 0;
+  color: #cbd5e1;
+  font-size: 1.15rem;
+  line-height: 1.7;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  max-width: 72rem;
+}
+
+.status-card {
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 1.25rem;
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 1rem 3rem rgba(2, 6, 23, 0.28);
+
+  .label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #93c5fd;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    display: block;
+    color: #f8fafc;
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin: 0.75rem 0 0;
+    color: #cbd5e1;
+    line-height: 1.6;
+  }
+}
+
+.workflow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+  max-width: 72rem;
+  margin-top: 1rem;
+}
+
+.intake-card,
+.review-card {
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 1.25rem;
+  background: rgba(15, 23, 42, 0.82);
+
+  h2,
+  h3 {
+    margin-top: 0;
+    color: #f8fafc;
+  }
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.9rem;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+input {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 0.75rem;
+  color: #f8fafc;
+  background: rgba(2, 6, 23, 0.72);
+}
+
+button {
+  padding: 0.8rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  color: #0f172a;
+  background: #93c5fd;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.7;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.state {
+  display: inline-flex;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  color: #082f49;
+  background: #bae6fd;
+  font-weight: 800;
+}
+
+.error {
+  color: #fecaca;
+}
+
+@media (max-width: 800px) {
+  .workflow,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

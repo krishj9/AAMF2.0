@@ -1,0 +1,59 @@
+{
+  "$defs": {
+    "TradeAction": {
+      "enum": [
+        "BUY",
+        "SELL",
+        "HOLD"
+      ],
+      "title": "TradeAction",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "$ref": "#/$defs/TradeAction"
+    },
+    "estimated_value": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Estimated Value"
+    },
+    "evidence_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "rationale": {
+      "title": "Rationale",
+      "type": "string"
+    },
+    "symbol": {
+      "title": "Symbol",
+      "type": "string"
+    },
+    "trade_id": {
+      "title": "Trade Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "trade_id",
+    "symbol",
+    "action",
+    "estimated_value",
+    "rationale"
+  ],
+  "title": "TradeProposal",
+  "type": "object"
+}

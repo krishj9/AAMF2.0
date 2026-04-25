@@ -1,0 +1,652 @@
+{
+  "$defs": {
+    "ApprovalArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "approval_id": {
+          "title": "Approval Id",
+          "type": "string"
+        },
+        "approval_status": {
+          "default": "PENDING",
+          "title": "Approval Status",
+          "type": "string"
+        },
+        "approved_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approved At"
+        },
+        "approved_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approved By"
+        },
+        "correlation": {
+          "$ref": "#/$defs/CorrelationMetadata"
+        },
+        "override_note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Override Note"
+        },
+        "recommendation": {
+          "$ref": "#/$defs/RecommendationPackage"
+        },
+        "recommendation_hash": {
+          "title": "Recommendation Hash",
+          "type": "string"
+        },
+        "rejection_note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rejection Note"
+        }
+      },
+      "required": [
+        "approval_id",
+        "correlation",
+        "recommendation_hash",
+        "recommendation"
+      ],
+      "title": "ApprovalArtifact",
+      "type": "object"
+    },
+    "CorrelationMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Idempotency Key"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "session_id": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "trace_id": {
+          "title": "Trace Id",
+          "type": "string"
+        }
+      },
+      "title": "CorrelationMetadata",
+      "type": "object"
+    },
+    "DriftItem": {
+      "additionalProperties": false,
+      "properties": {
+        "current_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Current Pct"
+        },
+        "drift_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Drift Pct"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "target_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Target Pct"
+        },
+        "tolerance_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Tolerance Pct"
+        },
+        "within_tolerance": {
+          "title": "Within Tolerance",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "key",
+        "current_pct",
+        "target_pct",
+        "drift_pct",
+        "tolerance_pct",
+        "within_tolerance"
+      ],
+      "title": "DriftItem",
+      "type": "object"
+    },
+    "ErrorSeverity": {
+      "enum": [
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "CRITICAL"
+      ],
+      "title": "ErrorSeverity",
+      "type": "string"
+    },
+    "ExecutionProposalResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Confidence",
+          "type": "object"
+        },
+        "estimated_cost": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0",
+          "title": "Estimated Cost"
+        },
+        "estimated_impact": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Estimated Impact",
+          "type": "object"
+        },
+        "proposal_status": {
+          "title": "Proposal Status",
+          "type": "string"
+        },
+        "tax_notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tax Notes",
+          "type": "array"
+        },
+        "trades": {
+          "items": {
+            "$ref": "#/$defs/TradeProposal"
+          },
+          "title": "Trades",
+          "type": "array"
+        }
+      },
+      "required": [
+        "proposal_status"
+      ],
+      "title": "ExecutionProposalResponse",
+      "type": "object"
+    },
+    "PolicyVerdictStatus": {
+      "enum": [
+        "COMPLIANT",
+        "NON_COMPLIANT",
+        "UNRESOLVED"
+      ],
+      "title": "PolicyVerdictStatus",
+      "type": "string"
+    },
+    "RecommendationPackage": {
+      "additionalProperties": false,
+      "properties": {
+        "approval_eligibility": {
+          "title": "Approval Eligibility",
+          "type": "boolean"
+        },
+        "current_allocation": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Current Allocation",
+          "type": "object"
+        },
+        "evidence": {
+          "items": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "proposal": {
+          "$ref": "#/$defs/ExecutionProposalResponse"
+        },
+        "proposed_allocation": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Proposed Allocation",
+          "type": "object"
+        },
+        "risk_policy": {
+          "$ref": "#/$defs/RiskPolicyResponse"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "target_allocation": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Target Allocation",
+          "type": "object"
+        },
+        "workflow_state": {
+          "$ref": "#/$defs/WorkflowState"
+        }
+      },
+      "required": [
+        "summary",
+        "current_allocation",
+        "target_allocation",
+        "proposed_allocation",
+        "risk_policy",
+        "proposal",
+        "workflow_state",
+        "approval_eligibility"
+      ],
+      "title": "RecommendationPackage",
+      "type": "object"
+    },
+    "RiskPolicyResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Confidence",
+          "type": "object"
+        },
+        "drift": {
+          "items": {
+            "$ref": "#/$defs/DriftItem"
+          },
+          "title": "Drift",
+          "type": "array"
+        },
+        "evidence": {
+          "items": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "rule_results": {
+          "items": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "type": "object"
+          },
+          "title": "Rule Results",
+          "type": "array"
+        },
+        "verdict": {
+          "$ref": "#/$defs/PolicyVerdictStatus"
+        }
+      },
+      "required": [
+        "verdict",
+        "drift"
+      ],
+      "title": "RiskPolicyResponse",
+      "type": "object"
+    },
+    "StructuredError": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "correlation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CorrelationMetadata"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "details": {
+          "additionalProperties": true,
+          "title": "Details",
+          "type": "object"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "retryable": {
+          "default": false,
+          "title": "Retryable",
+          "type": "boolean"
+        },
+        "severity": {
+          "$ref": "#/$defs/ErrorSeverity",
+          "default": "ERROR"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "source"
+      ],
+      "title": "StructuredError",
+      "type": "object"
+    },
+    "TradeAction": {
+      "enum": [
+        "BUY",
+        "SELL",
+        "HOLD"
+      ],
+      "title": "TradeAction",
+      "type": "string"
+    },
+    "TradeProposal": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/TradeAction"
+        },
+        "estimated_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Estimated Value"
+        },
+        "evidence_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "rationale": {
+          "title": "Rationale",
+          "type": "string"
+        },
+        "symbol": {
+          "title": "Symbol",
+          "type": "string"
+        },
+        "trade_id": {
+          "title": "Trade Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trade_id",
+        "symbol",
+        "action",
+        "estimated_value",
+        "rationale"
+      ],
+      "title": "TradeProposal",
+      "type": "object"
+    },
+    "VersionMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "agent_version_set": {
+          "default": "local-dev",
+          "title": "Agent Version Set",
+          "type": "string"
+        },
+        "app_version": {
+          "default": "0.1.0",
+          "title": "App Version",
+          "type": "string"
+        },
+        "environment": {
+          "default": "dev",
+          "title": "Environment",
+          "type": "string"
+        },
+        "policy_version": {
+          "default": "1.0.0",
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "title": "VersionMetadata",
+      "type": "object"
+    },
+    "WorkflowState": {
+      "enum": [
+        "NORMAL",
+        "DEGRADED",
+        "LOW_CONFIDENCE",
+        "BLOCKED"
+      ],
+      "title": "WorkflowState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "approval_artifact": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ApprovalArtifact"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "correlation": {
+      "$ref": "#/$defs/CorrelationMetadata"
+    },
+    "provider_trace_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Provider Trace Url"
+    },
+    "recommendation_package": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RecommendationPackage"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "structured_error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StructuredError"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "version": {
+      "$ref": "#/$defs/VersionMetadata"
+    },
+    "workflow_state": {
+      "$ref": "#/$defs/WorkflowState"
+    }
+  },
+  "required": [
+    "correlation",
+    "version",
+    "workflow_state"
+  ],
+  "title": "OrchestrationResponse",
+  "type": "object"
+}

@@ -1,0 +1,120 @@
+<main class="app-shell">
+  <section class="hero">
+    <p class="eyebrow">Personal Portfolio Multi-Agent Platform</p>
+    <h1>{{ title() }}</h1>
+    <p class="lede">
+      Advisory-only portfolio construction and rebalancing with traceable evidence,
+      policy checks, and manual approval controls.
+    </p>
+  </section>
+
+  <section class="status-grid" aria-label="Application status">
+    <article class="status-card">
+      <span class="label">Frontend</span>
+      <strong>Angular 21</strong>
+      <p>Standalone app scaffold is ready for intake and review workflows.</p>
+    </article>
+
+    <article class="status-card">
+      <span class="label">Backend</span>
+      @if (backendHealth(); as health) {
+        <strong>{{ health.status }}</strong>
+        <p>
+          {{ health.app }} running in {{ health.environment }} with schema
+          {{ health.schema_version }} and policy {{ health.policy_version }}.
+        </p>
+      } @else {
+        <strong>Pending</strong>
+        <p>{{ backendHealthError() ?? 'Checking backend health...' }}</p>
+      }
+    </article>
+
+    <article class="status-card">
+      <span class="label">Mode</span>
+      <strong>Advisory only</strong>
+      <p>No autonomous trade execution path exists in the MVP.</p>
+    </article>
+  </section>
+
+  <section class="workflow">
+    <form class="intake-card" [formGroup]="form" (ngSubmit)="submitRebalance()">
+      <h2>Rebalance Intake</h2>
+      <label>
+        Investor label
+        <input type="text" formControlName="displayLabel" />
+      </label>
+
+      <div class="form-grid">
+        <label>
+          Equity value
+          <input type="number" formControlName="equityValue" />
+        </label>
+        <label>
+          Fixed income value
+          <input type="number" formControlName="fixedIncomeValue" />
+        </label>
+        <label>
+          Cash value
+          <input type="number" formControlName="cashValue" />
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          Target equity %
+          <input type="number" formControlName="targetEquityPct" />
+        </label>
+        <label>
+          Target fixed income %
+          <input type="number" formControlName="targetFixedIncomePct" />
+        </label>
+        <label>
+          Target cash %
+          <input type="number" formControlName="targetCashPct" />
+        </label>
+      </div>
+
+      <button type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Submitting...' : 'Generate Recommendation' }}
+      </button>
+      @if (rebalanceError()) {
+        <p class="error">{{ rebalanceError() }}</p>
+      }
+    </form>
+
+    <article class="review-card">
+      <h2>Recommendation Review</h2>
+      @if (recommendation(); as response) {
+        <span class="state">{{ response.workflow_state }}</span>
+        <p>{{ response.recommendation_package?.summary }}</p>
+
+        <h3>Policy Verdict</h3>
+        <p>{{ response.recommendation_package?.risk_policy?.verdict }}</p>
+
+        <h3>Proposed Trades</h3>
+        @if (response.recommendation_package?.proposal?.trades?.length) {
+          <ul>
+            @for (trade of response.recommendation_package?.proposal?.trades; track trade.trade_id) {
+              <li>
+                <strong>{{ trade.action }}</strong> {{ trade.symbol }}:
+                estimated ${{ trade.estimated_value }}
+              </li>
+            }
+          </ul>
+        } @else {
+          <p>No trades proposed.</p>
+        }
+
+        <h3>Approval Artifact</h3>
+        <p>
+          {{ response.approval_artifact?.approval_id }} -
+          {{ response.approval_artifact?.approval_status }}
+        </p>
+      } @else {
+        <p>Submit the intake form to generate a local deterministic recommendation.</p>
+      }
+    </article>
+  </section>
+
+  <router-outlet />
+</main>

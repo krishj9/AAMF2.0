@@ -1,0 +1,2 @@
+{"scenario_id":"simple_rebalance","title":"Simple rebalance outside tolerance","expected_workflow_state":"NORMAL","expected_verdict":"COMPLIANT"}
+{"scenario_id":"blocked_concentration","title":"Blocked by concentration policy","expected_workflow_state":"BLOCKED","expected_verdict":"NON_COMPLIANT"}
