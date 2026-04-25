@@ -68,6 +68,7 @@ Make the system useful with deterministic seed data and local calculations befor
 ### Deliverables
 - Synthetic seed files for client profiles, accounts, instruments, holdings, allocation targets, and policy rules.
 - Idempotent seed loader for local/dev data.
+- Persisted multi-client portfolio records for rebalance intake and market simulation.
 - Portfolio math utilities for market value, allocation, drift, and tolerance-band checks.
 - Deterministic policy rule evaluator.
 - Market simulation agents for synthetic equity, interest-rate, bond, and cash-yield changes.
@@ -89,6 +90,7 @@ Make the system useful with deterministic seed data and local calculations befor
 - A seeded portfolio can be loaded and validated locally.
 - Drift and policy verdicts are deterministic and test-covered.
 - Simulated market ticks can be streamed to the UI and used to flag rebalance needs.
+- Simulated drift uses the selected account's stored portfolio rather than hard-coded demo values.
 - Golden scenarios can be executed without Bedrock.
 - Synthetic records are clearly labeled.
 
@@ -128,13 +130,14 @@ Implement the workflow skeleton and state transitions with stubbed node adapters
 Persist the review package and make manual approval explicit.
 
 ### Deliverables
-- DynamoDB table definitions or local DynamoDB equivalents for approval artifacts, audit events, sessions, and memory queue tasks.
+- DynamoDB table definitions or local DynamoDB equivalents for approval artifacts, audit events, portfolios, sessions, and memory queue tasks.
 - DynamoDB Local support for local development using endpoint `http://localhost:55000`.
 - AWS DynamoDB support using the same repository code with hosted endpoints selected by environment config.
 - Repository/adaptor layer for persistence operations.
 - Append-only audit event writer.
 - Approval artifact creation and status transitions.
 - Approval, rejection, and revision endpoints.
+- Approval write-back that persists the approved portfolio allocation for the selected client account.
 - Recommendation hash or version check to invalidate stale approval artifacts.
 
 ### Key contracts

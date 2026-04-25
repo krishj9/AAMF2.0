@@ -55,6 +55,17 @@ export interface PortfolioRebalanceRequest {
   };
 }
 
+export interface PortfolioRecord {
+  client_profile: PortfolioRebalanceRequest['client_profile'];
+  account_profile: PortfolioRebalanceRequest['account_profile'];
+  portfolio_snapshot: PortfolioRebalanceRequest['portfolio_snapshot'];
+  allocation_target: PortfolioRebalanceRequest['allocation_target'];
+  risk_profile: PortfolioRebalanceRequest['risk_profile'];
+  updated_at: string;
+  source: string;
+  source_approval_id?: string;
+}
+
 export interface OrchestrationResponse {
   workflow_state: 'NORMAL' | 'DEGRADED' | 'LOW_CONFIDENCE' | 'BLOCKED';
   recommendation_package?: {

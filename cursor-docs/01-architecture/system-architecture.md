@@ -32,7 +32,7 @@
 - **AgentCore Memory**: long-term memory retrieval and managed memory lifecycle features
 - **Tracing provider adapter**: pluggable tracing backend (`bedrock_agentcore` or `langsmith`)
 - **CloudWatch**: metrics/logs/dashboards/alarms for platform operations (independent of tracing provider)
-- **DynamoDB**: approval artifacts, audit events, session state, memory consolidation queue
+- **DynamoDB**: client portfolios, approval artifacts, audit events, session state, memory consolidation queue
 
 ## Local vs AWS persistence
 - Local development uses DynamoDB Local through the same repository interfaces used in AWS.
@@ -43,7 +43,7 @@
 ## Market simulation and rebalance monitoring
 - The local app can simulate market changes without external data feeds.
 - `MarketSimulationAgent` emits synthetic equity, interest-rate, bond, and cash-yield ticks.
-- `MarketMonitoringAgent` applies market ticks to a sample portfolio and recomputes current allocation drift.
+- `MarketMonitoringAgent` applies market ticks to the selected account's stored portfolio and recomputes current allocation drift.
 - `RebalanceTriggerAgent` emits `NO_ACTION`, `WATCH`, or `REBALANCE_NEEDED`.
 - The Angular UI subscribes through Server-Sent Events at `/market/stream`.
 

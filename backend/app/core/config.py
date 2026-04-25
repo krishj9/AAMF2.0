@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     aws_region: str = "us-east-1"
     approvals_table_name: str = "asset-management-dev-approvals"
     audit_events_table_name: str = "asset-management-dev-audit-events"
+    portfolios_table_name: str = "asset-management-dev-portfolios"
     sessions_table_name: str = "asset-management-dev-sessions"
     memory_queue_table_name: str = "asset-management-dev-memory-queue"
     research_agent_url: str = "http://localhost:8101/a2a/research"

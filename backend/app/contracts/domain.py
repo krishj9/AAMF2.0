@@ -87,3 +87,14 @@ class RiskProfile(ContractModel):
     max_single_position_pct: Decimal = Field(gt=0, le=100)
     max_sector_pct: Decimal = Field(gt=0, le=100)
     allowed_asset_classes: list[str] = Field(default_factory=list)
+
+
+class PortfolioRecord(ContractModel):
+    client_profile: ClientProfile
+    account_profile: AccountProfile
+    portfolio_snapshot: PortfolioSnapshot
+    allocation_target: AllocationTarget
+    risk_profile: RiskProfile | None = None
+    updated_at: datetime
+    source: str = "seed"
+    source_approval_id: str | None = None

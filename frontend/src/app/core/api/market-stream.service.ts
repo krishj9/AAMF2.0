@@ -7,14 +7,18 @@ import { MarketStreamEvent } from './market.models';
 export class MarketStreamService {
   private readonly zone = inject(NgZone);
 
-  stream(): Observable<MarketStreamEvent> {
+  stream(accountId?: string): Observable<MarketStreamEvent> {
     return new Observable<MarketStreamEvent>((subscriber) => {
       if (typeof EventSource === 'undefined') {
         subscriber.complete();
         return undefined;
       }
 
-      const source = new EventSource('/api/market/stream?limit=0&interval_ms=1500');
+      const params = new URLSearchParams({ limit: '0', interval_ms: '1500' });
+      if (accountId) {
+        params.set('account_id', accountId);
+      }
+      const source = new EventSource(`/api/market/stream?${params.toString()}`);
       source.onmessage = (message) => {
         this.zone.run(() => subscriber.next(JSON.parse(message.data) as MarketStreamEvent));
       };

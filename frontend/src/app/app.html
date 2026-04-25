@@ -109,6 +109,17 @@
         explains the same drift shown above.
       </p>
       <label>
+        Client portfolio
+        <select [value]="selectedAccountId()" (change)="selectPortfolio($event)">
+          @for (portfolio of portfolios(); track portfolio.account_profile.account_id) {
+            <option [value]="portfolio.account_profile.account_id">
+              {{ portfolio.client_profile.display_label }} -
+              {{ portfolio.account_profile.account_id }}
+            </option>
+          }
+        </select>
+      </label>
+      <label>
         Investor label
         <input type="text" formControlName="displayLabel" />
       </label>

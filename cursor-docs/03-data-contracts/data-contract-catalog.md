@@ -135,6 +135,13 @@ Producer: request intake or portfolio importer.
 Consumers: orchestration request, drift calculation, UI allocation views.
 Priority: Phase 1.
 
+### `PortfolioRecord`
+Purpose: Persist each client's portfolio and related decision inputs.
+Fields: `client_profile`, `account_profile`, `portfolio_snapshot`, `allocation_target`, `risk_profile`, `updated_at`, `source`, `source_approval_id`.
+Producer: seed loader, rebalance request intake, approval workflow.
+Consumers: portfolio API, market drift simulation, rebalance intake UI.
+Priority: Phase 2.
+
 ### `AllocationTarget`
 Purpose: Describe desired allocation constraints.
 Fields: `target_id`, `account_id`, `asset_class_targets`, `security_targets`, `tolerance_bands`.

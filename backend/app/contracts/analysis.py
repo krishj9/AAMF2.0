@@ -5,6 +5,13 @@ from enum import StrEnum
 from pydantic import Field
 
 from app.contracts.common import ContractModel, CorrelationMetadata, WorkflowState
+from app.contracts.domain import (
+    AccountProfile,
+    AllocationTarget,
+    ClientProfile,
+    PortfolioSnapshot,
+    RiskProfile,
+)
 
 
 class PolicyVerdictStatus(StrEnum):
@@ -96,6 +103,11 @@ class ApprovalArtifact(ContractModel):
     correlation: CorrelationMetadata
     recommendation_hash: str
     recommendation: RecommendationPackage
+    client_profile: ClientProfile
+    account_profile: AccountProfile
+    original_portfolio_snapshot: PortfolioSnapshot
+    allocation_target: AllocationTarget
+    risk_profile: RiskProfile | None = None
     approval_status: str = "PENDING"
     approved_by: str | None = None
     approved_at: datetime | None = None

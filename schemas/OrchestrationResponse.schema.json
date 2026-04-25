@@ -1,5 +1,63 @@
 {
   "$defs": {
+    "AccountProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "title": "Account Id",
+          "type": "string"
+        },
+        "account_type": {
+          "$ref": "#/$defs/AccountType",
+          "default": "BROKERAGE"
+        },
+        "base_currency": {
+          "default": "USD",
+          "maxLength": 3,
+          "minLength": 3,
+          "title": "Base Currency",
+          "type": "string"
+        },
+        "client_id": {
+          "title": "Client Id",
+          "type": "string"
+        },
+        "custodian_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Custodian Label"
+        },
+        "taxable": {
+          "default": true,
+          "title": "Taxable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "account_id",
+        "client_id"
+      ],
+      "title": "AccountProfile",
+      "type": "object"
+    },
+    "AccountType": {
+      "enum": [
+        "TAXABLE",
+        "IRA",
+        "ROTH_IRA",
+        "BROKERAGE",
+        "OTHER"
+      ],
+      "title": "AccountType",
+      "type": "string"
+    },
     "AgentStageResult": {
       "additionalProperties": false,
       "properties": {
@@ -16,6 +74,16 @@
           },
           "title": "Evidence",
           "type": "array"
+        },
+        "execution_location": {
+          "default": "in_process",
+          "title": "Execution Location",
+          "type": "string"
+        },
+        "protocol": {
+          "default": "LOCAL",
+          "title": "Protocol",
+          "type": "string"
         },
         "status": {
           "$ref": "#/$defs/AgentStatus"
@@ -45,9 +113,79 @@
       "title": "AgentStatus",
       "type": "string"
     },
+    "AllocationTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "title": "Account Id",
+          "type": "string"
+        },
+        "asset_class_targets": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Asset Class Targets",
+          "type": "object"
+        },
+        "security_targets": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Security Targets",
+          "type": "object"
+        },
+        "target_id": {
+          "title": "Target Id",
+          "type": "string"
+        },
+        "tolerance_bands": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Tolerance Bands",
+          "type": "object"
+        }
+      },
+      "required": [
+        "target_id",
+        "account_id"
+      ],
+      "title": "AllocationTarget",
+      "type": "object"
+    },
     "ApprovalArtifact": {
       "additionalProperties": false,
       "properties": {
+        "account_profile": {
+          "$ref": "#/$defs/AccountProfile"
+        },
+        "allocation_target": {
+          "$ref": "#/$defs/AllocationTarget"
+        },
         "approval_id": {
           "title": "Approval Id",
           "type": "string"
@@ -82,8 +220,14 @@
           "default": null,
           "title": "Approved By"
         },
+        "client_profile": {
+          "$ref": "#/$defs/ClientProfile"
+        },
         "correlation": {
           "$ref": "#/$defs/CorrelationMetadata"
+        },
+        "original_portfolio_snapshot": {
+          "$ref": "#/$defs/PortfolioSnapshot"
         },
         "override_note": {
           "anyOf": [
@@ -115,15 +259,83 @@
           ],
           "default": null,
           "title": "Rejection Note"
+        },
+        "risk_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
         "approval_id",
         "correlation",
         "recommendation_hash",
-        "recommendation"
+        "recommendation",
+        "client_profile",
+        "account_profile",
+        "original_portfolio_snapshot",
+        "allocation_target"
       ],
       "title": "ApprovalArtifact",
+      "type": "object"
+    },
+    "ClientProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "client_id": {
+          "title": "Client Id",
+          "type": "string"
+        },
+        "display_label": {
+          "title": "Display Label",
+          "type": "string"
+        },
+        "household_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Household Id"
+        },
+        "risk_profile_id": {
+          "title": "Risk Profile Id",
+          "type": "string"
+        },
+        "synthetic": {
+          "default": true,
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "tax_profile_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tax Profile Id"
+        }
+      },
+      "required": [
+        "client_id",
+        "display_label",
+        "risk_profile_id"
+      ],
+      "title": "ClientProfile",
       "type": "object"
     },
     "CorrelationMetadata": {
@@ -326,6 +538,184 @@
       "title": "PolicyVerdictStatus",
       "type": "string"
     },
+    "PortfolioHolding": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "asset_class": {
+          "default": "unknown",
+          "title": "Asset Class",
+          "type": "string"
+        },
+        "cost_basis": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cost Basis"
+        },
+        "instrument_id": {
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "market_price": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Market Price"
+        },
+        "market_value": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Market Value"
+        },
+        "quantity": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Quantity"
+        },
+        "sector": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sector"
+        },
+        "symbol": {
+          "title": "Symbol",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "symbol",
+        "quantity",
+        "market_price",
+        "market_value",
+        "as_of"
+      ],
+      "title": "PortfolioHolding",
+      "type": "object"
+    },
+    "PortfolioSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "account_id": {
+          "title": "Account Id",
+          "type": "string"
+        },
+        "allocation": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Allocation",
+          "type": "object"
+        },
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "cash": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0",
+          "title": "Cash"
+        },
+        "holdings": {
+          "items": {
+            "$ref": "#/$defs/PortfolioHolding"
+          },
+          "minItems": 1,
+          "title": "Holdings",
+          "type": "array"
+        },
+        "snapshot_id": {
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "total_value": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Total Value"
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "account_id",
+        "as_of",
+        "holdings",
+        "total_value"
+      ],
+      "title": "PortfolioSnapshot",
+      "type": "object"
+    },
     "RecommendationPackage": {
       "additionalProperties": false,
       "properties": {
@@ -486,6 +876,62 @@
         "drift"
       ],
       "title": "RiskPolicyResponse",
+      "type": "object"
+    },
+    "RiskProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_asset_classes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowed Asset Classes",
+          "type": "array"
+        },
+        "max_sector_pct": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 100.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Max Sector Pct"
+        },
+        "max_single_position_pct": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 100.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Max Single Position Pct"
+        },
+        "risk_level": {
+          "title": "Risk Level",
+          "type": "string"
+        },
+        "risk_profile_id": {
+          "title": "Risk Profile Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "risk_profile_id",
+        "risk_level",
+        "max_single_position_pct",
+        "max_sector_pct"
+      ],
+      "title": "RiskProfile",
       "type": "object"
     },
     "StructuredError": {

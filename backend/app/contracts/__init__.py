@@ -23,6 +23,7 @@ from app.contracts.common import (
     VersionMetadata,
     WorkflowState,
 )
+from app.contracts.domain import PortfolioRecord
 from app.contracts.market import (
     MarketMonitoringSnapshot,
     MarketRegime,
@@ -56,6 +57,7 @@ __all__ = [
     "PermissionMatrix",
     "PolicyVerdictStatus",
     "PortfolioRebalanceRequest",
+    "PortfolioRecord",
     "RecommendationPackage",
     "RebalanceSignal",
     "RebalanceTriggerResult",

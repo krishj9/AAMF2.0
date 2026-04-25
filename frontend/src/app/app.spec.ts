@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { App } from './app';
 import { HealthService } from './core/api/health.service';
 import { MarketStreamService } from './core/api/market-stream.service';
+import { PortfolioService } from './core/api/portfolio.service';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -27,6 +28,12 @@ describe('App', () => {
           provide: MarketStreamService,
           useValue: {
             stream: () => of()
+          }
+        },
+        {
+          provide: PortfolioService,
+          useValue: {
+            list: () => of([])
           }
         }
       ]

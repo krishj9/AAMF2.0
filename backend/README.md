@@ -38,6 +38,11 @@ uv run uvicorn app.main:app --reload
 The same repository code can target AWS-hosted DynamoDB by setting `DYNAMODB_MODE=aws`
 and leaving `DYNAMODB_ENDPOINT_URL` unset.
 
+The backend stores client portfolios in a dedicated portfolios table. Local mode seeds demo
+portfolios automatically when the table is empty. Approval actions persist the approved
+portfolio allocation back to the same account, and `/market/stream?account_id=<id>` uses the
+stored portfolio as the baseline for drift simulation.
+
 ## Optional Remote Agent Services
 
 Run the remote A2A Research Agent:

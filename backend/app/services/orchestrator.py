@@ -7,6 +7,7 @@ from app.agents.sentiment import SentimentAnalysisAgent
 from app.agents.trade_execution import TradeExecutionProposalAgent
 from app.contracts.analysis import AgentStageResult, RecommendationPackage
 from app.contracts.common import WorkflowState
+from app.contracts.domain import PortfolioRecord
 from app.contracts.workflow import OrchestrationResponse, PortfolioRebalanceRequest
 from app.persistence.memory_store import WorkflowStore
 
@@ -28,6 +29,17 @@ class Orchestrator:
             correlation=request.correlation,
             actor_id=request.actor.actor_id,
             outcome="ACCEPTED",
+        )
+        self.store.save_portfolio(
+            PortfolioRecord(
+                client_profile=request.client_profile,
+                account_profile=request.account_profile,
+                portfolio_snapshot=request.portfolio_snapshot,
+                allocation_target=request.allocation_target,
+                risk_profile=request.risk_profile,
+                updated_at=request.portfolio_snapshot.as_of,
+                source="rebalance_request",
+            )
         )
 
         stages: list[AgentStageResult] = []
@@ -71,7 +83,7 @@ class Orchestrator:
             evidence=risk_policy.evidence,
         )
         _approval_stage, approval = await self.approval_agent.run(
-            request.correlation, recommendation
+            request.correlation, recommendation, request
         )
         approval.recommendation = recommendation
         self.store.save_approval(approval)

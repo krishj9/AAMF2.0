@@ -12,8 +12,9 @@ from app.contracts.analysis import (
     AuditEvent,
 )
 from app.contracts.common import CorrelationMetadata, new_id
+from app.contracts.domain import PortfolioRecord
 from app.core.config import Settings
-from app.persistence.memory_store import InMemoryWorkflowStore
+from app.persistence.memory_store import InMemoryWorkflowStore, default_portfolios
 
 
 class DynamoDBWorkflowStore:
@@ -28,8 +29,39 @@ class DynamoDBWorkflowStore:
         self.dynamodb = boto3.resource("dynamodb", **resource_kwargs)
         self.approvals_table = self.dynamodb.Table(settings.approvals_table_name)
         self.audit_table = self.dynamodb.Table(settings.audit_events_table_name)
+        self.portfolios_table = self.dynamodb.Table(settings.portfolios_table_name)
         if settings.dynamodb_mode == "local":
             self._ensure_local_tables()
+            self._seed_local_portfolios()
+
+    def save_portfolio(self, portfolio: PortfolioRecord) -> PortfolioRecord:
+        self.portfolios_table.put_item(
+            Item={
+                "account_id": portfolio.account_profile.account_id,
+                "client_id": portfolio.client_profile.client_id,
+                "display_label": portfolio.client_profile.display_label,
+                "updated_at": portfolio.updated_at.isoformat(),
+                "portfolio_json": portfolio.model_dump_json(),
+            }
+        )
+        return portfolio
+
+    def get_portfolio(self, account_id: str) -> PortfolioRecord | None:
+        response = self.portfolios_table.get_item(Key={"account_id": account_id})
+        item = response.get("Item")
+        if not item:
+            return None
+        return PortfolioRecord.model_validate_json(item["portfolio_json"])
+
+    def list_portfolios(self) -> list[PortfolioRecord]:
+        response = self.portfolios_table.scan()
+        return sorted(
+            [
+                PortfolioRecord.model_validate_json(item["portfolio_json"])
+                for item in response.get("Items", [])
+            ],
+            key=lambda portfolio: portfolio.client_profile.display_label,
+        )
 
     def save_approval(self, artifact: ApprovalArtifact) -> ApprovalArtifact:
         item = {
@@ -105,8 +137,15 @@ class DynamoDBWorkflowStore:
         existing = set(self.dynamodb.meta.client.list_tables().get("TableNames", []))
         self._create_table_if_missing(existing, self.settings.approvals_table_name, "approval_id")
         self._create_table_if_missing(existing, self.settings.audit_events_table_name, "event_id")
+        self._create_table_if_missing(existing, self.settings.portfolios_table_name, "account_id")
         self._create_table_if_missing(existing, self.settings.sessions_table_name, "session_id")
         self._create_table_if_missing(existing, self.settings.memory_queue_table_name, "task_id")
+
+    def _seed_local_portfolios(self) -> None:
+        if self.list_portfolios():
+            return
+        for portfolio in default_portfolios():
+            self.save_portfolio(portfolio)
 
     def _create_table_if_missing(self, existing: set[str], table_name: str, hash_key: str) -> None:
         if table_name in existing:

@@ -17,6 +17,16 @@
           "title": "Evidence",
           "type": "array"
         },
+        "execution_location": {
+          "default": "in_process",
+          "title": "Execution Location",
+          "type": "string"
+        },
+        "protocol": {
+          "default": "LOCAL",
+          "title": "Protocol",
+          "type": "string"
+        },
         "status": {
           "$ref": "#/$defs/AgentStatus"
         },
