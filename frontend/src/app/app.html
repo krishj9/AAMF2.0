@@ -32,9 +32,31 @@
 
     <article class="status-card">
       <span class="label">Mode</span>
-      <strong>Advisory only</strong>
-      <p>No autonomous trade execution path exists in the MVP.</p>
+      <strong>A2A + MCP</strong>
+      <p>Supervisor delegates research over A2A and sentiment through an MCP tool server.</p>
     </article>
+  </section>
+
+  <section class="market-panel">
+    <p class="eyebrow">Agentic AI Architecture</p>
+    <h2>Supervisor + Local Agents + Remote Protocols</h2>
+    <div class="market-grid">
+      <article>
+        <span>Supervisor</span>
+        <strong>FastAPI Orchestrator</strong>
+        <p>Coordinates local agents, remote A2A research, MCP sentiment, approval, and audit.</p>
+      </article>
+      <article>
+        <span>Remote Agent</span>
+        <strong>A2A Research Agent</strong>
+        <p>Runs as a separate service on port 8101 with local fallback in the main backend.</p>
+      </article>
+      <article>
+        <span>MCP Tool Server</span>
+        <strong>Sentiment Analysis</strong>
+        <p>Runs as a separate MCP-style JSON-RPC server on port 8201.</p>
+      </article>
+    </div>
   </section>
 
   <section class="market-panel">
@@ -174,11 +196,14 @@
         <p>{{ response.recommendation_package?.risk_policy?.verdict }}</p>
 
         <h3>Agent Stages</h3>
-        <ul>
+        <ul class="agent-stage-list">
           @for (stage of response.recommendation_package?.agent_stages; track stage.agent_name) {
             <li>
-              <strong>{{ stage.agent_name }}</strong> - {{ stage.status }}:
-              {{ stage.summary }}
+              <div>
+                <strong>{{ stage.agent_name }}</strong>
+                <span>{{ stage.protocol }} / {{ stage.execution_location }}</span>
+              </div>
+              <p>{{ stage.status }}: {{ stage.summary }}</p>
             </li>
           }
         </ul>

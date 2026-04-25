@@ -42,6 +42,31 @@ Fields: `evidence_id`, `source_type`, `source_name`, `source_uri`, `retrieved_at
 Used by: research, risk/policy, proposal, recommendation package.
 Priority: Phase 1.
 
+### `A2AAgentRequest`
+Purpose: Envelope a supervisor-to-remote-agent task.
+Fields: `task`, `request_id`, `symbols`, `portfolio_request`.
+Used by: supervisor backend, remote research agent.
+Priority: Phase 5.
+
+### `A2AAgentResponse`
+Purpose: Return remote agent output with protocol and payload metadata.
+Fields: `agent`, `protocol`, `request_id`, `summary`, `payload`.
+Used by: remote research agent, supervisor backend, UI trace display.
+Priority: Phase 5.
+
+### `McpJsonRpcRequest`
+Purpose: Represent MCP-style JSON-RPC tool list and tool call requests.
+Fields: `jsonrpc`, `id`, `method`, `params`.
+Used by: sentiment MCP server, supervisor backend, remote research agent.
+Priority: Phase 5.
+
+### `AgentStageResult`
+Purpose: Report per-agent progress and outcomes for the UI and audit trail.
+Fields: `agent_name`, `status`, `summary`, `protocol`, `execution_location`, `evidence`.
+Validation: `status` values are `PENDING`, `RUNNING`, `COMPLETED`, `DEGRADED`, `BLOCKED`, `FAILED`.
+Used by: orchestrator, frontend workflow timeline, audit events.
+Priority: Phase 3.
+
 ### `ProvenanceMetadata`
 Purpose: Describe how a value was produced.
 Fields: `source_stage`, `producer_node`, `model_id`, `input_refs`, `transformation`, `generated_at`.

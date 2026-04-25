@@ -38,6 +38,8 @@ class AgentStageResult(ContractModel):
     agent_name: str
     status: AgentStatus
     summary: str
+    protocol: str = "LOCAL"
+    execution_location: str = "in_process"
     evidence: list[dict[str, str]] = Field(default_factory=list)
 
 

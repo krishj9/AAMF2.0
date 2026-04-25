@@ -63,6 +63,8 @@ export interface OrchestrationResponse {
       agent_name: string;
       status: string;
       summary: string;
+      protocol: string;
+      execution_location: string;
     }>;
     current_allocation: Record<string, string>;
     target_allocation: Record<string, string>;

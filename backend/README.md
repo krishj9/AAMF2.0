@@ -38,6 +38,24 @@ uv run uvicorn app.main:app --reload
 The same repository code can target AWS-hosted DynamoDB by setting `DYNAMODB_MODE=aws`
 and leaving `DYNAMODB_ENDPOINT_URL` unset.
 
+## Optional Remote Agent Services
+
+Run the remote A2A Research Agent:
+
+```shell
+cd ../remote-agents/research-agent
+uv run uvicorn app.main:app --reload --port 8101
+```
+
+Run the Sentiment MCP server:
+
+```shell
+cd ../mcp-servers/sentiment
+uv run uvicorn app.main:app --reload --port 8201
+```
+
+The backend falls back to local behavior if either service is unavailable.
+
 ## Test
 
 ```shell

@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     audit_events_table_name: str = "asset-management-dev-audit-events"
     sessions_table_name: str = "asset-management-dev-sessions"
     memory_queue_table_name: str = "asset-management-dev-memory-queue"
+    research_agent_url: str = "http://localhost:8101/a2a/research"
+    research_agent_remote_enabled: bool = True
+    sentiment_mcp_url: str = "http://localhost:8201/mcp"
+    sentiment_mcp_enabled: bool = True
+    remote_agent_timeout_seconds: float = 2.0
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

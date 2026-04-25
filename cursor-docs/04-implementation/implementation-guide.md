@@ -101,6 +101,7 @@ Implement the workflow skeleton and state transitions with stubbed node adapters
 - Lambda-compatible orchestration handler.
 - LangGraph state machine with nodes from `01-architecture/langgraph-orchestration.md`.
 - Explicit agent classes for supervisor, memory, research, sentiment analysis, portfolio rebalancing, risk/compliance, trade execution proposal, and human approval workflow.
+- Protocol-aware agent-stage output with `protocol` and `execution_location` labels for UI traceability.
 - Stubbed research, sentiment, memory, risk/policy, execution proposal, guardrail, and persistence adapters.
 - Conditional routing for validation failures, blocked states, degraded states, and guardrail violations.
 - Idempotency handling based on request/session tuple.
@@ -160,6 +161,9 @@ Replace stubs with controlled model and market-data integrations.
 - Bedrock model invocation adapter.
 - Prompt templates for research summaries, rationale summaries, and user-facing explanations.
 - Public/delayed market-data adapter for prices and basic market context.
+- Remote A2A Research Agent service under `remote-agents/research-agent`.
+- Sentiment MCP server under `mcp-servers/sentiment`.
+- Configurable fallback from remote A2A/MCP calls to local in-process behavior for personal development.
 - Bedrock guardrail wrapper for recommendation-bearing inputs and outputs.
 - Evidence and provenance generation for retrieved and model-assisted content.
 - Fallback behavior for missing, stale, or unavailable market data.
@@ -176,6 +180,7 @@ Replace stubs with controlled model and market-data integrations.
 - Unsupported or ungrounded claims are blocked or flagged.
 - The UI receives summaries, not hidden reasoning.
 - Research outages produce `DEGRADED` or `BLOCKED` outcomes according to policy.
+- UI agent stages identify whether each agent ran locally, through A2A, or through MCP.
 
 ## Phase 6: Memory and personalization
 

@@ -88,7 +88,14 @@ def test_rebalance_returns_recommendation() -> None:
     assert body["workflow_state"] == "NORMAL"
     assert body["recommendation_package"]["approval_eligibility"] is True
     assert body["approval_artifact"]["approval_status"] == "PENDING"
-    assert len(body["recommendation_package"]["agent_stages"]) == 7
+    stages = body["recommendation_package"]["agent_stages"]
+    assert len(stages) == 7
+    assert {stage["agent_name"] for stage in stages} >= {
+        "Research Agent",
+        "Sentiment Analysis Agent",
+    }
+    assert all("protocol" in stage for stage in stages)
+    assert all("execution_location" in stage for stage in stages)
 
 
 def test_rebalance_blocks_concentration_failure() -> None:

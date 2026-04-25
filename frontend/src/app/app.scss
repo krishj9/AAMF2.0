@@ -2,13 +2,10 @@
   min-height: 100dvh;
   padding: 4rem clamp(1rem, 4vw, 4rem);
   color: #dbeafe;
-  background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.35), transparent 32rem),
-    linear-gradient(135deg, #020617 0%, #0f172a 55%, #111827 100%);
+  background: linear-gradient(135deg, #020617 0%, #0f172a 55%, #111827 100%);
 }
 
 .hero {
-  max-width: 56rem;
   margin-bottom: 2rem;
 }
 
@@ -25,22 +22,17 @@ h1 {
   margin: 0;
   color: #f8fafc;
   font-size: clamp(2.5rem, 6vw, 5rem);
-  line-height: 0.95;
 }
 
 .lede {
-  max-width: 44rem;
   margin: 1.25rem 0 0;
   color: #cbd5e1;
-  font-size: 1.15rem;
-  line-height: 1.7;
 }
 
 .status-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   gap: 1rem;
-  max-width: 72rem;
 }
 
 .status-card {
@@ -195,6 +187,24 @@ button {
   margin-top: 0.75rem;
 }
 
+.agent-stage-list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 0.8rem;
+    border-radius: 0.9rem;
+    background: rgba(2, 6, 23, 0.5);
+  }
+
+  span {
+    color: #93c5fd;
+    font-weight: 800;
+  }
+}
+
 .approval-status,
 .balanced-note {
   display: inline-flex;
@@ -286,10 +296,6 @@ button {
   color: #082f49;
   background: #bae6fd;
   font-weight: 800;
-}
-
-.error {
-  color: #fecaca;
 }
 
 @media (max-width: 800px) {

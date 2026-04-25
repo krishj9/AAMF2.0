@@ -45,6 +45,7 @@ describe('App', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Asset Management');
-    expect(compiled.textContent).toContain('Advisory only');
+    expect(compiled.textContent).toContain('A2A + MCP');
+    expect(compiled.textContent).toContain('Agentic AI Architecture');
   });
 });

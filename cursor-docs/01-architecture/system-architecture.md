@@ -24,6 +24,8 @@
 - **Lambda + LangGraph runtime**: orchestration, state transitions, routing/fallback logic
 - **Supervisor Agent**: coordinates all specialist agents and assembles final user-facing responses
 - **Specialist agents**: independent bounded agents for memory, research, sentiment, rebalancing, risk/compliance, trade proposal, and human approval workflow
+- **Remote A2A Research Agent**: optional separate FastAPI service that receives research tasks from the supervisor through an A2A-style envelope
+- **Sentiment MCP Server**: optional MCP-style JSON-RPC tool server used by the supervisor or remote research agent for sentiment analysis
 - **Market simulation stream**: local-first SSE stream that simulates equity, interest-rate, bond, and cash-yield changes
 - **Bedrock runtime**: model inference endpoints
 - **Bedrock Guardrails**: safety, policy, sensitive data, grounding checks
@@ -44,6 +46,13 @@
 - `MarketMonitoringAgent` applies market ticks to a sample portfolio and recomputes current allocation drift.
 - `RebalanceTriggerAgent` emits `NO_ACTION`, `WATCH`, or `REBALANCE_NEEDED`.
 - The Angular UI subscribes through Server-Sent Events at `/market/stream`.
+
+## A2A and MCP extension
+- The main supervisor keeps core control-boundary agents local: rebalancing, risk/compliance, trade proposal, and human approval.
+- Research can run remotely as an A2A agent at `remote-agents/research-agent`.
+- Sentiment analysis can run as an MCP tool server at `mcp-servers/sentiment`.
+- If remote services are unavailable, the main backend falls back to local in-process behavior so the demo remains runnable.
+- Agent stage responses include `protocol` and `execution_location` so the UI can show whether work was local, remote A2A, or MCP-backed.
 
 ## Trust boundaries
 - Frontend may only call the orchestration entrypoint.

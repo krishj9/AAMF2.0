@@ -3,28 +3,21 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "asset-management-backend"
+name = "sentiment-mcp-server"
 version = "0.1.0"
-description = "FastAPI backend for the personal portfolio multi-agent platform"
 requires-python = ">=3.13"
 dependencies = [
-  "boto3",
   "fastapi",
-  "httpx",
   "pydantic",
-  "pydantic-settings",
   "uvicorn[standard]",
 ]
 
 [project.optional-dependencies]
 dev = [
+  "httpx",
   "pytest",
   "ruff",
 ]
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["app*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
