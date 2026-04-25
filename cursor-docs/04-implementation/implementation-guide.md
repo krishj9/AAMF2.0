@@ -97,7 +97,8 @@ Implement the workflow skeleton and state transitions with stubbed node adapters
 ### Deliverables
 - Lambda-compatible orchestration handler.
 - LangGraph state machine with nodes from `01-architecture/langgraph-orchestration.md`.
-- Stubbed research, memory, risk/policy, execution proposal, guardrail, and persistence adapters.
+- Explicit agent classes for supervisor, memory, research, sentiment analysis, portfolio rebalancing, risk/compliance, trade execution proposal, and human approval workflow.
+- Stubbed research, sentiment, memory, risk/policy, execution proposal, guardrail, and persistence adapters.
 - Conditional routing for validation failures, blocked states, degraded states, and guardrail violations.
 - Idempotency handling based on request/session tuple.
 
@@ -112,6 +113,7 @@ Implement the workflow skeleton and state transitions with stubbed node adapters
 
 ### Acceptance criteria
 - A valid request traverses the full graph and returns a recommendation package.
+- The response includes agent-stage outputs suitable for UI progress and audit review.
 - A blocked policy result skips proposal generation.
 - Every node emits a structured outcome with correlation metadata.
 - Unit tests cover normal, degraded, and blocked graph paths.
@@ -123,6 +125,8 @@ Persist the review package and make manual approval explicit.
 
 ### Deliverables
 - DynamoDB table definitions or local DynamoDB equivalents for approval artifacts, audit events, sessions, and memory queue tasks.
+- DynamoDB Local support for local development using endpoint `http://localhost:55000`.
+- AWS DynamoDB support using the same repository code with hosted endpoints selected by environment config.
 - Repository/adaptor layer for persistence operations.
 - Append-only audit event writer.
 - Approval artifact creation and status transitions.

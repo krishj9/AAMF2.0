@@ -21,6 +21,7 @@ export class App {
   protected readonly backendHealth = signal<HealthResponse | null>(null);
   protected readonly backendHealthError = signal<string | null>(null);
   protected readonly recommendation = signal<OrchestrationResponse | null>(null);
+  protected readonly approvalMessage = signal<string | null>(null);
   protected readonly rebalanceError = signal<string | null>(null);
   protected readonly submitting = signal(false);
 
@@ -52,6 +53,7 @@ export class App {
     this.rebalanceService.submit(this.buildRequest()).subscribe({
       next: (response) => {
         this.recommendation.set(response);
+        this.approvalMessage.set(null);
         this.submitting.set(false);
       },
       error: () => {
@@ -59,6 +61,30 @@ export class App {
         this.submitting.set(false);
       }
     });
+  }
+
+  protected approveRecommendation() {
+    const approval = this.recommendation()?.approval_artifact;
+    if (!approval) {
+      return;
+    }
+    this.rebalanceService.approve(approval.approval_id, approval.recommendation_hash).subscribe({
+      next: (result) => this.approvalMessage.set(result.message),
+      error: () => this.approvalMessage.set('Approval action failed.')
+    });
+  }
+
+  protected rejectRecommendation() {
+    const approval = this.recommendation()?.approval_artifact;
+    if (!approval) {
+      return;
+    }
+    this.rebalanceService
+      .reject(approval.approval_id, approval.recommendation_hash, 'Rejected from local UI.')
+      .subscribe({
+        next: (result) => this.approvalMessage.set(result.message),
+        error: () => this.approvalMessage.set('Rejection action failed.')
+      });
   }
 
   private buildRequest(): PortfolioRebalanceRequest {

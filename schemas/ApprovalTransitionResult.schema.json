@@ -1,0 +1,39 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "accepted": {
+      "title": "Accepted",
+      "type": "boolean"
+    },
+    "approval_id": {
+      "title": "Approval Id",
+      "type": "string"
+    },
+    "audit_event_id": {
+      "title": "Audit Event Id",
+      "type": "string"
+    },
+    "message": {
+      "title": "Message",
+      "type": "string"
+    },
+    "next_status": {
+      "title": "Next Status",
+      "type": "string"
+    },
+    "previous_status": {
+      "title": "Previous Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "approval_id",
+    "previous_status",
+    "next_status",
+    "accepted",
+    "audit_event_id",
+    "message"
+  ],
+  "title": "ApprovalTransitionResult",
+  "type": "object"
+}

@@ -91,6 +91,16 @@
         <h3>Policy Verdict</h3>
         <p>{{ response.recommendation_package?.risk_policy?.verdict }}</p>
 
+        <h3>Agent Stages</h3>
+        <ul>
+          @for (stage of response.recommendation_package?.agent_stages; track stage.agent_name) {
+            <li>
+              <strong>{{ stage.agent_name }}</strong> - {{ stage.status }}:
+              {{ stage.summary }}
+            </li>
+          }
+        </ul>
+
         <h3>Proposed Trades</h3>
         @if (response.recommendation_package?.proposal?.trades?.length) {
           <ul>
@@ -110,6 +120,19 @@
           {{ response.approval_artifact?.approval_id }} -
           {{ response.approval_artifact?.approval_status }}
         </p>
+        <div class="approval-actions">
+          <button
+            type="button"
+            [disabled]="!response.recommendation_package?.approval_eligibility"
+            (click)="approveRecommendation()"
+          >
+            Approve
+          </button>
+          <button type="button" (click)="rejectRecommendation()">Reject</button>
+        </div>
+        @if (approvalMessage()) {
+          <p>{{ approvalMessage() }}</p>
+        }
       } @else {
         <p>Submit the intake form to generate a local deterministic recommendation.</p>
       }

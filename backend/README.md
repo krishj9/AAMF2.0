@@ -22,14 +22,21 @@ Alternative: skip activation and use `uv run` (see below).
 With an activated venv:
 
 ```shell
+DYNAMODB_MODE=local \
+DYNAMODB_ENDPOINT_URL=http://localhost:55000 \
 uvicorn app.main:app --reload
 ```
 
 Or without activation:
 
 ```shell
+DYNAMODB_MODE=local \
+DYNAMODB_ENDPOINT_URL=http://localhost:55000 \
 uv run uvicorn app.main:app --reload
 ```
+
+The same repository code can target AWS-hosted DynamoDB by setting `DYNAMODB_MODE=aws`
+and leaving `DYNAMODB_ENDPOINT_URL` unset.
 
 ## Test
 

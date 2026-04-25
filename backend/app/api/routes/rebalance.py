@@ -4,13 +4,15 @@ from fastapi import APIRouter, Depends
 
 from app.contracts import OrchestrationResponse, PortfolioRebalanceRequest
 from app.core.config import Settings, get_settings
+from app.persistence.dependencies import get_workflow_store
+from app.persistence.memory_store import WorkflowStore
 from app.services.orchestrator import Orchestrator
 
 router = APIRouter(prefix="/rebalance", tags=["rebalance"])
 
 
-def get_orchestrator() -> Orchestrator:
-    return Orchestrator()
+def get_orchestrator(store: Annotated[WorkflowStore, Depends(get_workflow_store)]) -> Orchestrator:
+    return Orchestrator(store)
 
 
 @router.post("", response_model=OrchestrationResponse)

@@ -1,5 +1,50 @@
 {
   "$defs": {
+    "AgentStageResult": {
+      "additionalProperties": false,
+      "properties": {
+        "agent_name": {
+          "title": "Agent Name",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/AgentStatus"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agent_name",
+        "status",
+        "summary"
+      ],
+      "title": "AgentStageResult",
+      "type": "object"
+    },
+    "AgentStatus": {
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "COMPLETED",
+        "DEGRADED",
+        "BLOCKED",
+        "FAILED"
+      ],
+      "title": "AgentStatus",
+      "type": "string"
+    },
     "ApprovalArtifact": {
       "additionalProperties": false,
       "properties": {
@@ -284,6 +329,13 @@
     "RecommendationPackage": {
       "additionalProperties": false,
       "properties": {
+        "agent_stages": {
+          "items": {
+            "$ref": "#/$defs/AgentStageResult"
+          },
+          "title": "Agent Stages",
+          "type": "array"
+        },
         "approval_eligibility": {
           "title": "Approval Eligibility",
           "type": "boolean"

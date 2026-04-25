@@ -59,6 +59,11 @@ export interface OrchestrationResponse {
   workflow_state: 'NORMAL' | 'DEGRADED' | 'LOW_CONFIDENCE' | 'BLOCKED';
   recommendation_package?: {
     summary: string;
+    agent_stages: Array<{
+      agent_name: string;
+      status: string;
+      summary: string;
+    }>;
     current_allocation: Record<string, string>;
     target_allocation: Record<string, string>;
     approval_eligibility: boolean;
@@ -86,4 +91,13 @@ export interface OrchestrationResponse {
     approval_status: string;
     recommendation_hash: string;
   };
+}
+
+export interface ApprovalTransitionResult {
+  approval_id: string;
+  previous_status: string;
+  next_status: string;
+  accepted: boolean;
+  audit_event_id: string;
+  message: string;
 }

@@ -1,0 +1,46 @@
+{
+  "$defs": {
+    "ApprovalAction": {
+      "enum": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_REVISION"
+      ],
+      "title": "ApprovalAction",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "$ref": "#/$defs/ApprovalAction"
+    },
+    "actor_id": {
+      "title": "Actor Id",
+      "type": "string"
+    },
+    "expected_recommendation_hash": {
+      "title": "Expected Recommendation Hash",
+      "type": "string"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Note"
+    }
+  },
+  "required": [
+    "action",
+    "actor_id",
+    "expected_recommendation_hash"
+  ],
+  "title": "ApprovalActionRequest",
+  "type": "object"
+}

@@ -7,7 +7,10 @@ from pydantic import BaseModel
 
 from app.contracts import (
     ActorContext,
+    AgentStageResult,
+    ApprovalActionRequest,
     ApprovalArtifact,
+    ApprovalTransitionResult,
     AuditEvent,
     CorrelationMetadata,
     ExecutionProposalResponse,
@@ -37,6 +40,7 @@ MODELS: list[type[BaseModel]] = [
     CorrelationMetadata,
     VersionMetadata,
     ActorContext,
+    AgentStageResult,
     PermissionMatrix,
     StructuredError,
     ClientProfile,
@@ -51,6 +55,8 @@ MODELS: list[type[BaseModel]] = [
     TradeProposal,
     RecommendationPackage,
     ApprovalArtifact,
+    ApprovalActionRequest,
+    ApprovalTransitionResult,
     AuditEvent,
     OrchestrationResponse,
     SeedManifest,

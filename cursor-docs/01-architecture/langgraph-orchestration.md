@@ -11,6 +11,8 @@ LangGraph provides explicit graph state, predictable transitions, retry control,
 - `log_request_audit_event`
 - `hydrate_memory`
 - `run_research`
+- `run_sentiment_analysis`
+- `run_portfolio_rebalancing`
 - `run_risk_policy`
 - `generate_execution_proposal`
 - `apply_output_guardrails`
@@ -35,6 +37,8 @@ LangGraph provides explicit graph state, predictable transitions, retry control,
 ## Requirement coverage map
 - **R1/R2 (entrypoint + validation):** `validate_request`, `initialize_context_and_trace`, `log_request_audit_event`
 - **R3 (research):** `run_research`
+- **Sentiment analysis:** `run_sentiment_analysis`
+- **Portfolio rebalancing:** `run_portfolio_rebalancing`
 - **R4 (memory retrieval):** `hydrate_memory`
 - **R5 (memory lifecycle):** `enqueue_memory_consolidation_candidates` (writeback pipeline trigger)
 - **R6 (risk/policy):** `run_risk_policy`
@@ -51,7 +55,7 @@ LangGraph provides explicit graph state, predictable transitions, retry control,
 - Versioning: `schema_version`, `agent_version_set`, `policy_version`, `environment`
 - Tracing: `trace_provider`, optional `provider_trace_url`
 - Inputs: normalized request + user role context
-- Node outputs: research, memory, policy, proposal, guardrail_result
+- Node outputs: memory, research, sentiment, rebalancing, policy, proposal, approval, guardrail_result
 - Quality: confidence map, degraded reasons, blockers
 - Final: recommendation package + approval artifact reference + audit event ids
 
@@ -75,12 +79,17 @@ LangGraph provides explicit graph state, predictable transitions, retry control,
 2. `initialize_context_and_trace`
 3. `log_request_audit_event`
 4. Parallel fan-out: `hydrate_memory` + `run_research`
-5. `run_risk_policy`
-6. Conditional: `generate_execution_proposal` only if policy allows
-7. `assemble_recommendation`
-8. `apply_output_guardrails`
-9. `create_approval_artifact`
-10. `persist_workflow_artifacts`
-11. `enqueue_memory_consolidation_candidates`
-12. `emit_workflow_audit_event`
-13. `return_response`
+5. `run_sentiment_analysis`
+6. `run_portfolio_rebalancing`
+7. `run_risk_policy`
+8. Conditional: `generate_execution_proposal` only if policy allows
+9. `assemble_recommendation`
+10. `apply_output_guardrails`
+11. `create_approval_artifact`
+12. `persist_workflow_artifacts`
+13. `enqueue_memory_consolidation_candidates`
+14. `emit_workflow_audit_event`
+15. `return_response`
+
+## Agent implementation rule
+Each graph node should be backed by a concrete agent class with a typed input/output contract. Service functions may support agents, but the orchestration path should expose explicit agent boundaries so traces, audit events, tests, and UI stage progress can identify which agent produced each result.

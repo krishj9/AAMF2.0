@@ -3,6 +3,7 @@ Name: asset-management-backend
 Version: 0.1.0
 Summary: FastAPI backend for the personal portfolio multi-agent platform
 Requires-Python: >=3.13
+Requires-Dist: boto3
 Requires-Dist: fastapi
 Requires-Dist: pydantic
 Requires-Dist: pydantic-settings

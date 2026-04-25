@@ -7,8 +7,18 @@ app/adapters/bedrock.py
 app/adapters/guardrails.py
 app/adapters/memory.py
 app/adapters/tracing.py
+app/agents/__init__.py
+app/agents/base.py
+app/agents/human_approval.py
+app/agents/memory.py
+app/agents/rebalancing.py
+app/agents/research.py
+app/agents/risk_compliance.py
+app/agents/sentiment.py
+app/agents/trade_execution.py
 app/api/__init__.py
 app/api/routes/__init__.py
+app/api/routes/approvals.py
 app/api/routes/health.py
 app/api/routes/rebalance.py
 app/contracts/__init__.py
@@ -19,6 +29,8 @@ app/contracts/seed.py
 app/contracts/workflow.py
 app/core/config.py
 app/persistence/__init__.py
+app/persistence/dependencies.py
+app/persistence/dynamodb_store.py
 app/persistence/memory_store.py
 app/services/__init__.py
 app/services/orchestrator.py

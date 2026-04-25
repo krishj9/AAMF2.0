@@ -19,6 +19,28 @@ class TradeAction(StrEnum):
     HOLD = "HOLD"
 
 
+class AgentStatus(StrEnum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    DEGRADED = "DEGRADED"
+    BLOCKED = "BLOCKED"
+    FAILED = "FAILED"
+
+
+class ApprovalAction(StrEnum):
+    APPROVE = "APPROVE"
+    REJECT = "REJECT"
+    REQUEST_REVISION = "REQUEST_REVISION"
+
+
+class AgentStageResult(ContractModel):
+    agent_name: str
+    status: AgentStatus
+    summary: str
+    evidence: list[dict[str, str]] = Field(default_factory=list)
+
+
 class DriftItem(ContractModel):
     key: str
     current_pct: Decimal
@@ -56,6 +78,7 @@ class ExecutionProposalResponse(ContractModel):
 
 class RecommendationPackage(ContractModel):
     summary: str
+    agent_stages: list[AgentStageResult] = Field(default_factory=list)
     current_allocation: dict[str, Decimal]
     target_allocation: dict[str, Decimal]
     proposed_allocation: dict[str, Decimal]
@@ -76,6 +99,22 @@ class ApprovalArtifact(ContractModel):
     approved_at: datetime | None = None
     rejection_note: str | None = None
     override_note: str | None = None
+
+
+class ApprovalActionRequest(ContractModel):
+    action: ApprovalAction
+    actor_id: str
+    note: str | None = None
+    expected_recommendation_hash: str
+
+
+class ApprovalTransitionResult(ContractModel):
+    approval_id: str
+    previous_status: str
+    next_status: str
+    accepted: bool
+    audit_event_id: str
+    message: str
 
 
 class AuditEvent(ContractModel):

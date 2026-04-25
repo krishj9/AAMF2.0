@@ -38,6 +38,12 @@ Each environment has isolated config, IAM, data boundaries, and deployment artif
 - Commit example variable files as `*.tfvars.example`.
 - Run `terraform plan` before every `terraform apply`.
 
+## DynamoDB runtime selection
+- Local development uses DynamoDB Local at `http://localhost:55000`.
+- AWS deployment uses hosted DynamoDB by leaving the endpoint unset.
+- Keep table names configurable through environment variables.
+- The application repository layer must not branch business logic between local and AWS modes.
+
 ## Promotion checklist (minimum)
 - All required eval suites pass thresholds
 - No unresolved critical policy/safety findings

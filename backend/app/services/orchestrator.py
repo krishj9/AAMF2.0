@@ -1,27 +1,54 @@
-import hashlib
-
-from app.contracts.analysis import ApprovalArtifact, RecommendationPackage
-from app.contracts.common import WorkflowState, new_id
+from app.agents.human_approval import HumanApprovalWorkflowAgent
+from app.agents.memory import MemoryPersonalizationAgent
+from app.agents.rebalancing import PortfolioRebalancingAgent
+from app.agents.research import ResearchAgent
+from app.agents.risk_compliance import RiskComplianceAgent
+from app.agents.sentiment import SentimentAnalysisAgent
+from app.agents.trade_execution import TradeExecutionProposalAgent
+from app.contracts.analysis import AgentStageResult, RecommendationPackage
+from app.contracts.common import WorkflowState
 from app.contracts.workflow import OrchestrationResponse, PortfolioRebalanceRequest
-from app.persistence.memory_store import workflow_store
-from app.services.policy import evaluate_policy
-from app.services.portfolio import calculate_asset_allocation, calculate_drift
-from app.services.proposal import generate_execution_proposal
+from app.persistence.memory_store import WorkflowStore
 
 
 class Orchestrator:
+    def __init__(self, store: WorkflowStore) -> None:
+        self.store = store
+        self.memory_agent = MemoryPersonalizationAgent()
+        self.research_agent = ResearchAgent()
+        self.sentiment_agent = SentimentAnalysisAgent()
+        self.rebalancing_agent = PortfolioRebalancingAgent()
+        self.risk_agent = RiskComplianceAgent()
+        self.trade_agent = TradeExecutionProposalAgent()
+        self.approval_agent = HumanApprovalWorkflowAgent()
+
     async def run(self, request: PortfolioRebalanceRequest) -> OrchestrationResponse:
-        workflow_store.add_audit_event(
+        self.store.add_audit_event(
             event_type="REQUEST_RECEIVED",
             correlation=request.correlation,
             actor_id=request.actor.actor_id,
             outcome="ACCEPTED",
         )
 
-        current_allocation = calculate_asset_allocation(request.portfolio_snapshot)
-        drift = calculate_drift(request.portfolio_snapshot, request.allocation_target)
-        risk_policy = evaluate_policy(request.portfolio_snapshot, drift, request.risk_profile)
-        proposal = generate_execution_proposal(request.portfolio_snapshot, risk_policy)
+        stages: list[AgentStageResult] = []
+
+        memory_stage, _memory = await self.memory_agent.run(request)
+        research_stage, _research = await self.research_agent.run(request)
+        sentiment_stage, _sentiment = await self.sentiment_agent.run(request)
+        stages.extend([memory_stage, research_stage, sentiment_stage])
+
+        rebalancing_stage, rebalancing = await self.rebalancing_agent.run(request)
+        stages.append(rebalancing_stage)
+
+        current_allocation = rebalancing["current_allocation"]
+        drift = rebalancing["drift"]
+        risk_stage, risk_policy = await self.risk_agent.run(
+            request.portfolio_snapshot, drift, request.risk_profile
+        )
+        stages.append(risk_stage)
+
+        trade_stage, proposal = await self.trade_agent.run(request.portfolio_snapshot, risk_policy)
+        stages.append(trade_stage)
 
         workflow_state = WorkflowState.NORMAL
         approval_eligibility = proposal.proposal_status in {"READY_FOR_REVIEW", "NO_ACTION_NEEDED"}
@@ -33,6 +60,7 @@ class Orchestrator:
 
         recommendation = RecommendationPackage(
             summary=self._summary(proposal.proposal_status),
+            agent_stages=stages,
             current_allocation=current_allocation,
             target_allocation=request.allocation_target.asset_class_targets,
             proposed_allocation=proposal.estimated_impact or current_allocation,
@@ -42,14 +70,12 @@ class Orchestrator:
             approval_eligibility=approval_eligibility,
             evidence=risk_policy.evidence,
         )
-        approval = ApprovalArtifact(
-            approval_id=new_id("apr"),
-            correlation=request.correlation,
-            recommendation_hash=self._hash_recommendation(recommendation),
-            recommendation=recommendation,
+        _approval_stage, approval = await self.approval_agent.run(
+            request.correlation, recommendation
         )
-        workflow_store.save_approval(approval)
-        workflow_store.add_audit_event(
+        approval.recommendation = recommendation
+        self.store.save_approval(approval)
+        self.store.add_audit_event(
             event_type="APPROVAL_ARTIFACT_CREATED",
             correlation=request.correlation,
             actor_id=request.actor.actor_id,
@@ -64,10 +90,6 @@ class Orchestrator:
             recommendation_package=recommendation,
             approval_artifact=approval,
         )
-
-    def _hash_recommendation(self, recommendation: RecommendationPackage) -> str:
-        payload = recommendation.model_dump_json()
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def _summary(self, proposal_status: str) -> str:
         if proposal_status == "BLOCKED":

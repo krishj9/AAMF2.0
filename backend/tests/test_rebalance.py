@@ -2,7 +2,15 @@ from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
+from app.api.routes.rebalance import get_workflow_store
 from app.main import app
+from app.persistence.memory_store import InMemoryWorkflowStore
+
+
+def build_test_client() -> TestClient:
+    store = InMemoryWorkflowStore()
+    app.dependency_overrides[get_workflow_store] = lambda: store
+    return TestClient(app)
 
 
 def request_payload(max_single_position_pct: str = "85") -> dict:
@@ -72,7 +80,7 @@ def request_payload(max_single_position_pct: str = "85") -> dict:
 
 
 def test_rebalance_returns_recommendation() -> None:
-    client = TestClient(app)
+    client = build_test_client()
     response = client.post("/rebalance", json=request_payload())
 
     assert response.status_code == 200
@@ -80,13 +88,33 @@ def test_rebalance_returns_recommendation() -> None:
     assert body["workflow_state"] == "NORMAL"
     assert body["recommendation_package"]["approval_eligibility"] is True
     assert body["approval_artifact"]["approval_status"] == "PENDING"
+    assert len(body["recommendation_package"]["agent_stages"]) == 7
 
 
 def test_rebalance_blocks_concentration_failure() -> None:
-    client = TestClient(app)
+    client = build_test_client()
     response = client.post("/rebalance", json=request_payload(max_single_position_pct="50"))
 
     assert response.status_code == 200
     body = response.json()
     assert body["workflow_state"] == "BLOCKED"
     assert body["recommendation_package"]["risk_policy"]["verdict"] == "NON_COMPLIANT"
+
+
+def test_approval_action_updates_artifact() -> None:
+    client = build_test_client()
+    response = client.post("/rebalance", json=request_payload())
+    body = response.json()
+    approval = body["approval_artifact"]
+
+    action_response = client.post(
+        f"/approvals/{approval['approval_id']}/actions",
+        json={
+            "action": "APPROVE",
+            "actor_id": "owner",
+            "expected_recommendation_hash": approval["recommendation_hash"],
+        },
+    )
+
+    assert action_response.status_code == 200
+    assert action_response.json()["next_status"] == "APPROVED"
