@@ -61,6 +61,13 @@ uv run uvicorn app.main:app --reload --port 8201
 
 The backend falls back to local behavior if either service is unavailable.
 
+## AWS Lambda
+
+The backend exposes a Lambda entry point through `app.lambda_handler.handler`.
+Set `DYNAMODB_MODE=aws`, leave `DYNAMODB_ENDPOINT_URL` empty, and provide the hosted
+DynamoDB table names when running in AWS. `MARKET_STREAM_MAX_EVENTS` can be set to a
+positive integer to keep market streaming bounded for Lambda/API Gateway.
+
 ## Test
 
 ```shell

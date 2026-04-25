@@ -11,15 +11,16 @@ dependencies = [
   "boto3",
   "fastapi",
   "httpx",
+  "mangum",
   "pydantic",
   "pydantic-settings",
-  "uvicorn[standard]",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest",
   "ruff",
+  "uvicorn[standard]",
 ]
 
 [tool.setuptools.packages.find]

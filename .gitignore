@@ -17,3 +17,4 @@ schemas/generated/
 *.tfvars
 !*.tfvars.example
 *.egg-info
+infra/build/

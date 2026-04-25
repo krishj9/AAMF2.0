@@ -14,3 +14,7 @@ Endpoint: `POST /mcp`
 Supported method:
 - `tools/list`
 - `tools/call` with `analyze_symbol_news_sentiment`
+
+## AWS Lambda
+
+Lambda handler: `app.lambda_handler.handler`

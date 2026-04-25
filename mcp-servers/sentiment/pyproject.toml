@@ -8,8 +8,8 @@ version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
   "fastapi",
+  "mangum",
   "pydantic",
-  "uvicorn[standard]",
 ]
 
 [project.optional-dependencies]
@@ -17,6 +17,7 @@ dev = [
   "httpx",
   "pytest",
   "ruff",
+  "uvicorn[standard]",
 ]
 
 [tool.pytest.ini_options]

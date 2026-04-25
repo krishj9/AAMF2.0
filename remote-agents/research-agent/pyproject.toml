@@ -9,14 +9,15 @@ requires-python = ">=3.13"
 dependencies = [
   "fastapi",
   "httpx",
+  "mangum",
   "pydantic",
-  "uvicorn[standard]",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest",
   "ruff",
+  "uvicorn[standard]",
 ]
 
 [tool.pytest.ini_options]

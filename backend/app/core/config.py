@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     sentiment_mcp_url: str = "http://localhost:8201/mcp"
     sentiment_mcp_enabled: bool = True
     remote_agent_timeout_seconds: float = 2.0
+    market_stream_max_events: int = 0
+    seed_default_portfolios: bool = True
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

@@ -1,10 +1,11 @@
 boto3
 fastapi
+httpx
+mangum
 pydantic
 pydantic-settings
-uvicorn[standard]
 
 [dev]
-httpx
 pytest
 ruff
+uvicorn[standard]

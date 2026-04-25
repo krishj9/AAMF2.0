@@ -5,10 +5,11 @@ Summary: FastAPI backend for the personal portfolio multi-agent platform
 Requires-Python: >=3.13
 Requires-Dist: boto3
 Requires-Dist: fastapi
+Requires-Dist: httpx
+Requires-Dist: mangum
 Requires-Dist: pydantic
 Requires-Dist: pydantic-settings
-Requires-Dist: uvicorn[standard]
 Provides-Extra: dev
-Requires-Dist: httpx; extra == "dev"
 Requires-Dist: pytest; extra == "dev"
 Requires-Dist: ruff; extra == "dev"
+Requires-Dist: uvicorn[standard]; extra == "dev"

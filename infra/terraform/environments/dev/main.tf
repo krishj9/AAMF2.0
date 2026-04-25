@@ -1,5 +1,10 @@
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
 
   dynamodb_tables = {
     approvals    = "${local.name_prefix}-approvals"
@@ -7,6 +12,32 @@ locals {
     portfolios   = "${local.name_prefix}-portfolios"
     sessions     = "${local.name_prefix}-sessions"
     memory_queue = "${local.name_prefix}-memory-queue"
+  }
+
+  lambda_artifacts = {
+    backend        = "${path.module}/${var.lambda_artifact_dir}/backend.zip"
+    research_agent = "${path.module}/${var.lambda_artifact_dir}/research-agent.zip"
+    sentiment_mcp  = "${path.module}/${var.lambda_artifact_dir}/sentiment-mcp.zip"
+  }
+
+  frontend_bucket_name = coalesce(var.frontend_bucket_name, "${local.name_prefix}-frontend")
+}
+
+data "aws_iam_policy_document" "backend_dynamodb" {
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:Scan",
+    ]
+    resources = [
+      aws_dynamodb_table.approvals.arn,
+      aws_dynamodb_table.audit_events.arn,
+      aws_dynamodb_table.portfolios.arn,
+      aws_dynamodb_table.sessions.arn,
+      aws_dynamodb_table.memory_queue.arn,
+    ]
   }
 }
 
@@ -82,5 +113,157 @@ resource "aws_dynamodb_table" "memory_queue" {
   ttl {
     attribute_name = "ttl"
     enabled        = true
+  }
+}
+
+resource "aws_s3_bucket" "frontend" {
+  bucket = local.frontend_bucket_name
+  tags   = local.tags
+}
+
+resource "aws_s3_bucket_ownership_controls" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_website_configuration" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
+  }
+}
+
+data "aws_iam_policy_document" "frontend_public_read" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.frontend.arn}/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "frontend_public_read" {
+  bucket = aws_s3_bucket.frontend.id
+  policy = data.aws_iam_policy_document.frontend_public_read.json
+
+  depends_on = [aws_s3_bucket_public_access_block.frontend]
+}
+
+module "backend_lambda" {
+  source = "../../modules/python_lambda"
+
+  function_name   = "${local.name_prefix}-backend"
+  description     = "Asset management backend API."
+  artifact_path   = local.lambda_artifacts.backend
+  handler         = "app.lambda_handler.handler"
+  runtime         = var.lambda_runtime
+  timeout_seconds = 30
+  memory_mb       = 512
+  policy_json     = data.aws_iam_policy_document.backend_dynamodb.json
+  attach_policy   = true
+  tags            = local.tags
+
+  environment_variables = {
+    APP_NAME                      = "Asset Management API"
+    ENVIRONMENT                   = var.environment
+    DYNAMODB_MODE                 = "aws"
+    DYNAMODB_ENDPOINT_URL         = ""
+    APPROVALS_TABLE_NAME          = aws_dynamodb_table.approvals.name
+    AUDIT_EVENTS_TABLE_NAME       = aws_dynamodb_table.audit_events.name
+    PORTFOLIOS_TABLE_NAME         = aws_dynamodb_table.portfolios.name
+    SESSIONS_TABLE_NAME           = aws_dynamodb_table.sessions.name
+    MEMORY_QUEUE_TABLE_NAME       = aws_dynamodb_table.memory_queue.name
+    RESEARCH_AGENT_REMOTE_ENABLED = "true"
+    RESEARCH_AGENT_URL            = "${module.http_api.api_endpoint}/a2a/research"
+    SENTIMENT_MCP_ENABLED         = "true"
+    SENTIMENT_MCP_URL             = "${module.http_api.api_endpoint}/mcp"
+    MARKET_STREAM_MAX_EVENTS      = "20"
+    SEED_DEFAULT_PORTFOLIOS       = "true"
+  }
+}
+
+module "research_agent_lambda" {
+  source = "../../modules/python_lambda"
+
+  function_name   = "${local.name_prefix}-research-agent"
+  description     = "Remote A2A research agent."
+  artifact_path   = local.lambda_artifacts.research_agent
+  handler         = "app.lambda_handler.handler"
+  runtime         = var.lambda_runtime
+  timeout_seconds = 15
+  memory_mb       = 256
+  tags            = local.tags
+
+  environment_variables = {
+    ENVIRONMENT       = var.environment
+    SENTIMENT_MCP_URL = "${module.http_api.api_endpoint}/mcp"
+  }
+}
+
+module "sentiment_mcp_lambda" {
+  source = "../../modules/python_lambda"
+
+  function_name   = "${local.name_prefix}-sentiment-mcp"
+  description     = "Sentiment MCP JSON-RPC tool server."
+  artifact_path   = local.lambda_artifacts.sentiment_mcp
+  handler         = "app.lambda_handler.handler"
+  runtime         = var.lambda_runtime
+  timeout_seconds = 15
+  memory_mb       = 256
+  tags            = local.tags
+}
+
+module "http_api" {
+  source = "../../modules/http_api"
+
+  name               = "${local.name_prefix}-api"
+  cors_allow_origins = var.cors_allow_origins
+  tags               = local.tags
+
+  routes = {
+    backend_proxy = {
+      route_key            = "ANY /{proxy+}"
+      lambda_invoke_arn    = module.backend_lambda.invoke_arn
+      lambda_function_arn  = module.backend_lambda.function_arn
+      lambda_function_name = module.backend_lambda.function_name
+    }
+    backend_root = {
+      route_key            = "ANY /"
+      lambda_invoke_arn    = module.backend_lambda.invoke_arn
+      lambda_function_arn  = module.backend_lambda.function_arn
+      lambda_function_name = module.backend_lambda.function_name
+    }
+    research_agent = {
+      route_key            = "ANY /a2a/research"
+      lambda_invoke_arn    = module.research_agent_lambda.invoke_arn
+      lambda_function_arn  = module.research_agent_lambda.function_arn
+      lambda_function_name = module.research_agent_lambda.function_name
+    }
+    sentiment_mcp = {
+      route_key            = "ANY /mcp"
+      lambda_invoke_arn    = module.sentiment_mcp_lambda.invoke_arn
+      lambda_function_arn  = module.sentiment_mcp_lambda.function_arn
+      lambda_function_name = module.sentiment_mcp_lambda.function_name
+    }
   }
 }

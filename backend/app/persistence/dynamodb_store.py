@@ -32,7 +32,8 @@ class DynamoDBWorkflowStore:
         self.portfolios_table = self.dynamodb.Table(settings.portfolios_table_name)
         if settings.dynamodb_mode == "local":
             self._ensure_local_tables()
-            self._seed_local_portfolios()
+        if settings.seed_default_portfolios:
+            self._seed_portfolios_if_empty()
 
     def save_portfolio(self, portfolio: PortfolioRecord) -> PortfolioRecord:
         self.portfolios_table.put_item(
@@ -141,7 +142,7 @@ class DynamoDBWorkflowStore:
         self._create_table_if_missing(existing, self.settings.sessions_table_name, "session_id")
         self._create_table_if_missing(existing, self.settings.memory_queue_table_name, "task_id")
 
-    def _seed_local_portfolios(self) -> None:
+    def _seed_portfolios_if_empty(self) -> None:
         if self.list_portfolios():
             return
         for portfolio in default_portfolios():

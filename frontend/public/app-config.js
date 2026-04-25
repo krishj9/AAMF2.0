@@ -1,0 +1,3 @@
+window.assetManagementConfig = {
+  apiBaseUrl: '/api'
+};

@@ -1,6 +1,7 @@
 README.md
 pyproject.toml
 app/__init__.py
+app/lambda_handler.py
 app/main.py
 app/adapters/__init__.py
 app/adapters/bedrock.py
@@ -10,7 +11,10 @@ app/adapters/tracing.py
 app/agents/__init__.py
 app/agents/base.py
 app/agents/human_approval.py
+app/agents/market_monitoring.py
+app/agents/market_simulation.py
 app/agents/memory.py
+app/agents/rebalance_trigger.py
 app/agents/rebalancing.py
 app/agents/research.py
 app/agents/risk_compliance.py
@@ -20,11 +24,14 @@ app/api/__init__.py
 app/api/routes/__init__.py
 app/api/routes/approvals.py
 app/api/routes/health.py
+app/api/routes/market.py
+app/api/routes/portfolios.py
 app/api/routes/rebalance.py
 app/contracts/__init__.py
 app/contracts/analysis.py
 app/contracts/common.py
 app/contracts/domain.py
+app/contracts/market.py
 app/contracts/seed.py
 app/contracts/workflow.py
 app/core/config.py
@@ -43,4 +50,7 @@ asset_management_backend.egg-info/dependency_links.txt
 asset_management_backend.egg-info/requires.txt
 asset_management_backend.egg-info/top_level.txt
 tests/test_health.py
+tests/test_lambda_handler.py
+tests/test_market_stream.py
+tests/test_portfolios.py
 tests/test_rebalance.py

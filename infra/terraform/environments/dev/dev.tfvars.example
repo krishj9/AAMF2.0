@@ -1,3 +1,6 @@
 aws_region   = "us-east-1"
 project_name = "asset-management"
 environment  = "dev"
+lambda_runtime = "python3.13"
+cors_allow_origins = ["*"]
+# frontend_bucket_name = "asset-management-dev-frontend-your-suffix"

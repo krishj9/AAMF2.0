@@ -10,6 +10,26 @@ To start a local development server, run:
 ng serve
 ```
 
+## Runtime API Config
+
+The app reads `app-config.js` at runtime:
+
+```js
+window.assetManagementConfig = {
+  apiBaseUrl: '/api'
+};
+```
+
+Local development keeps `/api` so the Angular proxy can forward requests to FastAPI.
+For S3 hosting, overwrite `dist/frontend/browser/app-config.js` after `npm run build`
+with the deployed API Gateway URL, or from the repo root run:
+
+```bash
+./infra/scripts/publish_frontend.sh "$API_BASE_URL" "$S3_BUCKET_NAME"
+```
+
+(Use `terraform output -raw api_base_url` and `terraform output -raw frontend_bucket_name` from `infra/terraform/environments/dev`.)
+
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
 ## Code scaffolding
