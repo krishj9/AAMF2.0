@@ -1,0 +1,43 @@
+{
+  "$defs": {
+    "RebalanceSignal": {
+      "enum": [
+        "NO_ACTION",
+        "WATCH",
+        "REBALANCE_NEEDED",
+        "BLOCKED_BY_POLICY"
+      ],
+      "title": "RebalanceSignal",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "reason": {
+      "title": "Reason",
+      "type": "string"
+    },
+    "signal": {
+      "$ref": "#/$defs/RebalanceSignal"
+    },
+    "threshold_pct": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Threshold Pct"
+    }
+  },
+  "required": [
+    "signal",
+    "reason",
+    "threshold_pct"
+  ],
+  "title": "RebalanceTriggerResult",
+  "type": "object"
+}

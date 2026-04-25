@@ -70,6 +70,8 @@ Make the system useful with deterministic seed data and local calculations befor
 - Idempotent seed loader for local/dev data.
 - Portfolio math utilities for market value, allocation, drift, and tolerance-band checks.
 - Deterministic policy rule evaluator.
+- Market simulation agents for synthetic equity, interest-rate, bond, and cash-yield changes.
+- Rebalance trigger evaluator that flags watch/rebalance-needed states from simulated drift.
 - Golden scenario fixtures for normal, degraded, low-confidence, and blocked outcomes.
 
 ### Key contracts
@@ -86,6 +88,7 @@ Make the system useful with deterministic seed data and local calculations befor
 ### Acceptance criteria
 - A seeded portfolio can be loaded and validated locally.
 - Drift and policy verdicts are deterministic and test-covered.
+- Simulated market ticks can be streamed to the UI and used to flag rebalance needs.
 - Golden scenarios can be executed without Bedrock.
 - Synthetic records are clearly labeled.
 

@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 
 import { App } from './app';
 import { HealthService } from './core/api/health.service';
+import { MarketStreamService } from './core/api/market-stream.service';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -20,6 +21,12 @@ describe('App', () => {
                 schema_version: '1.0.0',
                 policy_version: '1.0.0'
               })
+          }
+        },
+        {
+          provide: MarketStreamService,
+          useValue: {
+            stream: () => of()
           }
         }
       ]

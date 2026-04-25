@@ -23,6 +23,14 @@ from app.contracts.common import (
     VersionMetadata,
     WorkflowState,
 )
+from app.contracts.market import (
+    MarketMonitoringSnapshot,
+    MarketRegime,
+    MarketStreamEvent,
+    MarketTick,
+    RebalanceSignal,
+    RebalanceTriggerResult,
+)
 from app.contracts.seed import SeedDomainBatch, SeedManifest
 from app.contracts.workflow import GraphState, OrchestrationResponse, PortfolioRebalanceRequest
 
@@ -40,11 +48,17 @@ __all__ = [
     "DriftItem",
     "ExecutionProposalResponse",
     "GraphState",
+    "MarketMonitoringSnapshot",
+    "MarketRegime",
+    "MarketStreamEvent",
+    "MarketTick",
     "OrchestrationResponse",
     "PermissionMatrix",
     "PolicyVerdictStatus",
     "PortfolioRebalanceRequest",
     "RecommendationPackage",
+    "RebalanceSignal",
+    "RebalanceTriggerResult",
     "RiskPolicyResponse",
     "SeedDomainBatch",
     "SeedManifest",

@@ -1,0 +1,67 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "current_allocation": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Current Allocation",
+      "type": "object"
+    },
+    "drift": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Drift",
+      "type": "object"
+    },
+    "max_abs_drift_pct": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Max Abs Drift Pct"
+    },
+    "portfolio_value": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Portfolio Value"
+    }
+  },
+  "required": [
+    "portfolio_value",
+    "current_allocation",
+    "drift",
+    "max_abs_drift_pct"
+  ],
+  "title": "MarketMonitoringSnapshot",
+  "type": "object"
+}

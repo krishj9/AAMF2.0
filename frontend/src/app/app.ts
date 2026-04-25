@@ -1,8 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
 
 import { HealthResponse, HealthService } from './core/api/health.service';
+import { MarketStreamEvent } from './core/api/market.models';
+import { MarketStreamService } from './core/api/market-stream.service';
 import { OrchestrationResponse, PortfolioRebalanceRequest } from './core/api/rebalance.models';
 import { RebalanceService } from './core/api/rebalance.service';
 
@@ -12,9 +14,10 @@ import { RebalanceService } from './core/api/rebalance.service';
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class App {
+export class App implements OnDestroy {
   private readonly formBuilder = inject(FormBuilder);
   private readonly healthService = inject(HealthService);
+  private readonly marketStreamService = inject(MarketStreamService);
   private readonly rebalanceService = inject(RebalanceService);
 
   protected readonly title = signal('Asset Management');
@@ -22,8 +25,28 @@ export class App {
   protected readonly backendHealthError = signal<string | null>(null);
   protected readonly recommendation = signal<OrchestrationResponse | null>(null);
   protected readonly approvalMessage = signal<string | null>(null);
+  protected readonly portfolioBalanced = signal(false);
   protected readonly rebalanceError = signal<string | null>(null);
+  protected readonly marketEvent = signal<MarketStreamEvent | null>(null);
+  protected readonly displayMarketEvent = computed(() => {
+    const event = this.marketEvent();
+    if (!event) {
+      return null;
+    }
+    return this.portfolioBalanced() ? this.toBalancedMarketEvent(event) : event;
+  });
+  protected readonly marketStreamError = signal<string | null>(null);
   protected readonly submitting = signal(false);
+  private readonly marketSubscription = this.marketStreamService.stream().subscribe({
+    next: (event) => {
+      this.marketEvent.set(event);
+      this.marketStreamError.set(null);
+      if (!this.portfolioBalanced()) {
+        this.syncFormToMarket(event);
+      }
+    },
+    error: () => this.marketStreamError.set('Market simulation stream is not reachable yet.')
+  });
 
   protected readonly form = this.formBuilder.nonNullable.group({
     displayLabel: ['Demo Investor', Validators.required],
@@ -42,6 +65,10 @@ export class App {
     });
   }
 
+  ngOnDestroy() {
+    this.marketSubscription.unsubscribe();
+  }
+
   protected submitRebalance() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -54,6 +81,7 @@ export class App {
       next: (response) => {
         this.recommendation.set(response);
         this.approvalMessage.set(null);
+        this.portfolioBalanced.set(false);
         this.submitting.set(false);
       },
       error: () => {
@@ -63,13 +91,25 @@ export class App {
     });
   }
 
+  protected driftEntries(event: MarketStreamEvent) {
+    return Object.entries(event.monitoring.drift);
+  }
+
   protected approveRecommendation() {
     const approval = this.recommendation()?.approval_artifact;
     if (!approval) {
       return;
     }
     this.rebalanceService.approve(approval.approval_id, approval.recommendation_hash).subscribe({
-      next: (result) => this.approvalMessage.set(result.message),
+      next: (result) => {
+        this.approvalMessage.set(`${result.message} Portfolio is now displayed as balanced.`);
+        this.portfolioBalanced.set(true);
+        this.updateApprovalStatus(result.next_status);
+        const displayed = this.displayMarketEvent();
+        if (displayed) {
+          this.syncFormToMarket(displayed);
+        }
+      },
       error: () => this.approvalMessage.set('Approval action failed.')
     });
   }
@@ -82,9 +122,26 @@ export class App {
     this.rebalanceService
       .reject(approval.approval_id, approval.recommendation_hash, 'Rejected from local UI.')
       .subscribe({
-        next: (result) => this.approvalMessage.set(result.message),
+        next: (result) => {
+          this.approvalMessage.set(`${result.message} Rebalance trigger remains active.`);
+          this.portfolioBalanced.set(false);
+          this.updateApprovalStatus(result.next_status);
+          const event = this.marketEvent();
+          if (event) {
+            this.syncFormToMarket(event);
+          }
+        },
         error: () => this.approvalMessage.set('Rejection action failed.')
       });
+  }
+
+  protected simulateDriftAgain() {
+    this.portfolioBalanced.set(false);
+    this.approvalMessage.set('Market drift simulation resumed. Rebalance trigger can activate again.');
+    const event = this.marketEvent();
+    if (event) {
+      this.syncFormToMarket(event);
+    }
   }
 
   private buildRequest(): PortfolioRebalanceRequest {
@@ -162,5 +219,67 @@ export class App {
         allowed_asset_classes: ['equity', 'fixed_income', 'cash']
       }
     };
+  }
+
+  private syncFormToMarket(event: MarketStreamEvent) {
+    const portfolioValue = Number(event.monitoring.portfolio_value);
+    const equityPct = Number(event.monitoring.current_allocation['equity'] ?? 0);
+    const fixedIncomePct = Number(event.monitoring.current_allocation['fixed_income'] ?? 0);
+    const cashPct = Number(event.monitoring.current_allocation['cash'] ?? 0);
+
+    this.form.patchValue(
+      {
+        equityValue: this.toCurrencyValue(portfolioValue, equityPct),
+        fixedIncomeValue: this.toCurrencyValue(portfolioValue, fixedIncomePct),
+        cashValue: this.toCurrencyValue(portfolioValue, cashPct)
+      },
+      { emitEvent: false }
+    );
+  }
+
+  private toCurrencyValue(totalValue: number, percent: number) {
+    return Number(((totalValue * percent) / 100).toFixed(2));
+  }
+
+  private toBalancedMarketEvent(event: MarketStreamEvent): MarketStreamEvent {
+    const target = this.form.getRawValue();
+    const balancedAllocation = {
+      equity: String(target.targetEquityPct),
+      fixed_income: String(target.targetFixedIncomePct),
+      cash: String(target.targetCashPct)
+    };
+
+    return {
+      ...event,
+      monitoring: {
+        ...event.monitoring,
+        current_allocation: balancedAllocation,
+        drift: {
+          equity: '0.00',
+          fixed_income: '0.00',
+          cash: '0.00'
+        },
+        max_abs_drift_pct: '0.00'
+      },
+      rebalance: {
+        signal: 'NO_ACTION',
+        reason: 'Approved recommendation has been applied in the simulation.',
+        threshold_pct: event.rebalance.threshold_pct
+      }
+    };
+  }
+
+  private updateApprovalStatus(status: string) {
+    const current = this.recommendation();
+    if (!current?.approval_artifact) {
+      return;
+    }
+    this.recommendation.set({
+      ...current,
+      approval_artifact: {
+        ...current.approval_artifact,
+        approval_status: status
+      }
+    });
   }
 }

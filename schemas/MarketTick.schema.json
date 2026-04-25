@@ -1,0 +1,126 @@
+{
+  "$defs": {
+    "MarketRegime": {
+      "enum": [
+        "CALM",
+        "NORMAL",
+        "STRESSED"
+      ],
+      "title": "MarketRegime",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "as_of": {
+      "format": "date-time",
+      "title": "As Of",
+      "type": "string"
+    },
+    "bond_change_pct": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Bond Change Pct"
+    },
+    "bond_price_index": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Bond Price Index"
+    },
+    "cash_yield_pct": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Cash Yield Pct"
+    },
+    "equity_change_pct": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Equity Change Pct"
+    },
+    "equity_index": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Equity Index"
+    },
+    "interest_rate_pct": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Interest Rate Pct"
+    },
+    "rate_change_bps": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Rate Change Bps"
+    },
+    "regime": {
+      "$ref": "#/$defs/MarketRegime"
+    },
+    "tick_id": {
+      "title": "Tick Id",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "tick_id",
+    "as_of",
+    "regime",
+    "equity_index",
+    "equity_change_pct",
+    "interest_rate_pct",
+    "rate_change_bps",
+    "bond_price_index",
+    "bond_change_pct",
+    "cash_yield_pct"
+  ],
+  "title": "MarketTick",
+  "type": "object"
+}

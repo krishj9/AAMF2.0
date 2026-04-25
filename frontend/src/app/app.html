@@ -18,10 +18,11 @@
     <article class="status-card">
       <span class="label">Backend</span>
       @if (backendHealth(); as health) {
-        <strong>{{ health.status }}</strong>
+        <strong>Python FastAPI</strong>
         <p>
-          {{ health.app }} running in {{ health.environment }} with schema
-          {{ health.schema_version }} and policy {{ health.policy_version }}.
+          Status: {{ health.status === 'ok' ? 'Healthy' : health.status }}. Running in
+          {{ health.environment }} with schema {{ health.schema_version }} and policy
+          {{ health.policy_version }}.
         </p>
       } @else {
         <strong>Pending</strong>
@@ -36,29 +37,110 @@
     </article>
   </section>
 
+  <section class="market-panel">
+    <div>
+      <p class="eyebrow">Live Market Simulation</p>
+      <h2>Streaming Portfolio Monitor</h2>
+    </div>
+    @if (displayMarketEvent(); as event) {
+      <div class="market-grid">
+        <article>
+          <span>Regime</span>
+          <strong>{{ event.tick.regime }}</strong>
+        </article>
+        <article>
+          <span>Equity Move</span>
+          <strong>{{ event.tick.equity_change_pct }}%</strong>
+        </article>
+        <article>
+          <span>Rate Move</span>
+          <strong>{{ event.tick.rate_change_bps }} bps</strong>
+        </article>
+        <article>
+          <span>Portfolio Value</span>
+          <strong>${{ event.monitoring.portfolio_value }}</strong>
+        </article>
+      </div>
+      <div class="rebalance-alert" [class.needs-rebalance]="event.rebalance.signal === 'REBALANCE_NEEDED'">
+        <strong>{{ event.rebalance.signal }}</strong>
+        <span>{{ event.rebalance.reason }}</span>
+      </div>
+      @if (portfolioBalanced()) {
+        <button class="secondary-action" type="button" (click)="simulateDriftAgain()">
+          Simulate drift
+        </button>
+      }
+      <p>
+        Max drift: {{ event.monitoring.max_abs_drift_pct }}%
+        (threshold {{ event.rebalance.threshold_pct }}%)
+      </p>
+    } @else {
+      <p>{{ marketStreamError() ?? 'Connecting to market simulation stream...' }}</p>
+    }
+  </section>
+
   <section class="workflow">
     <form class="intake-card" [formGroup]="form" (ngSubmit)="submitRebalance()">
-      <h2>Rebalance Intake</h2>
+      <h2>Live Rebalance Decision</h2>
+      <p>
+        Intake values are synced from the latest simulated market tick so the recommendation
+        explains the same drift shown above.
+      </p>
       <label>
         Investor label
         <input type="text" formControlName="displayLabel" />
       </label>
 
+      @if (displayMarketEvent(); as event) {
+        <div class="decision-summary" [class.needs-rebalance]="event.rebalance.signal === 'REBALANCE_NEEDED'">
+          <span>Current trigger</span>
+          <strong>{{ event.rebalance.signal }}</strong>
+          <p>{{ event.rebalance.reason }}</p>
+        </div>
+        @if (portfolioBalanced()) {
+          <p class="balanced-note">
+            Approved recommendation is applied in simulation. Portfolio values are held at target
+            allocation until you simulate drift again.
+          </p>
+        }
+
+        <h3>Current Simulated Allocation</h3>
+        <div class="allocation-grid">
+          <article>
+            <span>Equity</span>
+            <strong>{{ event.monitoring.current_allocation['equity'] }}%</strong>
+            <small>Drift {{ event.monitoring.drift['equity'] }}%</small>
+          </article>
+          <article>
+            <span>Fixed Income</span>
+            <strong>{{ event.monitoring.current_allocation['fixed_income'] }}%</strong>
+            <small>Drift {{ event.monitoring.drift['fixed_income'] }}%</small>
+          </article>
+          <article>
+            <span>Cash</span>
+            <strong>{{ event.monitoring.current_allocation['cash'] }}%</strong>
+            <small>Drift {{ event.monitoring.drift['cash'] }}%</small>
+          </article>
+        </div>
+      }
+
+      <h3>Simulated Position Values</h3>
       <div class="form-grid">
         <label>
           Equity value
-          <input type="number" formControlName="equityValue" />
+          <input type="number" formControlName="equityValue" readonly />
         </label>
         <label>
           Fixed income value
-          <input type="number" formControlName="fixedIncomeValue" />
+          <input type="number" formControlName="fixedIncomeValue" readonly />
         </label>
         <label>
           Cash value
-          <input type="number" formControlName="cashValue" />
+          <input type="number" formControlName="cashValue" readonly />
         </label>
       </div>
 
+      <h3>Target Allocation</h3>
       <div class="form-grid">
         <label>
           Target equity %
@@ -75,7 +157,7 @@
       </div>
 
       <button type="submit" [disabled]="submitting()">
-        {{ submitting() ? 'Submitting...' : 'Generate Recommendation' }}
+        {{ submitting() ? 'Submitting...' : 'Explain Rebalance Recommendation' }}
       </button>
       @if (rebalanceError()) {
         <p class="error">{{ rebalanceError() }}</p>
@@ -121,14 +203,23 @@
           {{ response.approval_artifact?.approval_status }}
         </p>
         <div class="approval-actions">
-          <button
-            type="button"
-            [disabled]="!response.recommendation_package?.approval_eligibility"
-            (click)="approveRecommendation()"
-          >
-            Approve
-          </button>
-          <button type="button" (click)="rejectRecommendation()">Reject</button>
+          @if (response.approval_artifact?.approval_status === 'PENDING') {
+            <button
+              type="button"
+              [disabled]="!response.recommendation_package?.approval_eligibility"
+              (click)="approveRecommendation()"
+            >
+              Approve
+            </button>
+            <button type="button" (click)="rejectRecommendation()">Reject</button>
+          } @else {
+            <span class="approval-status">Decision: {{ response.approval_artifact?.approval_status }}</span>
+          }
+          @if (portfolioBalanced()) {
+            <button class="secondary-action" type="button" (click)="simulateDriftAgain()">
+              Simulate drift
+            </button>
+          }
         </div>
         @if (approvalMessage()) {
           <p>{{ approvalMessage() }}</p>

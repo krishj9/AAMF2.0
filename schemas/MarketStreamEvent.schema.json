@@ -1,0 +1,255 @@
+{
+  "$defs": {
+    "MarketMonitoringSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "current_allocation": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Current Allocation",
+          "type": "object"
+        },
+        "drift": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Drift",
+          "type": "object"
+        },
+        "max_abs_drift_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Max Abs Drift Pct"
+        },
+        "portfolio_value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Portfolio Value"
+        }
+      },
+      "required": [
+        "portfolio_value",
+        "current_allocation",
+        "drift",
+        "max_abs_drift_pct"
+      ],
+      "title": "MarketMonitoringSnapshot",
+      "type": "object"
+    },
+    "MarketRegime": {
+      "enum": [
+        "CALM",
+        "NORMAL",
+        "STRESSED"
+      ],
+      "title": "MarketRegime",
+      "type": "string"
+    },
+    "MarketTick": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "bond_change_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Bond Change Pct"
+        },
+        "bond_price_index": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Bond Price Index"
+        },
+        "cash_yield_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Cash Yield Pct"
+        },
+        "equity_change_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Equity Change Pct"
+        },
+        "equity_index": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Equity Index"
+        },
+        "interest_rate_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Interest Rate Pct"
+        },
+        "rate_change_bps": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Rate Change Bps"
+        },
+        "regime": {
+          "$ref": "#/$defs/MarketRegime"
+        },
+        "tick_id": {
+          "title": "Tick Id",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tick_id",
+        "as_of",
+        "regime",
+        "equity_index",
+        "equity_change_pct",
+        "interest_rate_pct",
+        "rate_change_bps",
+        "bond_price_index",
+        "bond_change_pct",
+        "cash_yield_pct"
+      ],
+      "title": "MarketTick",
+      "type": "object"
+    },
+    "RebalanceSignal": {
+      "enum": [
+        "NO_ACTION",
+        "WATCH",
+        "REBALANCE_NEEDED",
+        "BLOCKED_BY_POLICY"
+      ],
+      "title": "RebalanceSignal",
+      "type": "string"
+    },
+    "RebalanceTriggerResult": {
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "signal": {
+          "$ref": "#/$defs/RebalanceSignal"
+        },
+        "threshold_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Threshold Pct"
+        }
+      },
+      "required": [
+        "signal",
+        "reason",
+        "threshold_pct"
+      ],
+      "title": "RebalanceTriggerResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "monitoring": {
+      "$ref": "#/$defs/MarketMonitoringSnapshot"
+    },
+    "rebalance": {
+      "$ref": "#/$defs/RebalanceTriggerResult"
+    },
+    "tick": {
+      "$ref": "#/$defs/MarketTick"
+    }
+  },
+  "required": [
+    "tick",
+    "monitoring",
+    "rebalance"
+  ],
+  "title": "MarketStreamEvent",
+  "type": "object"
+}
