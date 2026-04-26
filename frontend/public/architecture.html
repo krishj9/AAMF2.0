@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AWS Architecture - Asset Management Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -12,10 +15,10 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       line-height: 1.6;
-      color: #1a1a1a;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #f8f8f2;
+      background: linear-gradient(135deg, #1e1f29 0%, #282a36 55%, #2d2f3d 100%);
       min-height: 100vh;
       padding: 2rem;
     }
@@ -23,15 +26,16 @@
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      background: white;
+      background: #282a36;
       border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       overflow: hidden;
+      border: 1px solid #44475a;
     }
 
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: linear-gradient(135deg, #bd93f9 0%, #ff79c6 100%);
+      color: #282a36;
       padding: 3rem 2rem;
       text-align: center;
     }
@@ -40,28 +44,29 @@
       font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: 0.5rem;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
     }
 
     .header p {
       font-size: 1.125rem;
-      opacity: 0.9;
+      opacity: 0.95;
     }
 
     .nav {
-      background: #f8f9fa;
+      background: #44475a;
       padding: 1rem 2rem;
-      border-bottom: 1px solid #e0e0e0;
+      border-bottom: 1px solid #6272a4;
     }
 
     .nav a {
-      color: #667eea;
+      color: #8be9fd;
       text-decoration: none;
       font-weight: 500;
       transition: color 0.3s;
     }
 
     .nav a:hover {
-      color: #764ba2;
+      color: #ff79c6;
     }
 
     .content {
@@ -74,29 +79,30 @@
 
     .section h2 {
       font-size: 1.75rem;
-      color: #667eea;
+      color: #bd93f9;
       margin-bottom: 1rem;
       padding-bottom: 0.5rem;
-      border-bottom: 3px solid #667eea;
+      border-bottom: 3px solid #bd93f9;
+      text-shadow: 0 0 15px rgba(189, 147, 249, 0.3);
     }
 
     .section h3 {
       font-size: 1.25rem;
-      color: #764ba2;
+      color: #ff79c6;
       margin: 1.5rem 0 0.75rem;
     }
 
     .section p, .section li {
-      color: #4a4a4a;
+      color: #f8f8f2;
       margin-bottom: 0.75rem;
     }
 
     .architecture-diagram {
-      background: #f8f9fa;
+      background: rgba(68, 71, 90, 0.3);
       border-radius: 12px;
       padding: 2rem;
       margin: 2rem 0;
-      border: 2px solid #e0e0e0;
+      border: 1px solid #6272a4;
     }
 
     .architecture-diagram pre {
@@ -104,7 +110,7 @@
       font-size: 0.875rem;
       line-height: 1.4;
       overflow-x: auto;
-      color: #2d3748;
+      color: #8be9fd;
     }
 
     .card-grid {
@@ -115,20 +121,21 @@
     }
 
     .card {
-      background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+      background: rgba(68, 71, 90, 0.4);
       border-radius: 12px;
       padding: 1.5rem;
-      border: 2px solid #667eea30;
+      border: 1px solid #6272a4;
       transition: transform 0.3s, box-shadow 0.3s;
     }
 
     .card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+      box-shadow: 0 8px 24px rgba(189, 147, 249, 0.3);
+      border-color: #bd93f9;
     }
 
     .card h3 {
-      color: #667eea;
+      color: #bd93f9;
       margin: 0 0 0.75rem 0;
       font-size: 1.125rem;
     }
@@ -136,30 +143,31 @@
     .card p {
       margin: 0;
       font-size: 0.9375rem;
+      color: #f8f8f2;
     }
 
     .badge {
       display: inline-block;
-      background: #667eea;
-      color: white;
+      background: #bd93f9;
+      color: #282a36;
       padding: 0.25rem 0.75rem;
       border-radius: 20px;
       font-size: 0.875rem;
-      font-weight: 500;
+      font-weight: 600;
       margin-right: 0.5rem;
       margin-bottom: 0.5rem;
     }
 
     .badge.secondary {
-      background: #764ba2;
+      background: #ff79c6;
     }
 
     .badge.success {
-      background: #48bb78;
+      background: #50fa7b;
     }
 
     .badge.warning {
-      background: #ed8936;
+      background: #ffb86c;
     }
 
     ul {
@@ -177,37 +185,40 @@
       content: "→";
       position: absolute;
       left: 0;
-      color: #667eea;
+      color: #8be9fd;
       font-weight: bold;
     }
 
     .highlight-box {
-      background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
-      border-left: 4px solid #667eea;
+      background: rgba(68, 71, 90, 0.4);
+      border-left: 4px solid #ff79c6;
       padding: 1.5rem;
       border-radius: 8px;
       margin: 1.5rem 0;
+      border: 1px solid #6272a4;
     }
 
     .highlight-box h3 {
       margin-top: 0;
+      color: #ff79c6;
     }
 
     code {
-      background: #f1f3f5;
+      background: rgba(68, 71, 90, 0.6);
       padding: 0.2rem 0.4rem;
       border-radius: 4px;
       font-family: 'Courier New', monospace;
       font-size: 0.875rem;
-      color: #667eea;
+      color: #50fa7b;
+      border: 1px solid #44475a;
     }
 
     .footer {
-      background: #f8f9fa;
+      background: #44475a;
       padding: 2rem;
       text-align: center;
-      color: #6c757d;
-      border-top: 1px solid #e0e0e0;
+      color: #6272a4;
+      border-top: 1px solid #6272a4;
     }
 
     @media (max-width: 768px) {
