@@ -2,7 +2,7 @@ Metadata-Version: 2.4
 Name: asset-management-backend
 Version: 0.1.0
 Summary: FastAPI backend for the personal portfolio multi-agent platform
-Requires-Python: >=3.13
+Requires-Python: >=3.12
 Requires-Dist: boto3
 Requires-Dist: fastapi
 Requires-Dist: httpx
@@ -11,6 +11,7 @@ Requires-Dist: langsmith
 Requires-Dist: mangum
 Requires-Dist: pydantic
 Requires-Dist: pydantic-settings
+Requires-Dist: uvicorn[standard]
 Provides-Extra: dev
 Requires-Dist: hypothesis; extra == "dev"
 Requires-Dist: pytest; extra == "dev"

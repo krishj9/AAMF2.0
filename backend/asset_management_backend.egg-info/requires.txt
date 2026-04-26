@@ -6,6 +6,7 @@ langsmith
 mangum
 pydantic
 pydantic-settings
+uvicorn[standard]
 
 [dev]
 hypothesis

@@ -321,7 +321,6 @@ pkill -f "run_all_services.sh"
 ## Additional Resources
 
 - [README_LLM_INTEGRATION.md](README_LLM_INTEGRATION.md) - Quick start guide
-- [FINAL_SUMMARY.md](FINAL_SUMMARY.md) - Project overview
 - [backend/README.md](backend/README.md) - Backend documentation
 - [remote-agents/research-agent/README.md](remote-agents/research-agent/README.md) - Research Agent documentation
 - [mcp-servers/sentiment/README.md](mcp-servers/sentiment/README.md) - Sentiment Agent documentation

@@ -28,6 +28,7 @@ app/api/routes/approvals.py
 app/api/routes/health.py
 app/api/routes/market.py
 app/api/routes/portfolios.py
+app/api/routes/preferences.py
 app/api/routes/rebalance.py
 app/contracts/__init__.py
 app/contracts/analysis.py

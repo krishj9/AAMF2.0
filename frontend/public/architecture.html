@@ -1,79 +1,486 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Asset Management Architecture</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS Architecture - Asset Management Platform</title>
   <style>
-    :root {
-      color-scheme: dark;
-      --bg: #020617;
-      --panel: #0f172a;
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-      --accent: #38bdf8;
-      --border: rgba(148, 163, 184, 0.28);
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
+
     body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: linear-gradient(140deg, var(--bg), #111827 65%, #082f49);
-      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
     }
-    main {
-      max-width: 1100px;
+
+    .container {
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 2rem 1rem 3rem;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
     }
+
     .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 3rem 2rem;
+      text-align: center;
     }
-    h1 {
-      margin: 0;
-      font-size: clamp(1.6rem, 2.8vw, 2.2rem);
-    }
-    .link-btn {
-      display: inline-flex;
-      padding: 0.6rem 0.9rem;
-      border-radius: 999px;
-      color: #082f49;
-      background: var(--accent);
+
+    .header h1 {
+      font-size: 2.5rem;
       font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      font-size: 1.125rem;
+      opacity: 0.9;
+    }
+
+    .nav {
+      background: #f8f9fa;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .nav a {
+      color: #667eea;
       text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
     }
-    .panel {
-      padding: 1rem;
-      border: 1px solid var(--border);
-      border-radius: 1rem;
-      background: rgba(15, 23, 42, 0.75);
+
+    .nav a:hover {
+      color: #764ba2;
     }
-    .panel p {
+
+    .content {
+      padding: 3rem 2rem;
+    }
+
+    .section {
+      margin-bottom: 3rem;
+    }
+
+    .section h2 {
+      font-size: 1.75rem;
+      color: #667eea;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 3px solid #667eea;
+    }
+
+    .section h3 {
+      font-size: 1.25rem;
+      color: #764ba2;
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    .section p, .section li {
+      color: #4a4a4a;
+      margin-bottom: 0.75rem;
+    }
+
+    .architecture-diagram {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+      border: 2px solid #e0e0e0;
+    }
+
+    .architecture-diagram pre {
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      line-height: 1.4;
+      overflow-x: auto;
+      color: #2d3748;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .card {
+      background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 2px solid #667eea30;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .card h3 {
+      color: #667eea;
+      margin: 0 0 0.75rem 0;
+      font-size: 1.125rem;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 0.9375rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .badge.secondary {
+      background: #764ba2;
+    }
+
+    .badge.success {
+      background: #48bb78;
+    }
+
+    .badge.warning {
+      background: #ed8936;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    ul li {
+      padding-left: 1.5rem;
+      position: relative;
+      margin-bottom: 0.5rem;
+    }
+
+    ul li:before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-weight: bold;
+    }
+
+    .highlight-box {
+      background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+      border-left: 4px solid #667eea;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin: 1.5rem 0;
+    }
+
+    .highlight-box h3 {
       margin-top: 0;
-      color: var(--muted);
     }
-    .diagram {
-      width: 100%;
-      height: auto;
-      border-radius: 0.85rem;
-      border: 1px solid var(--border);
-      background: #000;
+
+    code {
+      background: #f1f3f5;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: #667eea;
+    }
+
+    .footer {
+      background: #f8f9fa;
+      padding: 2rem;
+      text-align: center;
+      color: #6c757d;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .header h1 {
+        font-size: 1.75rem;
+      }
+
+      .content {
+        padding: 2rem 1rem;
+      }
+
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <main>
+  <div class="container">
     <div class="header">
-      <h1>Personal Portfolio Agentic AI Architecture</h1>
-      <a class="link-btn" href="/">Back to Portal</a>
+      <h1>🏗️ AWS Architecture</h1>
+      <p>Lambda + LangGraph + Bedrock Multi-Agent Platform</p>
     </div>
-    <section class="panel">
-      <p>High-level architecture view of UI, API ingress, orchestration agents, remote protocols, and AWS data/ops layers.</p>
-      <img class="diagram" src="/assetmgmt.png" alt="Personal Portfolio Agentic AI system architecture diagram">
-    </section>
-  </main>
+
+    <div class="nav">
+      <a href="/">← Back to Application</a>
+    </div>
+
+    <div class="content">
+      <!-- Runtime Architecture -->
+      <section class="section">
+        <h2>Runtime Architecture</h2>
+        <div class="architecture-diagram">
+          <pre>
+┌─────────────────────────────────────────────────────────────┐
+│                         AWS Cloud                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌──────────────┐         ┌──────────────────────────┐      │
+│  │   S3 Bucket  │         │   API Gateway (HTTP)     │      │
+│  │   (Angular)  │         │   /api/* → Backend       │      │
+│  │   Frontend   │         │   /a2a/research → Agent  │      │
+│  └──────────────┘         │   /mcp → Sentiment       │      │
+│         │                 └──────────────────────────┘      │
+│         │                            │                        │
+│         │                            ▼                        │
+│         │                  ┌──────────────────┐              │
+│         │                  │  Lambda Functions │              │
+│         │                  ├──────────────────┤              │
+│         │                  │ • Backend API    │              │
+│         │                  │ • Research Agent │              │
+│         │                  │ • Sentiment MCP  │              │
+│         │                  └──────────────────┘              │
+│         │                            │                        │
+│         │                            ▼                        │
+│         │                  ┌──────────────────┐              │
+│         │                  │   DynamoDB       │              │
+│         │                  │   Bedrock LLMs   │              │
+│         │                  │   AgentCore      │              │
+│         │                  └──────────────────┘              │
+│         │                                                     │
+└─────────┴─────────────────────────────────────────────────────┘
+          │
+          ▼
+    ┌──────────┐
+    │  Users   │
+    └──────────┘
+          </pre>
+        </div>
+
+        <p>The platform uses a serverless architecture on AWS with the following components:</p>
+        <ul>
+          <li><strong>Angular Frontend</strong> hosted on S3 static website</li>
+          <li><strong>API Gateway</strong> HTTP API for routing requests</li>
+          <li><strong>Lambda Functions</strong> running FastAPI services</li>
+          <li><strong>DynamoDB</strong> for durable workflow and portfolio persistence</li>
+          <li><strong>Bedrock</strong> for LLM-powered agent capabilities</li>
+          <li><strong>AgentCore</strong> for memory and observability</li>
+        </ul>
+      </section>
+
+      <!-- Deployment Units -->
+      <section class="section">
+        <h2>Deployment Units</h2>
+        <div class="card-grid">
+          <div class="card">
+            <h3>Backend Lambda</h3>
+            <p>Portfolio APIs, rebalance orchestration, approvals, and market monitoring</p>
+            <div style="margin-top: 1rem;">
+              <span class="badge">FastAPI</span>
+              <span class="badge">Mangum</span>
+              <span class="badge">Python 3.13</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Research Agent Lambda</h3>
+            <p>Remote A2A research endpoint with automatic local fallback</p>
+            <div style="margin-top: 1rem;">
+              <span class="badge secondary">A2A Protocol</span>
+              <span class="badge secondary">Remote</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Sentiment MCP Lambda</h3>
+            <p>JSON-RPC MCP tool server for sentiment analysis</p>
+            <div style="margin-top: 1rem;">
+              <span class="badge success">MCP</span>
+              <span class="badge success">JSON-RPC</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Angular Frontend</h3>
+            <p>S3 static website with runtime API configuration</p>
+            <div style="margin-top: 1rem;">
+              <span class="badge warning">Angular</span>
+              <span class="badge warning">S3</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Environment Model -->
+      <section class="section">
+        <h2>Environment Model</h2>
+        <p>Each environment has isolated configuration, IAM, data boundaries, and deployment artifacts:</p>
+        <div style="margin: 1.5rem 0;">
+          <span class="badge">dev</span>
+          <span class="badge">test</span>
+          <span class="badge">staging</span>
+          <span class="badge">main</span>
+        </div>
+        <p>This ensures safe promotion paths and prevents cross-environment data leakage.</p>
+      </section>
+
+      <!-- Configuration -->
+      <section class="section">
+        <h2>Configuration Baseline</h2>
+        <div class="highlight-box">
+          <h3>Key Configuration Parameters</h3>
+          <ul>
+            <li><strong>Schema Version:</strong> Ensures data contract compatibility</li>
+            <li><strong>Policy Version:</strong> Tracks risk compliance rules</li>
+            <li><strong>Model Configuration:</strong> Bedrock model selection and guardrails</li>
+            <li><strong>Tracing Provider:</strong> <code>bedrock_agentcore</code> or <code>langsmith</code></li>
+            <li><strong>Timeout/Retry Budgets:</strong> Lambda execution limits</li>
+            <li><strong>Market Stream Limit:</strong> <code>MARKET_STREAM_MAX_EVENTS</code> for bounded streams</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Infrastructure as Code -->
+      <section class="section">
+        <h2>Infrastructure as Code</h2>
+        <p>All AWS resources are managed with Terraform:</p>
+        <ul>
+          <li>Reusable modules under <code>infra/terraform/modules/</code></li>
+          <li>Environment-specific inputs under <code>infra/terraform/environments/&lt;env&gt;/</code></li>
+          <li>Example variable files as <code>*.tfvars.example</code></li>
+          <li>Always run <code>terraform plan</code> before <code>terraform apply</code></li>
+        </ul>
+
+        <div class="highlight-box">
+          <h3>⚠️ Important</h3>
+          <p>Never commit:</p>
+          <ul>
+            <li><code>.tfstate</code> files (contain sensitive data)</li>
+            <li><code>.terraform/</code> directories (local cache)</li>
+            <li>Real <code>*.tfvars</code> files (contain secrets)</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- DynamoDB Runtime -->
+      <section class="section">
+        <h2>DynamoDB Runtime Selection</h2>
+        <div class="card-grid">
+          <div class="card">
+            <h3>Local Development</h3>
+            <p>Uses DynamoDB Local at <code>http://localhost:55000</code></p>
+            <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6c757d;">
+              Perfect for testing without AWS costs
+            </p>
+          </div>
+
+          <div class="card">
+            <h3>AWS Deployment</h3>
+            <p>Uses hosted DynamoDB by leaving endpoint unset</p>
+            <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6c757d;">
+              Automatic scaling and high availability
+            </p>
+          </div>
+        </div>
+
+        <p style="margin-top: 1rem;">
+          <strong>Design Principle:</strong> The application repository layer must not branch business logic between local and AWS modes. Configuration is environment-based only.
+        </p>
+      </section>
+
+      <!-- Lambda Packaging -->
+      <section class="section">
+        <h2>Lambda Packaging</h2>
+        <p>Build packages before Terraform plan/apply:</p>
+        <div class="highlight-box">
+          <code>./infra/scripts/package_lambda.sh</code>
+        </div>
+
+        <h3>Packaging Details</h3>
+        <ul>
+          <li>Packages written to <code>infra/build/</code> (not committed)</li>
+          <li>Each FastAPI service has a Mangum handler for API Gateway events</li>
+          <li>Uses AWS SAM Python 3.13 Docker image for consistent native wheels</li>
+          <li>For large dependencies, switch to container-image Lambdas using ECR</li>
+        </ul>
+      </section>
+
+      <!-- Frontend Hosting -->
+      <section class="section">
+        <h2>Frontend Hosting</h2>
+        <p>The Angular frontend is hosted on S3 as a static website:</p>
+        <ul>
+          <li>S3 bucket provisioned per environment</li>
+          <li>Runtime configuration via <code>app-config.js</code></li>
+          <li>API Gateway URL injected before upload</li>
+          <li>CloudFront optional for HTTPS and custom domains</li>
+        </ul>
+
+        <div class="highlight-box">
+          <h3>Deployment Script</h3>
+          <code>./infra/scripts/publish_frontend.sh &lt;api_url&gt; &lt;bucket_name&gt;</code>
+        </div>
+      </section>
+
+      <!-- Promotion Checklist -->
+      <section class="section">
+        <h2>Promotion Checklist</h2>
+        <p>Before promoting to the next environment, ensure:</p>
+        <div class="card-grid">
+          <div class="card">
+            <h3>✅ Testing</h3>
+            <p>All required eval suites pass thresholds</p>
+          </div>
+
+          <div class="card">
+            <h3>🔒 Security</h3>
+            <p>No unresolved critical policy/safety findings</p>
+          </div>
+
+          <div class="card">
+            <h3>📊 Observability</h3>
+            <p>Dashboards and alarms verified</p>
+          </div>
+
+          <div class="card">
+            <h3>🔄 Rollback</h3>
+            <p>Rollback path tested and documented</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="footer">
+      <p>Asset Management Multi-Agent Platform</p>
+      <p style="margin-top: 0.5rem; font-size: 0.875rem;">
+        Built with AWS Lambda, LangGraph, and Bedrock
+      </p>
+    </div>
+  </div>
 </body>
 </html>

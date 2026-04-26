@@ -35,5 +35,15 @@ function getApiBaseUrl(): string {
 
 export function apiUrl(path: string): string {
   const baseUrl = getApiBaseUrl();
-  return `${baseUrl}/${path.replace(/^\//, '')}`;
+  const cleanPath = path.replace(/^\//, '');
+  
+  // If using API Gateway URL (not local proxy), ensure /api prefix
+  if (baseUrl.startsWith('http')) {
+    // Add /api prefix if not already present in the path
+    const pathWithApi = cleanPath.startsWith('api/') ? cleanPath : `api/${cleanPath}`;
+    return `${baseUrl}/${pathWithApi}`;
+  }
+  
+  // Local development with proxy - path already has /api from baseUrl
+  return `${baseUrl}/${cleanPath}`;
 }

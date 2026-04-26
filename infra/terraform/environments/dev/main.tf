@@ -12,6 +12,7 @@ locals {
     portfolios   = "${local.name_prefix}-portfolios"
     sessions     = "${local.name_prefix}-sessions"
     memory_queue = "${local.name_prefix}-memory-queue"
+    preferences  = "${local.name_prefix}-preferences"
   }
 
   lambda_artifacts = {
@@ -30,6 +31,7 @@ data "aws_iam_policy_document" "backend_dynamodb" {
       "dynamodb:PutItem",
       "dynamodb:UpdateItem",
       "dynamodb:Scan",
+      "dynamodb:Query",
     ]
     resources = [
       aws_dynamodb_table.approvals.arn,
@@ -37,6 +39,7 @@ data "aws_iam_policy_document" "backend_dynamodb" {
       aws_dynamodb_table.portfolios.arn,
       aws_dynamodb_table.sessions.arn,
       aws_dynamodb_table.memory_queue.arn,
+      aws_dynamodb_table.preferences.arn,
     ]
   }
 }
@@ -116,6 +119,19 @@ resource "aws_dynamodb_table" "memory_queue" {
   }
 }
 
+resource "aws_dynamodb_table" "preferences" {
+  name         = local.dynamodb_tables.preferences
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "client_id"
+
+  attribute {
+    name = "client_id"
+    type = "S"
+  }
+
+  tags = local.tags
+}
+
 resource "aws_s3_bucket" "frontend" {
   bucket = local.frontend_bucket_name
   tags   = local.tags
@@ -193,6 +209,7 @@ module "backend_lambda" {
     PORTFOLIOS_TABLE_NAME         = aws_dynamodb_table.portfolios.name
     SESSIONS_TABLE_NAME           = aws_dynamodb_table.sessions.name
     MEMORY_QUEUE_TABLE_NAME       = aws_dynamodb_table.memory_queue.name
+    PREFERENCES_TABLE_NAME        = aws_dynamodb_table.preferences.name
     RESEARCH_AGENT_REMOTE_ENABLED = "true"
     RESEARCH_AGENT_URL            = "${module.http_api.api_endpoint}/a2a/research"
     SENTIMENT_MCP_ENABLED         = "true"
