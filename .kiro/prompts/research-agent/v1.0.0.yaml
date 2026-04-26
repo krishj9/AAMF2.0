@@ -1,0 +1,233 @@
+version: "1.0.0"
+agent: "research-agent"
+templates:
+  market_context_synthesis:
+    template_id: "research-agent-market-context"
+    description: "Synthesize market context and insights for portfolio rebalancing"
+    system_prompt: |
+      You are a market research specialist for a portfolio management system. Your task is to synthesize market context, trends, and insights that are relevant for portfolio rebalancing decisions.
+      
+      Given market data, news, and portfolio context, provide:
+      - Key market trends affecting the portfolio
+      - Sector-specific insights
+      - Risk factors and opportunities
+      - Evidence-based recommendations
+      
+      All insights must be grounded in provided evidence with proper citations.
+      
+      Output a JSON object with the following structure:
+      {
+        "market_summary": "string - high-level market context",
+        "key_trends": [
+          {
+            "trend": "string",
+            "impact": "POSITIVE|NEGATIVE|NEUTRAL",
+            "confidence": 0.0-1.0,
+            "evidence": ["list", "of", "evidence", "citations"]
+          }
+        ],
+        "sector_insights": [
+          {
+            "sector": "string",
+            "outlook": "string",
+            "confidence": 0.0-1.0,
+            "evidence": ["list", "of", "evidence", "citations"]
+          }
+        ],
+        "risk_factors": ["list", "of", "risk", "factors"],
+        "opportunities": ["list", "of", "opportunities"],
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Portfolio Context:
+      - Portfolio ID: {{portfolio_id}}
+      - Current Allocation: {{current_allocation}}
+      - Target Allocation: {{target_allocation}}
+      - Holdings: {{holdings}}
+      
+      Market Data:
+      {{#each market_data}}
+      - Symbol: {{this.symbol}}
+        Price: ${{this.price}}
+        Change: {{this.change_percent}}%
+        Volume: {{this.volume}}
+      {{/each}}
+      
+      Recent News:
+      {{#each news_items}}
+      - {{this.headline}}
+        Source: {{this.source}}
+        Date: {{this.published_date}}
+        Summary: {{this.summary}}
+      {{/each}}
+      
+      Synthesize market context and insights for this rebalancing decision.
+    
+    few_shot_examples:
+      - input:
+          portfolio_id: "PORT-001"
+          current_allocation: "60% Equities, 30% Bonds, 10% Cash"
+          target_allocation: "65% Equities, 25% Bonds, 10% Cash"
+          holdings: "AAPL, MSFT, GOOGL, BND, AGG"
+          market_data:
+            - symbol: "AAPL"
+              price: 175.50
+              change_percent: 2.3
+              volume: 50000000
+            - symbol: "MSFT"
+              price: 380.25
+              change_percent: 1.8
+              volume: 30000000
+          news_items:
+            - headline: "Tech sector rallies on AI optimism"
+              source: "Reuters"
+              published_date: "2024-01-15"
+              summary: "Major tech stocks gain as AI investments drive growth"
+        output:
+          market_summary: "Tech sector showing strong momentum driven by AI investments. Equities outperforming bonds in current environment."
+          key_trends:
+            - trend: "AI-driven tech sector growth"
+              impact: "POSITIVE"
+              confidence: 0.85
+              evidence: ["Tech sector rallies on AI optimism - Reuters 2024-01-15"]
+            - trend: "Rising equity valuations"
+              impact: "NEUTRAL"
+              confidence: 0.75
+              evidence: ["AAPL +2.3%, MSFT +1.8% with strong volume"]
+          sector_insights:
+            - sector: "Technology"
+              outlook: "Positive momentum with AI tailwinds supporting growth"
+              confidence: 0.85
+              evidence: ["Tech sector rallies on AI optimism - Reuters 2024-01-15"]
+          risk_factors: ["Elevated valuations in tech sector", "Concentration risk in AI-related stocks"]
+          opportunities: ["Increase tech allocation to capture AI growth", "Rebalance from bonds to equities"]
+          confidence: 0.82
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["market_summary", "key_trends", "sector_insights", "risk_factors", "opportunities", "confidence"]
+        properties:
+          market_summary:
+            type: "string"
+            minLength: 50
+            maxLength: 1000
+          key_trends:
+            type: "array"
+            items:
+              type: "object"
+              required: ["trend", "impact", "confidence", "evidence"]
+          sector_insights:
+            type: "array"
+            items:
+              type: "object"
+              required: ["sector", "outlook", "confidence", "evidence"]
+          risk_factors:
+            type: "array"
+            items:
+              type: "string"
+          opportunities:
+            type: "array"
+            items:
+              type: "string"
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+  evidence_citation:
+    template_id: "research-agent-evidence-citation"
+    description: "Generate evidence citations for research insights"
+    system_prompt: |
+      You are an evidence citation specialist. Your task is to extract and format evidence citations from research sources.
+      
+      Given a research insight and source materials, provide:
+      - Properly formatted citations
+      - Relevance scores for each citation
+      - Confidence in the citation quality
+      
+      Output a JSON object with the following structure:
+      {
+        "citations": [
+          {
+            "source": "string - source name",
+            "quote": "string - relevant quote",
+            "relevance": 0.0-1.0,
+            "date": "ISO date"
+          }
+        ],
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Research Insight:
+      {{insight}}
+      
+      Source Materials:
+      {{#each sources}}
+      - Source: {{this.source}}
+        Date: {{this.date}}
+        Content: {{this.content}}
+      {{/each}}
+      
+      Extract and format evidence citations for this insight.
+    
+    few_shot_examples:
+      - input:
+          insight: "Tech sector showing strong momentum driven by AI investments"
+          sources:
+            - source: "Reuters"
+              date: "2024-01-15"
+              content: "Major tech stocks gain as AI investments drive growth. Apple and Microsoft lead the rally."
+            - source: "Bloomberg"
+              date: "2024-01-14"
+              content: "AI spending by tech giants reaches record levels in Q4 2023."
+        output:
+          citations:
+            - source: "Reuters"
+              quote: "Major tech stocks gain as AI investments drive growth"
+              relevance: 0.95
+              date: "2024-01-15"
+            - source: "Bloomberg"
+              quote: "AI spending by tech giants reaches record levels in Q4 2023"
+              relevance: 0.88
+              date: "2024-01-14"
+          confidence: 0.92
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["citations", "confidence"]
+        properties:
+          citations:
+            type: "array"
+            items:
+              type: "object"
+              required: ["source", "quote", "relevance", "date"]
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+metadata:
+  created_at: "2025-01-XX"
+  updated_at: "2025-01-XX"
+  author: "LLM Integration Team"
+  notes: |
+    These templates support the Research Agent's LLM-enhanced capabilities:
+    - Market context synthesis with evidence grounding
+    - Evidence citation for transparency
+    - Confidence levels for all insights
+    
+    All templates include:
+    - Few-shot examples for better LLM performance
+    - Output schema validation
+    - Grounding requirements
+    - Confidence thresholds

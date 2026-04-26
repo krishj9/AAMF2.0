@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DYNAMODB_MODE=local
+      - DYNAMODB_ENDPOINT_URL=http://dynamodb:8000
+      - AWS_REGION=us-east-1
+      - RESEARCH_AGENT_URL=http://research-agent:8101/a2a/research
+      - SENTIMENT_MCP_URL=http://sentiment-mcp:8201/mcp
+      - FEATURE_MEMORY_AGENT_LLM_ENABLED=false
+      - FEATURE_RESEARCH_AGENT_LLM_ENABLED=false
+      - FEATURE_SENTIMENT_AGENT_LLM_ENABLED=false
+      - FEATURE_REBALANCING_AGENT_LLM_ENABLED=false
+      - FEATURE_RISK_AGENT_LLM_ENABLED=false
+      - FEATURE_TRADE_PROPOSAL_AGENT_LLM_ENABLED=false
+    depends_on:
+      - dynamodb
+      - research-agent
+      - sentiment-mcp
+    networks:
+      - asset-management
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  # Research Agent A2A Server
+  research-agent:
+    build:
+      context: .
+      dockerfile: remote-agents/research-agent/Dockerfile
+    ports:
+      - "8101:8101"
+    environment:
+      - FEATURE_RESEARCH_AGENT_LLM_ENABLED=false
+      - LLM_BEDROCK_REGION=us-east-1
+    networks:
+      - asset-management
+    command: python main.py
+
+  # Sentiment Agent MCP Server
+  sentiment-mcp:
+    build:
+      context: .
+      dockerfile: mcp-servers/sentiment/Dockerfile
+    ports:
+      - "8201:8201"
+    environment:
+      - FEATURE_SENTIMENT_AGENT_LLM_ENABLED=false
+      - LLM_BEDROCK_REGION=us-east-1
+    networks:
+      - asset-management
+    command: python server.py
+
+  # DynamoDB Local (for local development)
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    ports:
+      - "55000:8000"
+    networks:
+      - asset-management
+    command: -jar DynamoDBLocal.jar -sharedDb -port 8000
+
+networks:
+  asset-management:
+    driver: bridge

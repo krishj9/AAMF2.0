@@ -1,11 +1,16 @@
 boto3
 fastapi
 httpx
+langgraph
+langsmith
 mangum
 pydantic
 pydantic-settings
 
 [dev]
+hypothesis
 pytest
+pytest-asyncio
+pytest-mock
 ruff
 uvicorn[standard]

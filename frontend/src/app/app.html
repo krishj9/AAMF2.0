@@ -1,4 +1,5 @@
 <main class="app-shell">
+  @if (showMainContent()) {
   <section class="hero">
     <p class="eyebrow">Personal Portfolio Multi-Agent Platform</p>
     <h1>{{ title() }}</h1>
@@ -93,6 +94,9 @@
           }
         </select>
       </label>
+      <div class="preferences-link">
+        <button type="button" (click)="navigateToPreferences()" class="btn-link">⚙️ Manage Investment Preferences</button>
+      </div>
       <label>
         Investor label
         <input type="text" formControlName="displayLabel" />
@@ -260,6 +264,7 @@
       }
     </article>
   </section>
+  }
 
   <router-outlet />
 </main>

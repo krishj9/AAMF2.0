@@ -1,0 +1,276 @@
+version: "1.0.0"
+agent: "rebalancing-agent"
+templates:
+  drift_explanation:
+    template_id: "rebalancing-agent-drift-explanation"
+    description: "Explain portfolio drift and its implications"
+    system_prompt: |
+      You are a portfolio rebalancing specialist. Your task is to explain portfolio drift in clear, actionable terms for portfolio managers and clients.
+      
+      Given current allocation, target allocation, and drift metrics, provide:
+      - Clear explanation of what drifted and by how much
+      - Why the drift occurred (market movements, contributions, etc.)
+      - Implications of the drift for risk and returns
+      - Urgency level for rebalancing
+      
+      All explanations must be grounded in the provided drift metrics.
+      
+      Output a JSON object with the following structure:
+      {
+        "drift_summary": "string - high-level drift explanation",
+        "drifted_assets": [
+          {
+            "asset_class": "string",
+            "current_allocation": 0.0-1.0,
+            "target_allocation": 0.0-1.0,
+            "drift_amount": number,
+            "drift_percentage": number,
+            "explanation": "string"
+          }
+        ],
+        "drift_causes": ["list", "of", "likely", "causes"],
+        "risk_implications": "string",
+        "urgency": "LOW|MEDIUM|HIGH",
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Portfolio Context:
+      - Portfolio ID: {{portfolio_id}}
+      - Client Risk Tolerance: {{risk_tolerance}}
+      
+      Current Allocation:
+      {{#each current_allocation}}
+      - {{this.asset_class}}: {{this.percentage}}%
+      {{/each}}
+      
+      Target Allocation:
+      {{#each target_allocation}}
+      - {{this.asset_class}}: {{this.percentage}}%
+      {{/each}}
+      
+      Drift Metrics:
+      - Total Drift: {{total_drift}}%
+      - Max Single Asset Drift: {{max_drift}}%
+      - Drift Threshold: {{drift_threshold}}%
+      
+      Holdings Performance:
+      {{#each holdings}}
+      - {{this.symbol}}: {{this.return_percentage}}% return
+      {{/each}}
+      
+      Explain the portfolio drift and its implications.
+    
+    few_shot_examples:
+      - input:
+          portfolio_id: "PORT-001"
+          risk_tolerance: "MODERATE"
+          current_allocation:
+            - asset_class: "Equities"
+              percentage: 68
+            - asset_class: "Bonds"
+              percentage: 25
+            - asset_class: "Cash"
+              percentage: 7
+          target_allocation:
+            - asset_class: "Equities"
+              percentage: 60
+            - asset_class: "Bonds"
+              percentage: 30
+            - asset_class: "Cash"
+              percentage: 10
+          total_drift: 8.0
+          max_drift: 8.0
+          drift_threshold: 5.0
+          holdings:
+            - symbol: "AAPL"
+              return_percentage: 15.2
+            - symbol: "MSFT"
+              return_percentage: 12.8
+        output:
+          drift_summary: "Portfolio has drifted 8% from target, primarily due to strong equity performance. Equities are 8% overweight while bonds and cash are underweight."
+          drifted_assets:
+            - asset_class: "Equities"
+              current_allocation: 0.68
+              target_allocation: 0.60
+              drift_amount: 0.08
+              drift_percentage: 13.3
+              explanation: "Strong equity performance (AAPL +15.2%, MSFT +12.8%) has increased equity allocation above target"
+            - asset_class: "Bonds"
+              current_allocation: 0.25
+              target_allocation: 0.30
+              drift_amount: -0.05
+              drift_percentage: -16.7
+              explanation: "Relative underperformance and equity gains have reduced bond allocation"
+            - asset_class: "Cash"
+              current_allocation: 0.07
+              target_allocation: 0.10
+              drift_amount: -0.03
+              drift_percentage: -30.0
+              explanation: "Cash allocation reduced as equities appreciated"
+          drift_causes: ["Strong equity market performance", "Outperformance of tech holdings", "No recent rebalancing"]
+          risk_implications: "Portfolio now carries higher equity risk than target, increasing volatility exposure beyond client's moderate risk tolerance"
+          urgency: "HIGH"
+          confidence: 0.88
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["drift_summary", "drifted_assets", "drift_causes", "risk_implications", "urgency", "confidence"]
+        properties:
+          drift_summary:
+            type: "string"
+            minLength: 50
+            maxLength: 500
+          drifted_assets:
+            type: "array"
+            items:
+              type: "object"
+              required: ["asset_class", "current_allocation", "target_allocation", "drift_amount", "drift_percentage", "explanation"]
+          drift_causes:
+            type: "array"
+            items:
+              type: "string"
+          risk_implications:
+            type: "string"
+          urgency:
+            type: "string"
+            enum: ["LOW", "MEDIUM", "HIGH"]
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+  strategy_recommendation:
+    template_id: "rebalancing-agent-strategy-recommendation"
+    description: "Recommend rebalancing strategy based on drift and constraints"
+    system_prompt: |
+      You are a rebalancing strategy specialist. Your task is to recommend the optimal rebalancing strategy given portfolio drift, client constraints, and market conditions.
+      
+      Consider:
+      - Magnitude and direction of drift
+      - Transaction costs and tax implications
+      - Client risk tolerance and constraints
+      - Market conditions and timing
+      
+      Output a JSON object with the following structure:
+      {
+        "recommended_strategy": "FULL_REBALANCE|THRESHOLD_REBALANCE|TACTICAL_REBALANCE|NO_ACTION",
+        "rationale": "string - why this strategy is recommended",
+        "trade_approach": "IMMEDIATE|GRADUAL|OPPORTUNISTIC",
+        "priority_adjustments": [
+          {
+            "asset_class": "string",
+            "action": "BUY|SELL",
+            "priority": "HIGH|MEDIUM|LOW",
+            "rationale": "string"
+          }
+        ],
+        "considerations": ["list", "of", "important", "considerations"],
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Portfolio Context:
+      - Portfolio ID: {{portfolio_id}}
+      - Portfolio Value: ${{portfolio_value}}
+      - Client Risk Tolerance: {{risk_tolerance}}
+      
+      Drift Analysis:
+      {{drift_summary}}
+      
+      Drifted Assets:
+      {{#each drifted_assets}}
+      - {{this.asset_class}}: {{this.drift_percentage}}% drift ({{this.explanation}})
+      {{/each}}
+      
+      Constraints:
+      {{#each constraints}}
+      - {{this}}
+      {{/each}}
+      
+      Market Conditions:
+      {{market_context}}
+      
+      Recommend the optimal rebalancing strategy.
+    
+    few_shot_examples:
+      - input:
+          portfolio_id: "PORT-001"
+          portfolio_value: 1000000
+          risk_tolerance: "MODERATE"
+          drift_summary: "Portfolio has drifted 8% from target due to strong equity performance"
+          drifted_assets:
+            - asset_class: "Equities"
+              drift_percentage: 13.3
+              explanation: "Strong equity performance has increased allocation"
+            - asset_class: "Bonds"
+              drift_percentage: -16.7
+              explanation: "Relative underperformance"
+          constraints: ["Tax-loss harvesting preferred", "Minimize transaction costs"]
+          market_context: "Equity markets showing continued strength with moderate volatility"
+        output:
+          recommended_strategy: "THRESHOLD_REBALANCE"
+          rationale: "Drift exceeds 5% threshold and creates risk misalignment. However, strong equity momentum suggests gradual rebalancing to avoid missing gains while managing risk."
+          trade_approach: "GRADUAL"
+          priority_adjustments:
+            - asset_class: "Equities"
+              action: "SELL"
+              priority: "HIGH"
+              rationale: "Reduce equity overweight to manage risk, but do so gradually given positive momentum"
+            - asset_class: "Bonds"
+              action: "BUY"
+              priority: "MEDIUM"
+              rationale: "Increase bond allocation to restore target risk profile"
+          considerations: ["Consider tax implications of equity sales", "Monitor market conditions for optimal execution timing", "Maintain adequate cash reserves during rebalancing"]
+          confidence: 0.85
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["recommended_strategy", "rationale", "trade_approach", "priority_adjustments", "considerations", "confidence"]
+        properties:
+          recommended_strategy:
+            type: "string"
+            enum: ["FULL_REBALANCE", "THRESHOLD_REBALANCE", "TACTICAL_REBALANCE", "NO_ACTION"]
+          rationale:
+            type: "string"
+            minLength: 50
+          trade_approach:
+            type: "string"
+            enum: ["IMMEDIATE", "GRADUAL", "OPPORTUNISTIC"]
+          priority_adjustments:
+            type: "array"
+            items:
+              type: "object"
+              required: ["asset_class", "action", "priority", "rationale"]
+          considerations:
+            type: "array"
+            items:
+              type: "string"
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+metadata:
+  created_at: "2025-01-XX"
+  updated_at: "2025-01-XX"
+  author: "LLM Integration Team"
+  notes: |
+    These templates support the Rebalancing Agent's LLM-enhanced capabilities:
+    - Drift explanation with clear rationale
+    - Strategy recommendation based on multiple factors
+    - Evidence-based reasoning grounded in drift metrics
+    
+    All templates include:
+    - Few-shot examples for better LLM performance
+    - Output schema validation
+    - Grounding requirements
+    - Confidence thresholds

@@ -6,19 +6,25 @@ build-backend = "setuptools.build_meta"
 name = "asset-management-backend"
 version = "0.1.0"
 description = "FastAPI backend for the personal portfolio multi-agent platform"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
   "boto3",
   "fastapi",
   "httpx",
+  "langgraph",
+  "langsmith",
   "mangum",
   "pydantic",
   "pydantic-settings",
+  "uvicorn[standard]",
 ]
 
 [project.optional-dependencies]
 dev = [
+  "hypothesis",
   "pytest",
+  "pytest-asyncio",
+  "pytest-mock",
   "ruff",
   "uvicorn[standard]",
 ]

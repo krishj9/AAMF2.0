@@ -1,0 +1,277 @@
+version: "1.0.0"
+agent: "trade-proposal-agent"
+templates:
+  proposal_rationale:
+    template_id: "trade-proposal-agent-proposal-rationale"
+    description: "Generate rationale for trade proposal"
+    system_prompt: |
+      You are a trade proposal specialist for a portfolio management system. Your task is to generate clear, compelling rationale for trade proposals that will be reviewed by portfolio managers and clients.
+      
+      Given drift analysis, policy verdict, and proposed trades, provide:
+      - Clear rationale for why these trades are recommended
+      - How the trades address portfolio drift
+      - How the trades comply with risk policies
+      - Expected benefits and risks
+      
+      All rationale must be grounded in the drift analysis and policy verdict.
+      
+      Output a JSON object with the following structure:
+      {
+        "proposal_summary": "string - high-level proposal summary",
+        "primary_objectives": ["list", "of", "objectives"],
+        "trade_rationale": [
+          {
+            "symbol": "string",
+            "action": "BUY|SELL",
+            "quantity": number,
+            "rationale": "string",
+            "expected_impact": "string"
+          }
+        ],
+        "risk_considerations": ["list", "of", "risks"],
+        "expected_benefits": ["list", "of", "benefits"],
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Portfolio Context:
+      - Portfolio ID: {{portfolio_id}}
+      - Portfolio Value: ${{portfolio_value}}
+      - Client Risk Tolerance: {{risk_tolerance}}
+      
+      Drift Analysis:
+      {{drift_summary}}
+      
+      Policy Verdict: {{policy_verdict}}
+      
+      Proposed Trades:
+      {{#each proposed_trades}}
+      - {{this.action}} {{this.quantity}} shares of {{this.symbol}} at ${{this.price}}
+        Current Position: {{this.current_quantity}} shares
+        Target Position: {{this.target_quantity}} shares
+      {{/each}}
+      
+      Generate a clear rationale for this trade proposal.
+    
+    few_shot_examples:
+      - input:
+          portfolio_id: "PORT-001"
+          portfolio_value: 1000000
+          risk_tolerance: "MODERATE"
+          drift_summary: "Portfolio has drifted 8% from target due to strong equity performance. Equities are overweight by 8%."
+          policy_verdict: "COMPLIANT"
+          proposed_trades:
+            - action: "SELL"
+              quantity: 50
+              symbol: "AAPL"
+              price: 175.50
+              current_quantity: 200
+              target_quantity: 150
+            - action: "BUY"
+              quantity: 100
+              symbol: "BND"
+              price: 75.25
+              current_quantity: 300
+              target_quantity: 400
+        output:
+          proposal_summary: "Rebalance portfolio to restore target allocation by reducing equity overweight and increasing bond allocation"
+          primary_objectives: ["Restore target asset allocation", "Reduce equity concentration risk", "Align portfolio with moderate risk tolerance"]
+          trade_rationale:
+            - symbol: "AAPL"
+              action: "SELL"
+              quantity: 50
+              rationale: "Reduce AAPL position from 200 to 150 shares to decrease equity overweight. AAPL has appreciated 15% and now represents excessive concentration."
+              expected_impact: "Reduces equity allocation by approximately 0.9%, moves closer to target allocation"
+            - symbol: "BND"
+              action: "BUY"
+              quantity: 100
+              rationale: "Increase bond allocation to restore target fixed income exposure. Bonds are currently 5% underweight relative to target."
+              expected_impact: "Increases bond allocation by approximately 0.8%, improves portfolio diversification and risk profile"
+          risk_considerations: ["Selling AAPL may incur capital gains tax", "Market timing risk if equity momentum continues", "Transaction costs will reduce net returns"]
+          expected_benefits: ["Restores target risk profile", "Reduces concentration risk", "Improves diversification", "Aligns with client's moderate risk tolerance"]
+          confidence: 0.88
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["proposal_summary", "primary_objectives", "trade_rationale", "risk_considerations", "expected_benefits", "confidence"]
+        properties:
+          proposal_summary:
+            type: "string"
+            minLength: 50
+            maxLength: 500
+          primary_objectives:
+            type: "array"
+            items:
+              type: "string"
+          trade_rationale:
+            type: "array"
+            items:
+              type: "object"
+              required: ["symbol", "action", "quantity", "rationale", "expected_impact"]
+          risk_considerations:
+            type: "array"
+            items:
+              type: "string"
+          expected_benefits:
+            type: "array"
+            items:
+              type: "string"
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+  estimated_impact:
+    template_id: "trade-proposal-agent-estimated-impact"
+    description: "Explain estimated impact of trade proposal"
+    system_prompt: |
+      You are a portfolio impact analysis specialist. Your task is to explain the estimated impact of a trade proposal on portfolio allocation, risk, and returns.
+      
+      Given proposed trades and current portfolio state, explain:
+      - Impact on asset allocation
+      - Impact on risk metrics
+      - Impact on expected returns
+      - Impact on diversification
+      
+      Output a JSON object with the following structure:
+      {
+        "allocation_impact": {
+          "before": {"asset_class": percentage},
+          "after": {"asset_class": percentage},
+          "changes": [{"asset_class": "string", "change": number, "explanation": "string"}]
+        },
+        "risk_impact": {
+          "risk_level_before": "string",
+          "risk_level_after": "string",
+          "explanation": "string"
+        },
+        "diversification_impact": {
+          "before": "string",
+          "after": "string",
+          "explanation": "string"
+        },
+        "summary": "string",
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Portfolio Context:
+      - Portfolio ID: {{portfolio_id}}
+      - Portfolio Value: ${{portfolio_value}}
+      
+      Current Allocation:
+      {{#each current_allocation}}
+      - {{this.asset_class}}: {{this.percentage}}%
+      {{/each}}
+      
+      Target Allocation:
+      {{#each target_allocation}}
+      - {{this.asset_class}}: {{this.percentage}}%
+      {{/each}}
+      
+      Proposed Trades:
+      {{#each proposed_trades}}
+      - {{this.action}} {{this.quantity}} shares of {{this.symbol}} (${{this.value}})
+      {{/each}}
+      
+      Explain the estimated impact of these trades on the portfolio.
+    
+    few_shot_examples:
+      - input:
+          portfolio_id: "PORT-001"
+          portfolio_value: 1000000
+          current_allocation:
+            - asset_class: "Equities"
+              percentage: 68
+            - asset_class: "Bonds"
+              percentage: 25
+            - asset_class: "Cash"
+              percentage: 7
+          target_allocation:
+            - asset_class: "Equities"
+              percentage: 60
+            - asset_class: "Bonds"
+              percentage: 30
+            - asset_class: "Cash"
+              percentage: 10
+          proposed_trades:
+            - action: "SELL"
+              quantity: 50
+              symbol: "AAPL"
+              value: 8775
+            - action: "BUY"
+              quantity: 100
+              symbol: "BND"
+              value: 7525
+        output:
+          allocation_impact:
+            before:
+              Equities: 68
+              Bonds: 25
+              Cash: 7
+            after:
+              Equities: 67.1
+              Bonds: 25.8
+              Cash: 7.1
+            changes:
+              - asset_class: "Equities"
+                change: -0.9
+                explanation: "Selling 50 AAPL shares reduces equity allocation by 0.9%, moving closer to 60% target"
+              - asset_class: "Bonds"
+                change: 0.8
+                explanation: "Buying 100 BND shares increases bond allocation by 0.8%, moving closer to 30% target"
+          risk_impact:
+            risk_level_before: "Moderate-High (equity overweight)"
+            risk_level_after: "Moderate (closer to target)"
+            explanation: "Reducing equity overweight decreases portfolio volatility and aligns risk with client's moderate tolerance"
+          diversification_impact:
+            before: "Concentrated in equities (68%)"
+            after: "Better balanced (67.1% equities, 25.8% bonds)"
+            explanation: "Improved diversification across asset classes, reduced concentration risk"
+          summary: "Trades move portfolio closer to target allocation, reducing equity overweight from 8% to 7.1% and increasing bond allocation. Risk profile improves to better align with moderate risk tolerance."
+          confidence: 0.85
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["allocation_impact", "risk_impact", "diversification_impact", "summary", "confidence"]
+        properties:
+          allocation_impact:
+            type: "object"
+            required: ["before", "after", "changes"]
+          risk_impact:
+            type: "object"
+            required: ["risk_level_before", "risk_level_after", "explanation"]
+          diversification_impact:
+            type: "object"
+            required: ["before", "after", "explanation"]
+          summary:
+            type: "string"
+            minLength: 50
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+metadata:
+  created_at: "2025-01-XX"
+  updated_at: "2025-01-XX"
+  author: "LLM Integration Team"
+  notes: |
+    These templates support the Trade Proposal Agent's LLM-enhanced capabilities:
+    - Trade proposal rationale with clear reasoning
+    - Estimated impact analysis
+    - Evidence-based recommendations grounded in drift and policy analysis
+    
+    All templates include:
+    - Few-shot examples for better LLM performance
+    - Output schema validation
+    - Grounding requirements
+    - Confidence thresholds

@@ -1,0 +1,207 @@
+version: "1.0.0"
+agent: "sentiment-agent"
+templates:
+  sentiment_analysis:
+    template_id: "sentiment-agent-sentiment-analysis"
+    description: "Analyze sentiment from news and social media for portfolio symbols"
+    system_prompt: |
+      You are a sentiment analysis specialist for a portfolio management system. Your task is to analyze sentiment from news articles, social media, and other sources to assess market sentiment for specific symbols.
+      
+      Given news items and social media posts, provide:
+      - Overall sentiment (POSITIVE, NEGATIVE, NEUTRAL)
+      - Sentiment score (-1.0 to 1.0)
+      - Key themes and topics
+      - Confidence level
+      
+      Output a JSON object with the following structure:
+      {
+        "symbol": "string - stock symbol",
+        "overall_sentiment": "POSITIVE|NEGATIVE|NEUTRAL",
+        "sentiment_score": -1.0 to 1.0,
+        "themes": [
+          {
+            "theme": "string",
+            "sentiment": "POSITIVE|NEGATIVE|NEUTRAL",
+            "mentions": number
+          }
+        ],
+        "confidence": 0.0-1.0,
+        "sources_analyzed": number
+      }
+    
+    user_prompt: |
+      Symbol: {{symbol}}
+      
+      News Items:
+      {{#each news_items}}
+      - Headline: {{this.headline}}
+        Source: {{this.source}}
+        Date: {{this.published_date}}
+        Summary: {{this.summary}}
+        Sentiment Indicators: {{this.sentiment_indicators}}
+      {{/each}}
+      
+      Social Media Posts:
+      {{#each social_posts}}
+      - Platform: {{this.platform}}
+        Content: {{this.content}}
+        Engagement: {{this.engagement}}
+        Date: {{this.date}}
+      {{/each}}
+      
+      Analyze the sentiment for {{symbol}} based on these sources.
+    
+    few_shot_examples:
+      - input:
+          symbol: "AAPL"
+          news_items:
+            - headline: "Apple announces record iPhone sales"
+              source: "Reuters"
+              published_date: "2024-01-15"
+              summary: "Apple reports strong Q4 results with iPhone sales exceeding expectations"
+              sentiment_indicators: "positive, strong, exceeding"
+            - headline: "Apple faces regulatory challenges in EU"
+              source: "Bloomberg"
+              published_date: "2024-01-14"
+              summary: "EU regulators investigate Apple's App Store practices"
+              sentiment_indicators: "challenges, investigate, regulatory"
+          social_posts:
+            - platform: "Twitter"
+              content: "Just got the new iPhone, amazing device! #Apple"
+              engagement: 1500
+              date: "2024-01-15"
+            - platform: "Reddit"
+              content: "Apple's ecosystem is unmatched"
+              engagement: 850
+              date: "2024-01-14"
+        output:
+          symbol: "AAPL"
+          overall_sentiment: "POSITIVE"
+          sentiment_score: 0.65
+          themes:
+            - theme: "Product success"
+              sentiment: "POSITIVE"
+              mentions: 2
+            - theme: "Regulatory concerns"
+              sentiment: "NEGATIVE"
+              mentions: 1
+          confidence: 0.82
+          sources_analyzed: 4
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["symbol", "overall_sentiment", "sentiment_score", "themes", "confidence", "sources_analyzed"]
+        properties:
+          symbol:
+            type: "string"
+          overall_sentiment:
+            type: "string"
+            enum: ["POSITIVE", "NEGATIVE", "NEUTRAL"]
+          sentiment_score:
+            type: "number"
+            minimum: -1.0
+            maximum: 1.0
+          themes:
+            type: "array"
+            items:
+              type: "object"
+              required: ["theme", "sentiment", "mentions"]
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+          sources_analyzed:
+            type: "integer"
+            minimum: 0
+      
+      grounding_required: true
+      confidence_threshold: 0.6
+
+  theme_identification:
+    template_id: "sentiment-agent-theme-identification"
+    description: "Identify key themes and topics from sentiment sources"
+    system_prompt: |
+      You are a theme identification specialist. Your task is to identify key themes and topics from news and social media content.
+      
+      Given a collection of content items, identify:
+      - Main themes and topics
+      - Frequency of each theme
+      - Sentiment associated with each theme
+      
+      Output a JSON object with the following structure:
+      {
+        "themes": [
+          {
+            "theme": "string",
+            "description": "string",
+            "frequency": number,
+            "sentiment": "POSITIVE|NEGATIVE|NEUTRAL",
+            "examples": ["list", "of", "example", "mentions"]
+          }
+        ],
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Content Items:
+      {{#each content_items}}
+      - {{this.text}}
+      {{/each}}
+      
+      Identify key themes and topics from these content items.
+    
+    few_shot_examples:
+      - input:
+          content_items:
+            - text: "Apple announces record iPhone sales"
+            - text: "iPhone demand exceeds expectations"
+            - text: "Apple faces regulatory challenges in EU"
+            - text: "New iPhone features impress users"
+        output:
+          themes:
+            - theme: "Product success"
+              description: "Strong iPhone sales and positive user reception"
+              frequency: 3
+              sentiment: "POSITIVE"
+              examples: ["record iPhone sales", "demand exceeds expectations", "features impress users"]
+            - theme: "Regulatory concerns"
+              description: "Regulatory challenges in European market"
+              frequency: 1
+              sentiment: "NEGATIVE"
+              examples: ["regulatory challenges in EU"]
+          confidence: 0.88
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["themes", "confidence"]
+        properties:
+          themes:
+            type: "array"
+            items:
+              type: "object"
+              required: ["theme", "description", "frequency", "sentiment", "examples"]
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.6
+
+metadata:
+  created_at: "2025-01-XX"
+  updated_at: "2025-01-XX"
+  author: "LLM Integration Team"
+  notes: |
+    These templates support the Sentiment Agent's LLM-enhanced capabilities:
+    - Sentiment analysis from multiple sources
+    - Theme identification and categorization
+    - Confidence levels for all assessments
+    
+    All templates include:
+    - Few-shot examples for better LLM performance
+    - Output schema validation
+    - Grounding requirements
+    - Confidence thresholds

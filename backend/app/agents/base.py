@@ -29,3 +29,18 @@ def blocked_stage(
         protocol=protocol,
         execution_location=execution_location,
     )
+
+
+def failed_stage(
+    agent_name: str,
+    summary: str,
+    protocol: str = "LOCAL",
+    execution_location: str = "in_process",
+) -> AgentStageResult:
+    return AgentStageResult(
+        agent_name=agent_name,
+        status=AgentStatus.FAILED,
+        summary=summary,
+        protocol=protocol,
+        execution_location=execution_location,
+    )

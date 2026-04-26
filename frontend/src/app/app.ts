@@ -1,12 +1,13 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterOutlet } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { Subscription, filter } from 'rxjs';
 
 import { HealthResponse, HealthService } from './core/api/health.service';
 import { MarketStreamEvent } from './core/api/market.models';
 import { MarketStreamService } from './core/api/market-stream.service';
 import { PortfolioService } from './core/api/portfolio.service';
+import { PreferenceService } from './core/api/preference.service';
 import {
   OrchestrationResponse,
   PortfolioRebalanceRequest,
@@ -25,7 +26,9 @@ export class App implements OnDestroy {
   private readonly healthService = inject(HealthService);
   private readonly marketStreamService = inject(MarketStreamService);
   private readonly portfolioService = inject(PortfolioService);
+  private readonly preferenceService = inject(PreferenceService);
   private readonly rebalanceService = inject(RebalanceService);
+  private readonly router = inject(Router);
 
   protected readonly title = signal('Asset Management');
   protected readonly backendHealth = signal<HealthResponse | null>(null);
@@ -39,6 +42,7 @@ export class App implements OnDestroy {
   protected readonly marketEvent = signal<MarketStreamEvent | null>(null);
   protected readonly portfolios = signal<PortfolioRecord[]>([]);
   protected readonly selectedAccountId = signal<string>('acct_demo');
+  protected readonly showMainContent = signal(true);
   protected readonly selectedPortfolio = computed(
     () =>
       this.portfolios().find(
@@ -123,6 +127,14 @@ export class App implements OnDestroy {
   });
 
   constructor() {
+    // Listen to router events to toggle main content visibility
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        const navEvent = event as NavigationEnd;
+        this.showMainContent.set(navEvent.url === '/' || navEvent.url === '');
+      });
+
     this.healthService.getHealth().subscribe({
       next: (health) => this.backendHealth.set(health),
       error: () => this.backendHealthError.set('Backend health check is not reachable yet.')
@@ -134,6 +146,7 @@ export class App implements OnDestroy {
         if (firstPortfolio) {
           this.selectedAccountId.set(firstPortfolio.account_profile.account_id);
           this.patchFormFromPortfolio(firstPortfolio);
+          this.loadPreferencesForPortfolio(firstPortfolio.client_profile.client_id);
           this.startMarketStream(firstPortfolio.account_profile.account_id);
         } else {
           this.startMarketStream();
@@ -159,6 +172,7 @@ export class App implements OnDestroy {
     this.selectedAccountId.set(accountId);
     this.recommendation.set(null);
     this.patchFormFromPortfolio(portfolio);
+    this.loadPreferencesForPortfolio(portfolio.client_profile.client_id);
     this.startMarketStream(accountId);
   }
 
@@ -170,7 +184,26 @@ export class App implements OnDestroy {
 
     this.submitting.set(true);
     this.rebalanceError.set(null);
-    this.rebalanceService.submit(this.buildRequest()).subscribe({
+    
+    // Fetch latest preferences before submitting
+    const clientId = this.selectedPortfolio()?.client_profile.client_id ?? 'client_demo';
+    this.preferenceService.getPreferences(clientId).subscribe({
+      next: (preferences) => {
+        // Build request with latest preferences
+        const request = this.buildRequestWithPreferences(preferences);
+        this.submitRebalanceRequest(request);
+      },
+      error: () => {
+        // Fallback to building request without preferences
+        this.rebalanceError.set('Warning: Could not load preferences. Using default values.');
+        const request = this.buildRequest();
+        this.submitRebalanceRequest(request);
+      }
+    });
+  }
+
+  private submitRebalanceRequest(request: PortfolioRebalanceRequest) {
+    this.rebalanceService.submit(request).subscribe({
       next: (response) => {
         this.recommendation.set(response);
         this.approvalMessage.set(null);
@@ -339,6 +372,78 @@ export class App implements OnDestroy {
     };
   }
 
+  private buildRequestWithPreferences(preferences: any): PortfolioRebalanceRequest {
+    const value = this.form.getRawValue();
+    const portfolio = this.selectedPortfolio();
+    const asOf = new Date().toISOString();
+    const totalValue = value.equityValue + value.fixedIncomeValue + value.cashValue;
+    const clientProfile = portfolio?.client_profile;
+    const accountProfile = portfolio?.account_profile;
+
+    return {
+      actor: {
+        actor_id: 'local_owner',
+        display_name: 'Local Owner',
+        role: 'OWNER',
+        auth_provider: 'local',
+        is_owner: true
+      },
+      client_profile: {
+        client_id: clientProfile?.client_id ?? 'client_demo',
+        display_label: value.displayLabel,
+        risk_profile_id: preferences.risk_profile.risk_profile_id,
+        synthetic: clientProfile?.synthetic ?? true
+      },
+      account_profile: {
+        account_id: accountProfile?.account_id ?? 'acct_demo',
+        client_id: accountProfile?.client_id ?? 'client_demo',
+        account_type: accountProfile?.account_type ?? 'BROKERAGE',
+        base_currency: accountProfile?.base_currency ?? 'USD',
+        taxable: accountProfile?.taxable ?? true
+      },
+      portfolio_snapshot: {
+        snapshot_id: `snap_${accountProfile?.account_id ?? 'acct_demo'}_${Date.now()}`,
+        account_id: accountProfile?.account_id ?? 'acct_demo',
+        as_of: asOf,
+        holdings: [
+          {
+            instrument_id: 'inst_equity',
+            symbol: 'EQUITY',
+            asset_class: 'equity',
+            quantity: '1',
+            market_price: String(value.equityValue),
+            market_value: String(value.equityValue),
+            as_of: asOf
+          },
+          {
+            instrument_id: 'inst_fixed_income',
+            symbol: 'BONDS',
+            asset_class: 'fixed_income',
+            quantity: '1',
+            market_price: String(value.fixedIncomeValue),
+            market_value: String(value.fixedIncomeValue),
+            as_of: asOf
+          }
+        ],
+        cash: String(value.cashValue),
+        total_value: String(totalValue)
+      },
+      allocation_target: {
+        target_id: preferences.allocation_target.target_id,
+        account_id: accountProfile?.account_id ?? 'acct_demo',
+        asset_class_targets: preferences.allocation_target.asset_class_targets,
+        tolerance_bands: preferences.allocation_target.tolerance_bands
+      },
+      risk_profile: {
+        risk_profile_id: preferences.risk_profile.risk_profile_id,
+        risk_level: preferences.risk_profile.risk_level,
+        max_single_position_pct: preferences.risk_profile.max_single_position_pct,
+        max_sector_pct: preferences.risk_profile.max_sector_pct,
+        allowed_asset_classes: preferences.risk_profile.allowed_asset_classes
+      }
+    };
+  }
+
   private startMarketStream(accountId?: string) {
     this.marketSubscription?.unsubscribe();
     this.marketSubscription = this.marketStreamService.stream(accountId).subscribe({
@@ -373,6 +478,26 @@ export class App implements OnDestroy {
       },
       { emitEvent: false }
     );
+  }
+
+  private loadPreferencesForPortfolio(clientId: string) {
+    this.preferenceService.getPreferences(clientId).subscribe({
+      next: (preferences) => {
+        // Update target allocation fields with saved preferences
+        this.form.patchValue(
+          {
+            targetEquityPct: Number(preferences.allocation_target.asset_class_targets['equity']),
+            targetFixedIncomePct: Number(preferences.allocation_target.asset_class_targets['fixed_income']),
+            targetCashPct: Number(preferences.allocation_target.asset_class_targets['cash'])
+          },
+          { emitEvent: false }
+        );
+      },
+      error: (err) => {
+        console.warn('Could not load preferences for client:', clientId, err);
+        // Keep the default values from portfolio
+      }
+    });
   }
 
   private valueForAssetClass(
@@ -457,17 +582,24 @@ export class App implements OnDestroy {
   }
 
   private maybeAutoGenerateRecommendation(accountId: string) {
-    if (!(this.autoRecommendByAccount()[accountId] ?? false)) {
-      return;
-    }
+    // Skip if already submitting or recommendation exists
     if (this.submitting() || this.recommendation() !== null) {
       return;
     }
+    
+    // Check if REBALANCE_NEEDED signal is present
     if (this.displayMarketEvent()?.rebalance.signal !== 'REBALANCE_NEEDED') {
       return;
     }
 
-    this.clearAutoRecommendForAccount(accountId);
+    // Auto-generate if flag is set OR if this is initial load with REBALANCE_NEEDED
+    const shouldAutoGenerate = this.autoRecommendByAccount()[accountId] ?? false;
+    
+    if (shouldAutoGenerate) {
+      this.clearAutoRecommendForAccount(accountId);
+    }
+    
+    // Always submit when REBALANCE_NEEDED appears without a recommendation
     this.submitRebalance();
   }
 
@@ -517,5 +649,9 @@ export class App implements OnDestroy {
         approval_status: status
       }
     });
+  }
+
+  protected navigateToPreferences() {
+    this.router.navigate(['/preferences']);
   }
 }

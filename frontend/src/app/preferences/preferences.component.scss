@@ -1,0 +1,424 @@
+.preferences-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.preferences-header {
+  text-align: center;
+  margin-bottom: 3rem;
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    color: #666;
+  }
+}
+
+.loading,
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
+
+.error-message {
+  color: #d32f2f;
+  background: #ffebee;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+// Progress Steps
+.progress-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3rem;
+  padding: 0 2rem;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+
+  .step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .step-label {
+    font-size: 0.875rem;
+    color: #666;
+    transition: color 0.3s ease;
+  }
+
+  &.active {
+    .step-number {
+      background: #1976d2;
+      color: white;
+    }
+
+    .step-label {
+      color: #1976d2;
+      font-weight: 600;
+    }
+  }
+
+  &.completed {
+    .step-number {
+      background: #4caf50;
+      color: white;
+    }
+
+    .step-label {
+      color: #4caf50;
+    }
+  }
+}
+
+.step-connector {
+  flex: 1;
+  height: 2px;
+  background: #e0e0e0;
+  margin: 0 1rem;
+  margin-bottom: 2rem;
+}
+
+// Step Content
+.step-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+
+  h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+  }
+
+  .step-description {
+    color: #666;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+}
+
+// Form Styles
+.form-group {
+  margin-bottom: 1.5rem;
+
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    color: #1a1a1a;
+    background: white;
+    transition: border-color 0.3s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #1976d2;
+      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+    }
+
+    &.ng-invalid.ng-touched {
+      border-color: #d32f2f;
+    }
+  }
+
+  .form-control-small {
+    width: 100px;
+    padding: 0.5rem;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: #1a1a1a;
+    background: white;
+    margin-top: 0.5rem;
+
+    &:focus {
+      outline: none;
+      border-color: #1976d2;
+      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+    }
+  }
+
+  .form-hint {
+    display: block;
+    font-size: 0.875rem;
+    color: #666;
+    margin-top: 0.25rem;
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+// Risk Level Options
+.risk-level-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.radio-card {
+  display: block;
+  cursor: pointer;
+
+  input[type='radio'] {
+    display: none;
+
+    &:checked + .radio-card-content {
+      border-color: #1976d2;
+      background: #e3f2fd;
+    }
+  }
+
+  .radio-card-content {
+    padding: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #1976d2;
+    }
+
+    .radio-card-title {
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 0.25rem;
+    }
+
+    .radio-card-description {
+      font-size: 0.875rem;
+      color: #666;
+    }
+  }
+}
+
+// Allocation Presets
+.allocation-presets {
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1a1a1a;
+    margin-bottom: 0.75rem;
+  }
+
+  .preset-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-preset {
+    padding: 0.625rem 1.25rem;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1a1a1a;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #1976d2;
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+  }
+}
+
+// Allocation Grid
+.allocation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.allocation-item {
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.allocation-total {
+  text-align: center;
+  padding: 1.25rem;
+  background: #e8f5e9;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+
+  &.invalid {
+    background: #ffebee;
+  }
+
+  strong {
+    color: #1a1a1a;
+  }
+
+  .error-text {
+    color: #d32f2f;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+}
+
+// Review Section
+.review-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+  }
+
+  .review-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e0e0e0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .review-label {
+      font-weight: 500;
+      color: #666;
+    }
+
+    .review-value {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+  }
+}
+
+// Step Actions
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+
+  .btn {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .btn-primary {
+    background: #1976d2;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: #1565c0;
+    }
+  }
+
+  .btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+
+    &:hover {
+      background: #e0e0e0;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .preferences-container {
+    padding: 1rem;
+  }
+
+  .progress-steps {
+    padding: 0;
+  }
+
+  .step-label {
+    display: none;
+  }
+
+  .risk-level-options,
+  .allocation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .step-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}

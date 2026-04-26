@@ -1,0 +1,281 @@
+version: "1.0.0"
+agent: "risk-agent"
+templates:
+  policy_verdict_explanation:
+    template_id: "risk-agent-policy-verdict-explanation"
+    description: "Explain policy verdict and compliance status"
+    system_prompt: |
+      You are a risk and compliance specialist for a portfolio management system. Your task is to explain policy verdicts in clear, actionable terms.
+      
+      Given a policy verdict (COMPLIANT, NON_COMPLIANT, or UNRESOLVED), explain:
+      - What the verdict means
+      - Which policy rules were evaluated
+      - Why the verdict was reached
+      - What actions are required (if any)
+      
+      All explanations must be grounded in the policy rules and evaluation results.
+      
+      Output a JSON object with the following structure:
+      {
+        "verdict_summary": "string - high-level verdict explanation",
+        "verdict_status": "COMPLIANT|NON_COMPLIANT|UNRESOLVED",
+        "policy_rules_evaluated": [
+          {
+            "rule_id": "string",
+            "rule_description": "string",
+            "evaluation_result": "PASS|FAIL|UNRESOLVED",
+            "explanation": "string"
+          }
+        ],
+        "compliance_issues": ["list", "of", "issues"],
+        "required_actions": ["list", "of", "required", "actions"],
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Portfolio Context:
+      - Portfolio ID: {{portfolio_id}}
+      - Client Risk Tolerance: {{risk_tolerance}}
+      
+      Policy Verdict: {{verdict_status}}
+      
+      Policy Rules Evaluated:
+      {{#each policy_rules}}
+      - Rule: {{this.rule_id}}
+        Description: {{this.description}}
+        Result: {{this.result}}
+        Details: {{this.details}}
+      {{/each}}
+      
+      Rebalancing Proposal:
+      {{#each proposed_trades}}
+      - {{this.action}} {{this.quantity}} shares of {{this.symbol}}
+      {{/each}}
+      
+      Explain the policy verdict and what it means for this rebalancing request.
+    
+    few_shot_examples:
+      - input:
+          portfolio_id: "PORT-001"
+          risk_tolerance: "MODERATE"
+          verdict_status: "NON_COMPLIANT"
+          policy_rules:
+            - rule_id: "RULE-001"
+              description: "Maximum single position concentration: 20%"
+              result: "FAIL"
+              details: "Proposed AAPL position would be 25% of portfolio"
+            - rule_id: "RULE-002"
+              description: "Minimum diversification: 10 holdings"
+              result: "PASS"
+              details: "Portfolio has 15 holdings"
+          proposed_trades:
+            - action: "BUY"
+              quantity: 100
+              symbol: "AAPL"
+        output:
+          verdict_summary: "Rebalancing proposal is NON_COMPLIANT due to excessive concentration in AAPL, which would exceed the 20% single position limit."
+          verdict_status: "NON_COMPLIANT"
+          policy_rules_evaluated:
+            - rule_id: "RULE-001"
+              rule_description: "Maximum single position concentration: 20%"
+              evaluation_result: "FAIL"
+              explanation: "Proposed purchase of 100 AAPL shares would increase position to 25% of portfolio, exceeding the 20% limit for moderate risk tolerance"
+            - rule_id: "RULE-002"
+              rule_description: "Minimum diversification: 10 holdings"
+              evaluation_result: "PASS"
+              explanation: "Portfolio maintains 15 holdings, well above the 10 holding minimum"
+          compliance_issues: ["AAPL position concentration exceeds 20% limit"]
+          required_actions: ["Reduce AAPL purchase quantity to maintain position below 20%", "Consider diversifying into additional positions"]
+          confidence: 0.92
+      
+      - input:
+          portfolio_id: "PORT-002"
+          risk_tolerance: "CONSERVATIVE"
+          verdict_status: "COMPLIANT"
+          policy_rules:
+            - rule_id: "RULE-003"
+              description: "Maximum equity allocation: 40%"
+              result: "PASS"
+              details: "Proposed equity allocation: 35%"
+            - rule_id: "RULE-004"
+              description: "Minimum bond allocation: 50%"
+              result: "PASS"
+              details: "Proposed bond allocation: 55%"
+          proposed_trades:
+            - action: "SELL"
+              quantity: 50
+              symbol: "AAPL"
+            - action: "BUY"
+              quantity: 100
+              symbol: "BND"
+        output:
+          verdict_summary: "Rebalancing proposal is COMPLIANT with all risk policies for conservative risk tolerance."
+          verdict_status: "COMPLIANT"
+          policy_rules_evaluated:
+            - rule_id: "RULE-003"
+              rule_description: "Maximum equity allocation: 40%"
+              evaluation_result: "PASS"
+              explanation: "Proposed equity allocation of 35% is within the 40% limit for conservative portfolios"
+            - rule_id: "RULE-004"
+              rule_description: "Minimum bond allocation: 50%"
+              evaluation_result: "PASS"
+              explanation: "Proposed bond allocation of 55% exceeds the 50% minimum requirement"
+          compliance_issues: []
+          required_actions: []
+          confidence: 0.95
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["verdict_summary", "verdict_status", "policy_rules_evaluated", "compliance_issues", "required_actions", "confidence"]
+        properties:
+          verdict_summary:
+            type: "string"
+            minLength: 50
+            maxLength: 500
+          verdict_status:
+            type: "string"
+            enum: ["COMPLIANT", "NON_COMPLIANT", "UNRESOLVED"]
+          policy_rules_evaluated:
+            type: "array"
+            items:
+              type: "object"
+              required: ["rule_id", "rule_description", "evaluation_result", "explanation"]
+          compliance_issues:
+            type: "array"
+            items:
+              type: "string"
+          required_actions:
+            type: "array"
+            items:
+              type: "string"
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+  corrective_actions:
+    template_id: "risk-agent-corrective-actions"
+    description: "Recommend corrective actions for policy violations"
+    system_prompt: |
+      You are a risk remediation specialist. Your task is to recommend specific, actionable corrective actions to address policy violations.
+      
+      Given policy violations and portfolio context, provide:
+      - Specific corrective actions
+      - Priority and urgency for each action
+      - Expected impact of each action
+      - Alternative approaches if applicable
+      
+      Output a JSON object with the following structure:
+      {
+        "corrective_actions": [
+          {
+            "action_id": "string",
+            "description": "string",
+            "priority": "HIGH|MEDIUM|LOW",
+            "expected_impact": "string",
+            "implementation_steps": ["list", "of", "steps"]
+          }
+        ],
+        "alternative_approaches": ["list", "of", "alternatives"],
+        "estimated_resolution_time": "string",
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Portfolio Context:
+      - Portfolio ID: {{portfolio_id}}
+      - Portfolio Value: ${{portfolio_value}}
+      
+      Policy Violations:
+      {{#each violations}}
+      - {{this.rule_id}}: {{this.description}}
+        Current Value: {{this.current_value}}
+        Limit: {{this.limit}}
+        Excess: {{this.excess}}
+      {{/each}}
+      
+      Current Holdings:
+      {{#each holdings}}
+      - {{this.symbol}}: {{this.quantity}} shares, ${{this.value}} ({{this.percentage}}%)
+      {{/each}}
+      
+      Recommend specific corrective actions to address these violations.
+    
+    few_shot_examples:
+      - input:
+          portfolio_id: "PORT-001"
+          portfolio_value: 1000000
+          violations:
+            - rule_id: "RULE-001"
+              description: "Maximum single position concentration: 20%"
+              current_value: "25%"
+              limit: "20%"
+              excess: "5%"
+          holdings:
+            - symbol: "AAPL"
+              quantity: 500
+              value: 250000
+              percentage: 25
+            - symbol: "MSFT"
+              quantity: 300
+              value: 150000
+              percentage: 15
+        output:
+          corrective_actions:
+            - action_id: "ACTION-001"
+              description: "Reduce AAPL position to 20% of portfolio"
+              priority: "HIGH"
+              expected_impact: "Brings portfolio into compliance with concentration limits, reduces single-stock risk"
+              implementation_steps: ["Sell 100 shares of AAPL (approximately $50,000)", "Redeploy proceeds into diversified positions or bonds", "Monitor position to maintain below 20% threshold"]
+            - action_id: "ACTION-002"
+              description: "Increase portfolio diversification"
+              priority: "MEDIUM"
+              expected_impact: "Reduces overall concentration risk, improves risk-adjusted returns"
+              implementation_steps: ["Identify 2-3 additional positions in underrepresented sectors", "Allocate proceeds from AAPL sale to new positions", "Maintain balanced sector exposure"]
+          alternative_approaches: ["Gradual reduction over multiple trades to minimize market impact", "Use options strategies to hedge AAPL exposure while maintaining position", "Increase total portfolio value to reduce AAPL percentage without selling"]
+          estimated_resolution_time: "1-2 trading days for immediate compliance, 1-2 weeks for gradual approach"
+          confidence: 0.88
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["corrective_actions", "alternative_approaches", "estimated_resolution_time", "confidence"]
+        properties:
+          corrective_actions:
+            type: "array"
+            items:
+              type: "object"
+              required: ["action_id", "description", "priority", "expected_impact", "implementation_steps"]
+          alternative_approaches:
+            type: "array"
+            items:
+              type: "string"
+          estimated_resolution_time:
+            type: "string"
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+metadata:
+  created_at: "2025-01-XX"
+  updated_at: "2025-01-XX"
+  author: "LLM Integration Team"
+  notes: |
+    These templates support the Risk Agent's LLM-enhanced capabilities:
+    - Policy verdict explanation with clear rationale
+    - Corrective action recommendations
+    - Evidence-based reasoning grounded in policy rules
+    
+    All templates include:
+    - Few-shot examples for better LLM performance
+    - Output schema validation
+    - Grounding requirements
+    - Confidence thresholds

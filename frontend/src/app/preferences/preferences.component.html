@@ -1,0 +1,302 @@
+<div class="preferences-container">
+  <div class="preferences-header">
+    <h1>Investment Preferences</h1>
+    <p class="subtitle">Customize your portfolio strategy and risk tolerance</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">Loading preferences...</div>
+  } @else if (error()) {
+    <div class="error-message">{{ error() }}</div>
+  } @else {
+    <!-- Progress Indicator -->
+    <div class="progress-steps">
+      <div class="step" [class.active]="currentStep() === 'risk'" [class.completed]="currentStep() !== 'risk'">
+        <div class="step-number">1</div>
+        <div class="step-label">Risk Profile</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step" [class.active]="currentStep() === 'allocation'" [class.completed]="currentStep() === 'constraints' || currentStep() === 'review'">
+        <div class="step-number">2</div>
+        <div class="step-label">Allocation</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step" [class.active]="currentStep() === 'constraints'" [class.completed]="currentStep() === 'review'">
+        <div class="step-number">3</div>
+        <div class="step-label">Constraints</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step" [class.active]="currentStep() === 'review'">
+        <div class="step-number">4</div>
+        <div class="step-label">Review</div>
+      </div>
+    </div>
+
+    <!-- Step 1: Risk Profile -->
+    @if (currentStep() === 'risk') {
+      <div class="step-content">
+        <h2>Risk Profile</h2>
+        <p class="step-description">Define your risk tolerance and investment constraints</p>
+
+        <form [formGroup]="riskForm">
+          <div class="form-group">
+            <label>Risk Level</label>
+            <div class="risk-level-options">
+              @for (option of riskLevelOptions; track option.value) {
+                <label class="radio-card">
+                  <input type="radio" formControlName="riskLevel" [value]="option.value" />
+                  <div class="radio-card-content">
+                    <div class="radio-card-title">{{ option.label }}</div>
+                    <div class="radio-card-description">{{ option.description }}</div>
+                  </div>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="maxSinglePosition">Max Single Position (%)</label>
+              <input
+                id="maxSinglePosition"
+                type="number"
+                formControlName="maxSinglePositionPct"
+                min="1"
+                max="100"
+                class="form-control"
+              />
+              <small class="form-hint">Maximum percentage of portfolio in a single stock</small>
+            </div>
+
+            <div class="form-group">
+              <label for="maxSector">Max Sector Concentration (%)</label>
+              <input
+                id="maxSector"
+                type="number"
+                formControlName="maxSectorPct"
+                min="1"
+                max="100"
+                class="form-control"
+              />
+              <small class="form-hint">Maximum percentage of portfolio in a single sector</small>
+            </div>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Step 2: Allocation Target -->
+    @if (currentStep() === 'allocation') {
+      <div class="step-content">
+        <h2>Asset Allocation</h2>
+        <p class="step-description">Set your target asset allocation and rebalancing thresholds</p>
+
+        <div class="allocation-presets">
+          <label>Quick Presets:</label>
+          <div class="preset-buttons">
+            @for (preset of allocationPresets; track preset.name) {
+              <button type="button" class="btn-preset" (click)="applyAllocationPreset(preset)">
+                {{ preset.name }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <form [formGroup]="allocationForm">
+          <div class="allocation-grid">
+            <div class="allocation-item">
+              <label for="equityTarget">Equity (%)</label>
+              <input
+                id="equityTarget"
+                type="number"
+                formControlName="equityTarget"
+                min="0"
+                max="100"
+                class="form-control"
+              />
+              <label for="equityTolerance">Tolerance (±%)</label>
+              <input
+                id="equityTolerance"
+                type="number"
+                formControlName="equityTolerance"
+                min="0"
+                max="20"
+                class="form-control-small"
+              />
+            </div>
+
+            <div class="allocation-item">
+              <label for="fixedIncomeTarget">Fixed Income (%)</label>
+              <input
+                id="fixedIncomeTarget"
+                type="number"
+                formControlName="fixedIncomeTarget"
+                min="0"
+                max="100"
+                class="form-control"
+              />
+              <label for="fixedIncomeTolerance">Tolerance (±%)</label>
+              <input
+                id="fixedIncomeTolerance"
+                type="number"
+                formControlName="fixedIncomeTolerance"
+                min="0"
+                max="20"
+                class="form-control-small"
+              />
+            </div>
+
+            <div class="allocation-item">
+              <label for="cashTarget">Cash (%)</label>
+              <input
+                id="cashTarget"
+                type="number"
+                formControlName="cashTarget"
+                min="0"
+                max="100"
+                class="form-control"
+              />
+              <label for="cashTolerance">Tolerance (±%)</label>
+              <input
+                id="cashTolerance"
+                type="number"
+                formControlName="cashTolerance"
+                min="0"
+                max="20"
+                class="form-control-small"
+              />
+            </div>
+          </div>
+
+          <div class="allocation-total" [class.invalid]="!allocationValid()">
+            <strong>Total:</strong> {{ allocationTotal() }}%
+            @if (!allocationValid()) {
+              <span class="error-text">(Must equal 100%)</span>
+            }
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Step 3: Constraints -->
+    @if (currentStep() === 'constraints') {
+      <div class="step-content">
+        <h2>Investment Constraints</h2>
+        <p class="step-description">Specify any special requirements or preferences</p>
+
+        <form [formGroup]="constraintsForm">
+          <div class="form-group">
+            <label for="taxStrategy">Tax Strategy</label>
+            <select id="taxStrategy" formControlName="taxStrategy" class="form-control">
+              @for (option of taxStrategyOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="esgPreference">ESG Preference</label>
+            <select id="esgPreference" formControlName="esgPreference" class="form-control">
+              @for (option of esgOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="dividendPreference">Dividend Preference</label>
+            <select id="dividendPreference" formControlName="dividendPreference" class="form-control">
+              @for (option of dividendOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Step 4: Review -->
+    @if (currentStep() === 'review') {
+      <div class="step-content">
+        <h2>Review Your Preferences</h2>
+        <p class="step-description">Please review your selections before saving</p>
+
+        <div class="review-section">
+          <h3>Risk Profile</h3>
+          <div class="review-item">
+            <span class="review-label">Risk Level:</span>
+            <span class="review-value">{{ riskForm.value.riskLevel }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">Max Single Position:</span>
+            <span class="review-value">{{ riskForm.value.maxSinglePositionPct }}%</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">Max Sector Concentration:</span>
+            <span class="review-value">{{ riskForm.value.maxSectorPct }}%</span>
+          </div>
+        </div>
+
+        <div class="review-section">
+          <h3>Asset Allocation</h3>
+          <div class="review-item">
+            <span class="review-label">Equity:</span>
+            <span class="review-value">{{ allocationForm.value.equityTarget }}% (±{{ allocationForm.value.equityTolerance }}%)</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">Fixed Income:</span>
+            <span class="review-value">{{ allocationForm.value.fixedIncomeTarget }}% (±{{ allocationForm.value.fixedIncomeTolerance }}%)</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">Cash:</span>
+            <span class="review-value">{{ allocationForm.value.cashTarget }}% (±{{ allocationForm.value.cashTolerance }}%)</span>
+          </div>
+        </div>
+
+        <div class="review-section">
+          <h3>Constraints</h3>
+          <div class="review-item">
+            <span class="review-label">Tax Strategy:</span>
+            <span class="review-value">{{ constraintsForm.value.taxStrategy }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">ESG Preference:</span>
+            <span class="review-value">{{ constraintsForm.value.esgPreference }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">Dividend Preference:</span>
+            <span class="review-value">{{ constraintsForm.value.dividendPreference }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Navigation Buttons -->
+    <div class="step-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">
+        Cancel
+      </button>
+      
+      @if (currentStep() !== 'risk') {
+        <button type="button" class="btn btn-secondary" (click)="previousStep()">
+          Previous
+        </button>
+      }
+
+      @if (currentStep() !== 'review') {
+        <button type="button" class="btn btn-primary" (click)="nextStep()">
+          Next
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="savePreferences()"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Saving...' : 'Save Preferences' }}
+        </button>
+      }
+    </div>
+  }
+</div>

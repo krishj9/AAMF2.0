@@ -1,0 +1,300 @@
+version: "1.0.0"
+agent: "memory-agent"
+templates:
+  semantic_query:
+    template_id: "memory-agent-semantic-query"
+    description: "Generate semantic query for memory retrieval based on client context"
+    system_prompt: |
+      You are a memory retrieval specialist for a portfolio management system. Your task is to generate semantic queries that will retrieve relevant historical context about a client's investment preferences, risk tolerance, and past decisions.
+      
+      Given a client profile and current rebalancing request, generate a semantic query that captures the key concepts and themes that would help retrieve relevant memories.
+      
+      Focus on:
+      - Investment preferences and constraints
+      - Risk tolerance and past reactions to volatility
+      - Sector preferences or restrictions
+      - Past rebalancing decisions and rationale
+      - Client-specific goals and concerns
+      
+      Output a JSON object with the following structure:
+      {
+        "semantic_query": "string - the semantic query for vector search",
+        "keywords": ["list", "of", "keywords"],
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Client Profile:
+      - Client ID: {{client_id}}
+      - Risk Tolerance: {{risk_tolerance}}
+      - Investment Horizon: {{investment_horizon}}
+      - Constraints: {{constraints}}
+      
+      Current Request:
+      - Portfolio ID: {{portfolio_id}}
+      - Trigger: {{trigger_type}}
+      - Context: {{request_context}}
+      
+      Generate a semantic query to retrieve relevant memories for this rebalancing request.
+    
+    few_shot_examples:
+      - input:
+          client_id: "CLIENT-001"
+          risk_tolerance: "MODERATE"
+          investment_horizon: "LONG_TERM"
+          constraints: "ESG_FOCUSED"
+          portfolio_id: "PORT-001"
+          trigger_type: "DRIFT"
+          request_context: "Portfolio has drifted 8% from target allocation"
+        output:
+          semantic_query: "ESG investment preferences moderate risk long-term allocation drift rebalancing decisions"
+          keywords: ["ESG", "moderate risk", "drift", "allocation", "rebalancing"]
+          confidence: 0.95
+      
+      - input:
+          client_id: "CLIENT-002"
+          risk_tolerance: "CONSERVATIVE"
+          investment_horizon: "SHORT_TERM"
+          constraints: "NO_TECH_STOCKS"
+          portfolio_id: "PORT-002"
+          trigger_type: "MARKET_EVENT"
+          request_context: "Market volatility triggered review"
+        output:
+          semantic_query: "conservative risk short-term no technology stocks market volatility reactions past decisions"
+          keywords: ["conservative", "short-term", "no tech", "volatility", "market events"]
+          confidence: 0.92
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["semantic_query", "keywords", "confidence"]
+        properties:
+          semantic_query:
+            type: "string"
+            minLength: 10
+            maxLength: 500
+          keywords:
+            type: "array"
+            items:
+              type: "string"
+            minItems: 1
+            maxItems: 20
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+  memory_synthesis:
+    template_id: "memory-agent-memory-synthesis"
+    description: "Synthesize retrieved memory items into coherent context"
+    system_prompt: |
+      You are a memory synthesis specialist for a portfolio management system. Your task is to synthesize multiple memory items into a coherent summary that provides relevant context for the current rebalancing decision.
+      
+      Given a list of retrieved memory items, synthesize them into a structured summary that highlights:
+      - Key investment preferences and constraints
+      - Historical risk tolerance and reactions
+      - Past rebalancing decisions and outcomes
+      - Relevant patterns or trends
+      - Any conflicts or changes in preferences over time
+      
+      Output a JSON object with the following structure:
+      {
+        "summary": "string - coherent synthesis of memories",
+        "key_preferences": ["list", "of", "preferences"],
+        "historical_patterns": ["list", "of", "patterns"],
+        "relevant_decisions": [
+          {
+            "date": "ISO date",
+            "decision": "string",
+            "outcome": "string"
+          }
+        ],
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Retrieved Memory Items:
+      {{#each memory_items}}
+      - Date: {{this.timestamp}}
+        Type: {{this.memory_type}}
+        Content: {{this.content}}
+        Relevance: {{this.relevance_score}}
+      {{/each}}
+      
+      Current Context:
+      - Client ID: {{client_id}}
+      - Portfolio ID: {{portfolio_id}}
+      - Request Type: {{trigger_type}}
+      
+      Synthesize these memories into a coherent summary for the current rebalancing decision.
+    
+    few_shot_examples:
+      - input:
+          memory_items:
+            - timestamp: "2024-01-15T10:00:00Z"
+              memory_type: "PREFERENCE"
+              content: "Client prefers ESG-focused investments, particularly renewable energy"
+              relevance_score: 0.95
+            - timestamp: "2024-02-20T14:30:00Z"
+              memory_type: "DECISION"
+              content: "Approved rebalancing to increase clean energy allocation by 5%"
+              relevance_score: 0.88
+            - timestamp: "2024-03-10T09:15:00Z"
+              memory_type: "REACTION"
+              content: "Client expressed satisfaction with ESG portfolio performance"
+              relevance_score: 0.82
+          client_id: "CLIENT-001"
+          portfolio_id: "PORT-001"
+          trigger_type: "DRIFT"
+        output:
+          summary: "Client has consistently demonstrated strong preference for ESG investments, particularly renewable energy. Past rebalancing decisions show willingness to increase clean energy allocation. Client has expressed satisfaction with ESG portfolio performance."
+          key_preferences: ["ESG investments", "renewable energy focus", "clean energy allocation"]
+          historical_patterns: ["Consistent ESG preference", "Positive reaction to clean energy performance"]
+          relevant_decisions:
+            - date: "2024-02-20"
+              decision: "Increased clean energy allocation by 5%"
+              outcome: "Client satisfaction"
+          confidence: 0.90
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["summary", "key_preferences", "historical_patterns", "relevant_decisions", "confidence"]
+        properties:
+          summary:
+            type: "string"
+            minLength: 50
+            maxLength: 2000
+          key_preferences:
+            type: "array"
+            items:
+              type: "string"
+          historical_patterns:
+            type: "array"
+            items:
+              type: "string"
+          relevant_decisions:
+            type: "array"
+            items:
+              type: "object"
+              required: ["date", "decision", "outcome"]
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+  conflict_detection:
+    template_id: "memory-agent-conflict-detection"
+    description: "Detect conflicts or inconsistencies in memory items"
+    system_prompt: |
+      You are a conflict detection specialist for a portfolio management system. Your task is to identify conflicts or inconsistencies in retrieved memory items that might indicate changes in client preferences or contradictory information.
+      
+      Given a list of memory items, identify:
+      - Contradictory preferences or constraints
+      - Changes in risk tolerance over time
+      - Inconsistent reactions to similar events
+      - Conflicting investment goals
+      
+      Output a JSON object with the following structure:
+      {
+        "conflicts_detected": true/false,
+        "conflicts": [
+          {
+            "type": "string - type of conflict",
+            "description": "string - description of conflict",
+            "memory_ids": ["list", "of", "conflicting", "memory", "ids"],
+            "severity": "LOW|MEDIUM|HIGH",
+            "recommendation": "string - how to resolve"
+          }
+        ],
+        "confidence": 0.0-1.0
+      }
+    
+    user_prompt: |
+      Memory Items to Analyze:
+      {{#each memory_items}}
+      - ID: {{this.memory_id}}
+        Date: {{this.timestamp}}
+        Type: {{this.memory_type}}
+        Content: {{this.content}}
+      {{/each}}
+      
+      Analyze these memories for conflicts or inconsistencies.
+    
+    few_shot_examples:
+      - input:
+          memory_items:
+            - memory_id: "MEM-001"
+              timestamp: "2024-01-15T10:00:00Z"
+              memory_type: "PREFERENCE"
+              content: "Client prefers aggressive growth strategy"
+            - memory_id: "MEM-002"
+              timestamp: "2024-03-20T14:30:00Z"
+              memory_type: "PREFERENCE"
+              content: "Client requested conservative allocation due to market volatility"
+        output:
+          conflicts_detected: true
+          conflicts:
+            - type: "RISK_TOLERANCE_CHANGE"
+              description: "Client's risk tolerance appears to have changed from aggressive to conservative over 2 months"
+              memory_ids: ["MEM-001", "MEM-002"]
+              severity: "MEDIUM"
+              recommendation: "Confirm current risk tolerance with client before proceeding"
+          confidence: 0.88
+      
+      - input:
+          memory_items:
+            - memory_id: "MEM-003"
+              timestamp: "2024-01-15T10:00:00Z"
+              memory_type: "PREFERENCE"
+              content: "Client prefers ESG investments"
+            - memory_id: "MEM-004"
+              timestamp: "2024-02-20T14:30:00Z"
+              memory_type: "DECISION"
+              content: "Approved ESG-focused rebalancing"
+        output:
+          conflicts_detected: false
+          conflicts: []
+          confidence: 0.95
+    
+    validation:
+      output_schema:
+        type: "object"
+        required: ["conflicts_detected", "conflicts", "confidence"]
+        properties:
+          conflicts_detected:
+            type: "boolean"
+          conflicts:
+            type: "array"
+            items:
+              type: "object"
+              required: ["type", "description", "memory_ids", "severity", "recommendation"]
+          confidence:
+            type: "number"
+            minimum: 0.0
+            maximum: 1.0
+      
+      grounding_required: true
+      confidence_threshold: 0.7
+
+metadata:
+  created_at: "2025-01-XX"
+  updated_at: "2025-01-XX"
+  author: "LLM Integration Team"
+  notes: |
+    These templates support the Memory Agent's LLM-enhanced capabilities:
+    - Semantic query generation for better memory retrieval
+    - Memory synthesis for coherent context
+    - Conflict detection for identifying inconsistencies
+    
+    All templates include:
+    - Few-shot examples for better LLM performance
+    - Output schema validation
+    - Grounding requirements
+    - Confidence thresholds
