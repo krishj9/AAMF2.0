@@ -44,6 +44,33 @@ data "aws_iam_policy_document" "backend_dynamodb" {
   }
 }
 
+data "aws_iam_policy_document" "backend_bedrock" {
+  statement {
+    actions = [
+      "bedrock:InvokeModel",
+      "bedrock:InvokeModelWithResponseStream",
+    ]
+    resources = ["*"]
+  }
+}
+
+data "aws_iam_policy_document" "backend_combined" {
+  source_policy_documents = [
+    data.aws_iam_policy_document.backend_dynamodb.json,
+    data.aws_iam_policy_document.backend_bedrock.json,
+  ]
+}
+
+data "aws_iam_policy_document" "agent_bedrock" {
+  statement {
+    actions = [
+      "bedrock:InvokeModel",
+      "bedrock:InvokeModelWithResponseStream",
+    ]
+    resources = ["*"]
+  }
+}
+
 resource "aws_dynamodb_table" "approvals" {
   name         = local.dynamodb_tables.approvals
   billing_mode = "PAY_PER_REQUEST"
@@ -195,27 +222,34 @@ module "backend_lambda" {
   runtime         = var.lambda_runtime
   timeout_seconds = 30
   memory_mb       = 512
-  policy_json     = data.aws_iam_policy_document.backend_dynamodb.json
+  policy_json     = data.aws_iam_policy_document.backend_combined.json
   attach_policy   = true
   tags            = local.tags
 
   environment_variables = {
-    APP_NAME                      = "Asset Management API"
-    ENVIRONMENT                   = var.environment
-    DYNAMODB_MODE                 = "aws"
-    DYNAMODB_ENDPOINT_URL         = ""
-    APPROVALS_TABLE_NAME          = aws_dynamodb_table.approvals.name
-    AUDIT_EVENTS_TABLE_NAME       = aws_dynamodb_table.audit_events.name
-    PORTFOLIOS_TABLE_NAME         = aws_dynamodb_table.portfolios.name
-    SESSIONS_TABLE_NAME           = aws_dynamodb_table.sessions.name
-    MEMORY_QUEUE_TABLE_NAME       = aws_dynamodb_table.memory_queue.name
-    PREFERENCES_TABLE_NAME        = aws_dynamodb_table.preferences.name
-    RESEARCH_AGENT_REMOTE_ENABLED = "true"
-    RESEARCH_AGENT_URL            = "${module.http_api.api_endpoint}/a2a/research"
-    SENTIMENT_MCP_ENABLED         = "true"
-    SENTIMENT_MCP_URL             = "${module.http_api.api_endpoint}/mcp"
-    MARKET_STREAM_MAX_EVENTS      = "20"
-    SEED_DEFAULT_PORTFOLIOS       = "true"
+    APP_NAME                              = "Asset Management API"
+    ENVIRONMENT                           = var.environment
+    DYNAMODB_MODE                         = "aws"
+    DYNAMODB_ENDPOINT_URL                 = ""
+    APPROVALS_TABLE_NAME                  = aws_dynamodb_table.approvals.name
+    AUDIT_EVENTS_TABLE_NAME               = aws_dynamodb_table.audit_events.name
+    PORTFOLIOS_TABLE_NAME                 = aws_dynamodb_table.portfolios.name
+    SESSIONS_TABLE_NAME                   = aws_dynamodb_table.sessions.name
+    MEMORY_QUEUE_TABLE_NAME               = aws_dynamodb_table.memory_queue.name
+    PREFERENCES_TABLE_NAME                = aws_dynamodb_table.preferences.name
+    RESEARCH_AGENT_REMOTE_ENABLED         = "true"
+    RESEARCH_AGENT_URL                    = "${module.http_api.api_endpoint}/a2a/research"
+    SENTIMENT_MCP_ENABLED                 = "true"
+    SENTIMENT_MCP_URL                     = "${module.http_api.api_endpoint}/mcp"
+    MARKET_STREAM_MAX_EVENTS              = "20"
+    SEED_DEFAULT_PORTFOLIOS               = "true"
+    FEATURE_MEMORY_AGENT_LLM_ENABLED      = "true"
+    FEATURE_RESEARCH_AGENT_LLM_ENABLED    = "true"
+    FEATURE_SENTIMENT_AGENT_LLM_ENABLED   = "true"
+    FEATURE_REBALANCING_AGENT_LLM_ENABLED = "true"
+    FEATURE_RISK_AGENT_LLM_ENABLED        = "true"
+    FEATURE_TRADE_PROPOSAL_AGENT_LLM_ENABLED = "true"
+    FEATURE_FALLBACK_ON_LLM_FAILURE       = "true"
   }
 }
 
@@ -229,11 +263,14 @@ module "research_agent_lambda" {
   runtime         = var.lambda_runtime
   timeout_seconds = 15
   memory_mb       = 256
+  policy_json     = data.aws_iam_policy_document.agent_bedrock.json
+  attach_policy   = true
   tags            = local.tags
 
   environment_variables = {
-    ENVIRONMENT       = var.environment
-    SENTIMENT_MCP_URL = "${module.http_api.api_endpoint}/mcp"
+    ENVIRONMENT                        = var.environment
+    SENTIMENT_MCP_URL                  = "${module.http_api.api_endpoint}/mcp"
+    FEATURE_RESEARCH_AGENT_LLM_ENABLED = "true"
   }
 }
 
@@ -247,7 +284,14 @@ module "sentiment_mcp_lambda" {
   runtime         = var.lambda_runtime
   timeout_seconds = 15
   memory_mb       = 256
+  policy_json     = data.aws_iam_policy_document.agent_bedrock.json
+  attach_policy   = true
   tags            = local.tags
+
+  environment_variables = {
+    ENVIRONMENT                         = var.environment
+    FEATURE_SENTIMENT_AGENT_LLM_ENABLED = "true"
+  }
 }
 
 module "http_api" {

@@ -69,12 +69,21 @@ export class App implements OnDestroy {
   protected reviewHeadline(response: OrchestrationResponse): string {
     const trades = response.recommendation_package?.proposal?.trades ?? [];
     const status = response.approval_artifact?.approval_status ?? 'PENDING';
+    const state = response.workflow_state;
+    const verdict = response.recommendation_package?.risk_policy?.verdict;
+    
     if (status === 'APPROVED') {
       return 'Recommendation approved and applied';
     }
     if (status === 'REJECTED') {
       return 'Recommendation rejected';
     }
+    
+    // Check for policy block
+    if (state === 'BLOCKED' || verdict === 'NON_COMPLIANT') {
+      return 'Recommendation blocked by policy checks';
+    }
+    
     if (trades.length > 0) {
       return `Rebalance required - ${trades.length} trade${trades.length === 1 ? '' : 's'} ready`;
     }
@@ -89,6 +98,18 @@ export class App implements OnDestroy {
 
     const trades = response.recommendation_package?.proposal?.trades ?? [];
     return trades.length > 0;
+  }
+  
+  protected isBlockedByPolicy(response: OrchestrationResponse): boolean {
+    const status = response.approval_artifact?.approval_status;
+    if (status !== 'PENDING') {
+      return false;
+    }
+    
+    const state = response.workflow_state;
+    const verdict = response.recommendation_package?.risk_policy?.verdict;
+    
+    return state === 'BLOCKED' || verdict === 'NON_COMPLIANT';
   }
   protected readonly showAgentStages = signal(false);
 
@@ -127,12 +148,18 @@ export class App implements OnDestroy {
   });
 
   constructor() {
-    // Listen to router events to toggle main content visibility
+    // Listen to router events to toggle main content visibility and reload preferences
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event) => {
         const navEvent = event as NavigationEnd;
-        this.showMainContent.set(navEvent.url === '/' || navEvent.url === '');
+        const isMainPage = navEvent.url === '/' || navEvent.url === '';
+        this.showMainContent.set(isMainPage);
+        
+        // Reload preferences when returning to main page
+        if (isMainPage && this.selectedPortfolio()) {
+          this.loadPreferencesForPortfolio(this.selectedPortfolio()!.client_profile.client_id);
+        }
       });
 
     this.healthService.getHealth().subscribe({
@@ -262,6 +289,29 @@ export class App implements OnDestroy {
           }
         },
         error: () => this.approvalMessage.set('Rejection action failed.')
+      });
+  }
+
+  protected acknowledgeBlockedRecommendation() {
+    const approval = this.recommendation()?.approval_artifact;
+    if (!approval) {
+      return;
+    }
+    // Acknowledge by rejecting with a specific message
+    this.rebalanceService
+      .reject(approval.approval_id, approval.recommendation_hash, 'Acknowledged policy block from local UI.')
+      .subscribe({
+        next: (result) => {
+          this.approvalMessage.set(`${result.message} Policy block acknowledged. You may adjust preferences or portfolio to resolve the issue.`);
+          this.setAccountBalanced(this.selectedAccountId(), false);
+          this.updateApprovalStatus(result.next_status);
+          this.recommendation.set(null); // Clear the blocked recommendation
+          const event = this.marketEvent();
+          if (event) {
+            this.syncFormToMarket(event);
+          }
+        },
+        error: () => this.approvalMessage.set('Acknowledgment action failed.')
       });
   }
 
@@ -481,17 +531,39 @@ export class App implements OnDestroy {
   }
 
   private loadPreferencesForPortfolio(clientId: string) {
+    console.log('Loading preferences for client:', clientId);
     this.preferenceService.getPreferences(clientId).subscribe({
       next: (preferences) => {
+        console.log('Loaded preferences:', preferences);
+        
         // Update target allocation fields with saved preferences
+        const equityTarget = Number(preferences.allocation_target.asset_class_targets['equity']);
+        const fixedIncomeTarget = Number(preferences.allocation_target.asset_class_targets['fixed_income']);
+        const cashTarget = Number(preferences.allocation_target.asset_class_targets['cash']);
+        
+        console.log('Updating form with targets:', { equityTarget, fixedIncomeTarget, cashTarget });
+        
         this.form.patchValue(
           {
-            targetEquityPct: Number(preferences.allocation_target.asset_class_targets['equity']),
-            targetFixedIncomePct: Number(preferences.allocation_target.asset_class_targets['fixed_income']),
-            targetCashPct: Number(preferences.allocation_target.asset_class_targets['cash'])
+            targetEquityPct: equityTarget,
+            targetFixedIncomePct: fixedIncomeTarget,
+            targetCashPct: cashTarget
           },
           { emitEvent: false }
         );
+        
+        console.log('Form values after patch:', this.form.value);
+        
+        // Reload portfolios to get updated risk profile
+        this.portfolioService.list().subscribe({
+          next: (portfolios) => {
+            console.log('Reloaded portfolios:', portfolios);
+            this.portfolios.set(portfolios);
+          },
+          error: (err) => {
+            console.warn('Could not reload portfolios:', err);
+          }
+        });
       },
       error: (err) => {
         console.warn('Could not load preferences for client:', clientId, err);
@@ -515,6 +587,8 @@ export class App implements OnDestroy {
     const fixedIncomePct = Number(event.monitoring.current_allocation['fixed_income'] ?? 0);
     const cashPct = Number(event.monitoring.current_allocation['cash'] ?? 0);
 
+    console.log('Syncing form to market event. Current allocation:', { equityPct, fixedIncomePct, cashPct });
+
     this.form.patchValue(
       {
         equityValue: this.toCurrencyValue(portfolioValue, equityPct),
@@ -523,6 +597,8 @@ export class App implements OnDestroy {
       },
       { emitEvent: false }
     );
+    
+    console.log('Form values after sync (only position values should change, not targets):', this.form.value);
   }
 
   private toCurrencyValue(totalValue: number, percent: number) {

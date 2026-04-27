@@ -1,16 +1,17 @@
-// Dracula Theme Colors
-$dracula-background: #282a36;
-$dracula-current-line: #44475a;
-$dracula-foreground: #f8f8f2;
-$dracula-comment: #6272a4;
-$dracula-cyan: #8be9fd;
-$dracula-green: #50fa7b;
-$dracula-orange: #ffb86c;
-$dracula-pink: #ff79c6;
-$dracula-purple: #bd93f9;
-$dracula-red: #ff5555;
-$dracula-yellow: #f1fa8c;
-$dracula-rose: #fb7185;
+// Professional Theme Colors - Subdued & Corporate
+$color-bg-primary: #0f1419;
+$color-bg-secondary: #1a1f2e;
+$color-bg-tertiary: #252b3b;
+$color-border: #2d3548;
+$color-text-primary: #e4e7eb;
+$color-text-secondary: #9ca3af;
+$color-text-muted: #6b7280;
+$color-accent: #3b82f6;
+$color-accent-hover: #2563eb;
+$color-success: #10b981;
+$color-warning: #f59e0b;
+$color-danger: #ef4444;
+$color-info: #06b6d4;
 
 .preferences-container {
   max-width: 900px;
@@ -26,14 +27,13 @@ $dracula-rose: #fb7185;
   h1 {
     font-size: 2rem;
     font-weight: 600;
-    color: $dracula-purple;
+    color: $color-text-primary;
     margin-bottom: 0.5rem;
-    text-shadow: 0 0 20px rgba($dracula-purple, 0.3);
   }
 
   .subtitle {
     font-size: 1rem;
-    color: $dracula-cyan;
+    color: $color-text-secondary;
   }
 }
 
@@ -42,13 +42,13 @@ $dracula-rose: #fb7185;
   text-align: center;
   padding: 2rem;
   font-size: 1.1rem;
-  color: $dracula-foreground;
+  color: $color-text-primary;
 }
 
 .error-message {
-  color: $dracula-foreground;
-  background: rgba($dracula-red, 0.2);
-  border: 1px solid $dracula-red;
+  color: white;
+  background: rgba($color-danger, 0.2);
+  border: 1px solid $color-danger;
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -73,8 +73,8 @@ $dracula-rose: #fb7185;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: $dracula-current-line;
-    color: $dracula-comment;
+    background: $color-bg-tertiary;
+    color: $color-text-muted;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -85,31 +85,30 @@ $dracula-rose: #fb7185;
 
   .step-label {
     font-size: 0.875rem;
-    color: $dracula-comment;
+    color: $color-text-muted;
     transition: color 0.3s ease;
   }
 
   &.active {
     .step-number {
-      background: $dracula-purple;
-      color: $dracula-background;
-      box-shadow: 0 0 15px rgba($dracula-purple, 0.5);
+      background: $color-accent;
+      color: white;
     }
 
     .step-label {
-      color: $dracula-purple;
+      color: $color-accent;
       font-weight: 600;
     }
   }
 
   &.completed {
     .step-number {
-      background: $dracula-green;
-      color: $dracula-background;
+      background: $color-success;
+      color: white;
     }
 
     .step-label {
-      color: $dracula-green;
+      color: $color-success;
     }
   }
 }
@@ -117,16 +116,16 @@ $dracula-rose: #fb7185;
 .step-connector {
   flex: 1;
   height: 2px;
-  background: $dracula-current-line;
+  background: $color-border;
   margin: 0 1rem;
   margin-bottom: 2rem;
 }
 
 // Step Content
 .step-content {
-  background: rgba($dracula-current-line, 0.3);
-  border: 1px solid $dracula-current-line;
-  border-radius: 12px;
+  background: $color-bg-secondary;
+  border: 1px solid $color-border;
+  border-radius: 8px;
   padding: 2.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   margin-bottom: 2rem;
@@ -134,12 +133,12 @@ $dracula-rose: #fb7185;
   h2 {
     font-size: 1.75rem;
     font-weight: 600;
-    color: $dracula-purple;
+    color: $color-text-primary;
     margin-bottom: 0.5rem;
   }
 
   .step-description {
-    color: $dracula-cyan;
+    color: $color-text-secondary;
     font-size: 1rem;
     margin-bottom: 2rem;
   }
@@ -153,52 +152,52 @@ $dracula-rose: #fb7185;
     display: block;
     font-weight: 600;
     font-size: 0.95rem;
-    color: $dracula-cyan;
+    color: $color-text-secondary;
     margin-bottom: 0.5rem;
   }
 
   .form-control {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid $dracula-current-line;
+    border: 1px solid $color-border;
     border-radius: 6px;
     font-size: 1rem;
-    color: $dracula-foreground;
-    background: rgba($dracula-background, 0.8);
+    color: $color-text-primary;
+    background: $color-bg-tertiary;
     transition: border-color 0.3s ease;
 
     &:focus {
       outline: none;
-      border-color: $dracula-purple;
-      box-shadow: 0 0 0 3px rgba($dracula-purple, 0.2);
+      border-color: $color-accent;
+      box-shadow: 0 0 0 3px rgba($color-accent, 0.1);
     }
 
     &.ng-invalid.ng-touched {
-      border-color: $dracula-red;
+      border-color: $color-danger;
     }
   }
 
   .form-control-small {
     width: 100px;
     padding: 0.5rem;
-    border: 1px solid $dracula-current-line;
+    border: 1px solid $color-border;
     border-radius: 6px;
     font-size: 0.875rem;
-    color: $dracula-foreground;
-    background: rgba($dracula-background, 0.8);
+    color: $color-text-primary;
+    background: $color-bg-tertiary;
     margin-top: 0.5rem;
 
     &:focus {
       outline: none;
-      border-color: $dracula-purple;
-      box-shadow: 0 0 0 3px rgba($dracula-purple, 0.2);
+      border-color: $color-accent;
+      box-shadow: 0 0 0 3px rgba($color-accent, 0.1);
     }
   }
 
   .form-hint {
     display: block;
     font-size: 0.875rem;
-    color: $dracula-comment;
+    color: $color-text-muted;
     margin-top: 0.25rem;
   }
 }
@@ -224,32 +223,31 @@ $dracula-rose: #fb7185;
     display: none;
 
     &:checked + .radio-card-content {
-      border-color: $dracula-purple;
-      background: rgba($dracula-purple, 0.2);
-      box-shadow: 0 0 15px rgba($dracula-purple, 0.3);
+      border-color: $color-accent;
+      background: rgba($color-accent, 0.1);
     }
   }
 
   .radio-card-content {
     padding: 1rem;
-    border: 1px solid $dracula-current-line;
-    border-radius: 8px;
-    background: rgba($dracula-background, 0.6);
+    border: 1px solid $color-border;
+    border-radius: 6px;
+    background: $color-bg-tertiary;
     transition: all 0.3s ease;
 
     &:hover {
-      border-color: $dracula-purple;
+      border-color: $color-accent;
     }
 
     .radio-card-title {
       font-weight: 600;
-      color: $dracula-purple;
+      color: $color-text-primary;
       margin-bottom: 0.25rem;
     }
 
     .radio-card-description {
       font-size: 0.875rem;
-      color: $dracula-foreground;
+      color: $color-text-secondary;
     }
   }
 }
@@ -258,15 +256,15 @@ $dracula-rose: #fb7185;
 .allocation-presets {
   margin-bottom: 2rem;
   padding: 1.25rem;
-  background: rgba($dracula-current-line, 0.3);
-  border: 1px solid $dracula-current-line;
-  border-radius: 8px;
+  background: $color-bg-tertiary;
+  border: 1px solid $color-border;
+  border-radius: 6px;
 
   label {
     display: block;
     font-weight: 600;
     font-size: 0.95rem;
-    color: $dracula-cyan;
+    color: $color-text-secondary;
     margin-bottom: 0.75rem;
   }
 
@@ -278,19 +276,19 @@ $dracula-rose: #fb7185;
 
   .btn-preset {
     padding: 0.625rem 1.25rem;
-    border: 1px solid $dracula-current-line;
-    background: rgba($dracula-background, 0.6);
+    border: 1px solid $color-border;
+    background: $color-bg-secondary;
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.875rem;
     font-weight: 500;
-    color: $dracula-foreground;
+    color: $color-text-primary;
     transition: all 0.3s ease;
 
     &:hover {
-      border-color: $dracula-purple;
-      background: rgba($dracula-purple, 0.2);
-      color: $dracula-purple;
+      border-color: $color-accent;
+      background: rgba($color-accent, 0.1);
+      color: $color-accent;
     }
   }
 }
@@ -308,7 +306,7 @@ $dracula-rose: #fb7185;
     display: block;
     font-weight: 600;
     font-size: 0.95rem;
-    color: $dracula-cyan;
+    color: $color-text-secondary;
     margin-bottom: 0.5rem;
   }
 }
@@ -316,24 +314,24 @@ $dracula-rose: #fb7185;
 .allocation-total {
   text-align: center;
   padding: 1.25rem;
-  background: rgba($dracula-green, 0.2);
-  border: 1px solid $dracula-green;
-  border-radius: 8px;
+  background: rgba($color-success, 0.1);
+  border: 1px solid $color-success;
+  border-radius: 6px;
   font-size: 1.25rem;
   font-weight: 600;
-  color: $dracula-foreground;
+  color: $color-text-primary;
 
   &.invalid {
-    background: rgba($dracula-red, 0.2);
-    border-color: $dracula-red;
+    background: rgba($color-danger, 0.1);
+    border-color: $color-danger;
   }
 
   strong {
-    color: $dracula-green;
+    color: $color-success;
   }
 
   .error-text {
-    color: $dracula-red;
+    color: $color-danger;
     font-weight: 600;
     margin-left: 0.5rem;
   }
@@ -343,14 +341,14 @@ $dracula-rose: #fb7185;
 .review-section {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: rgba($dracula-current-line, 0.3);
-  border: 1px solid $dracula-current-line;
-  border-radius: 8px;
+  background: $color-bg-tertiary;
+  border: 1px solid $color-border;
+  border-radius: 6px;
 
   h3 {
     font-size: 1.125rem;
     font-weight: 600;
-    color: $dracula-purple;
+    color: $color-text-primary;
     margin-bottom: 1rem;
   }
 
@@ -358,7 +356,7 @@ $dracula-rose: #fb7185;
     display: flex;
     justify-content: space-between;
     padding: 0.75rem 0;
-    border-bottom: 1px solid $dracula-current-line;
+    border-bottom: 1px solid $color-border;
 
     &:last-child {
       border-bottom: none;
@@ -366,12 +364,12 @@ $dracula-rose: #fb7185;
 
     .review-label {
       font-weight: 500;
-      color: $dracula-cyan;
+      color: $color-text-secondary;
     }
 
     .review-value {
       font-weight: 600;
-      color: $dracula-foreground;
+      color: $color-text-primary;
     }
   }
 }
@@ -386,11 +384,11 @@ $dracula-rose: #fb7185;
   .btn {
     padding: 0.75rem 2rem;
     border: none;
-    border-radius: 999px;
+    border-radius: 6px;
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 
     &:disabled {
       opacity: 0.5;
@@ -399,23 +397,22 @@ $dracula-rose: #fb7185;
   }
 
   .btn-primary {
-    background: $dracula-green;
-    color: $dracula-background;
+    background: $color-success;
+    color: white;
 
     &:hover:not(:disabled) {
-      background: lighten($dracula-green, 5%);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba($dracula-green, 0.4);
+      background: darken($color-success, 5%);
+      transform: translateY(-1px);
     }
   }
 
   .btn-secondary {
-    background: rgba($dracula-current-line, 0.5);
-    color: $dracula-foreground;
-    border: 1px solid $dracula-current-line;
+    background: $color-bg-tertiary;
+    color: $color-text-primary;
+    border: 1px solid $color-border;
 
     &:hover {
-      background: rgba($dracula-current-line, 0.8);
+      background: $color-bg-secondary;
     }
   }
 }
@@ -449,5 +446,72 @@ $dracula-rose: #fb7185;
     .btn {
       width: 100%;
     }
+  }
+}
+
+// Validation Messages
+.validation-errors {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  background: rgba($color-danger, 0.1);
+  border: 1px solid $color-danger;
+  border-radius: 6px;
+  color: $color-text-primary;
+
+  .error-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .error-content {
+    flex: 1;
+
+    strong {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: $color-danger;
+    }
+
+    ul {
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+      list-style-type: disc;
+
+      li {
+        margin-bottom: 0.25rem;
+        color: $color-text-primary;
+      }
+    }
+
+    .error-hint {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: $color-text-secondary;
+      font-style: italic;
+    }
+  }
+}
+
+.validation-warning {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  background: rgba($color-warning, 0.1);
+  border: 1px solid $color-warning;
+  border-radius: 6px;
+  color: $color-text-primary;
+
+  .warning-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .warning-content {
+    flex: 1;
+    color: $color-text-secondary;
+    font-size: 0.9rem;
   }
 }

@@ -8,18 +8,21 @@ services:
       dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
+    volumes:
+      - ~/.aws:/root/.aws:ro
     environment:
       - DYNAMODB_MODE=local
       - DYNAMODB_ENDPOINT_URL=http://dynamodb:8000
-      - AWS_REGION=us-east-1
+      - AWS_REGION=us-east-2
       - RESEARCH_AGENT_URL=http://research-agent:8101/a2a/research
       - SENTIMENT_MCP_URL=http://sentiment-mcp:8201/mcp
-      - FEATURE_MEMORY_AGENT_LLM_ENABLED=false
-      - FEATURE_RESEARCH_AGENT_LLM_ENABLED=false
-      - FEATURE_SENTIMENT_AGENT_LLM_ENABLED=false
-      - FEATURE_REBALANCING_AGENT_LLM_ENABLED=false
-      - FEATURE_RISK_AGENT_LLM_ENABLED=false
-      - FEATURE_TRADE_PROPOSAL_AGENT_LLM_ENABLED=false
+      - FEATURE_MEMORY_AGENT_LLM_ENABLED=true
+      - FEATURE_RESEARCH_AGENT_LLM_ENABLED=true
+      - FEATURE_SENTIMENT_AGENT_LLM_ENABLED=true
+      - FEATURE_REBALANCING_AGENT_LLM_ENABLED=true
+      - FEATURE_RISK_AGENT_LLM_ENABLED=true
+      - FEATURE_TRADE_PROPOSAL_AGENT_LLM_ENABLED=true
+      - FEATURE_FALLBACK_ON_LLM_FAILURE=true
     depends_on:
       - dynamodb
       - research-agent
@@ -35,9 +38,12 @@ services:
       dockerfile: remote-agents/research-agent/Dockerfile
     ports:
       - "8101:8101"
+    volumes:
+      - ~/.aws:/root/.aws:ro
     environment:
-      - FEATURE_RESEARCH_AGENT_LLM_ENABLED=false
-      - LLM_BEDROCK_REGION=us-east-1
+      - FEATURE_RESEARCH_AGENT_LLM_ENABLED=true
+      - LLM_BEDROCK_REGION=us-east-2
+      - AWS_REGION=us-east-2
     networks:
       - asset-management
     command: python main.py
@@ -49,9 +55,12 @@ services:
       dockerfile: mcp-servers/sentiment/Dockerfile
     ports:
       - "8201:8201"
+    volumes:
+      - ~/.aws:/root/.aws:ro
     environment:
-      - FEATURE_SENTIMENT_AGENT_LLM_ENABLED=false
-      - LLM_BEDROCK_REGION=us-east-1
+      - FEATURE_SENTIMENT_AGENT_LLM_ENABLED=true
+      - LLM_BEDROCK_REGION=us-east-2
+      - AWS_REGION=us-east-2
     networks:
       - asset-management
     command: python server.py

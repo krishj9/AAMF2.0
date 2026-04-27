@@ -5,7 +5,7 @@ resource "aws_apigatewayv2_api" "this" {
 
   cors_configuration {
     allow_headers = ["content-type", "authorization"]
-    allow_methods = ["GET", "POST", "OPTIONS"]
+    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     allow_origins = var.cors_allow_origins
     max_age       = 300
   }

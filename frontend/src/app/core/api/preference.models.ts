@@ -26,14 +26,14 @@ export interface PreferenceProfile {
 export interface PreferenceUpdateRequest {
   risk_profile?: {
     risk_profile_id?: string;
-    risk_level?: string;
-    max_single_position_pct?: string;
-    max_sector_pct?: string;
-    allowed_asset_classes?: string[];
+    risk_level: string;
+    max_single_position_pct: string;
+    max_sector_pct: string;
+    allowed_asset_classes: string[];
   };
   allocation_target?: {
-    asset_class_targets?: Record<string, string>;
-    tolerance_bands?: Record<string, string>;
+    asset_class_targets: Record<string, string>;
+    tolerance_bands: Record<string, string>;
   };
   constraints?: Record<string, any>;
 }

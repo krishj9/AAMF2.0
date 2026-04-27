@@ -190,6 +190,11 @@
               Approve
             </button>
             <button type="button" (click)="rejectRecommendation()">Reject</button>
+          } @else if (isBlockedByPolicy(response)) {
+            <button type="button" class="secondary-action" (click)="acknowledgeBlockedRecommendation()">
+              Acknowledge Policy Block
+            </button>
+            <span class="review-note">Recommendation blocked by policy checks. Click to acknowledge and clear.</span>
           } @else if (response.approval_artifact?.approval_status === 'PENDING') {
             <span class="review-note">No decision required: portfolio already within target tolerance.</span>
           } @else {

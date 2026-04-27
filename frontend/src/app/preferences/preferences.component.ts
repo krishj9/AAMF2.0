@@ -56,6 +56,38 @@ export class PreferencesComponent implements OnInit {
     return Math.abs(total - 100) < 0.01;
   });
 
+  protected readonly concentrationWarning = computed(() => {
+    const riskValues = this.riskForm.getRawValue();
+    const allocationValues = this.allocationForm.getRawValue();
+    const maxConcentration = riskValues.maxSinglePositionPct;
+    
+    const warnings: string[] = [];
+    
+    if (allocationValues.equityTarget > maxConcentration) {
+      warnings.push(`Equity target (${allocationValues.equityTarget}%) exceeds max concentration limit (${maxConcentration}%)`);
+    }
+    if (allocationValues.fixedIncomeTarget > maxConcentration) {
+      warnings.push(`Fixed Income target (${allocationValues.fixedIncomeTarget}%) exceeds max concentration limit (${maxConcentration}%)`);
+    }
+    if (allocationValues.cashTarget > maxConcentration) {
+      warnings.push(`Cash target (${allocationValues.cashTarget}%) exceeds max concentration limit (${maxConcentration}%)`);
+    }
+    
+    return warnings;
+  });
+
+  protected readonly cashWarning = computed(() => {
+    const allocationValues = this.allocationForm.getRawValue();
+    if (allocationValues.cashTarget === 0) {
+      return 'Warning: 0% cash allocation provides no liquidity buffer for rebalancing operations. Consider maintaining at least 5% cash.';
+    }
+    return null;
+  });
+
+  protected readonly hasValidationErrors = computed(() => {
+    return !this.allocationValid() || this.concentrationWarning().length > 0;
+  });
+
   protected readonly riskLevelOptions = [
     { value: 'conservative', label: 'Conservative', description: 'Minimize risk, focus on capital preservation' },
     { value: 'balanced', label: 'Balanced', description: 'Balance growth and stability' },
@@ -68,8 +100,16 @@ export class PreferencesComponent implements OnInit {
     { name: 'Moderate', equity: 50, fixedIncome: 40, cash: 10 },
     { name: 'Balanced', equity: 60, fixedIncome: 30, cash: 10 },
     { name: 'Growth', equity: 75, fixedIncome: 20, cash: 5 },
-    { name: 'Aggressive', equity: 90, fixedIncome: 10, cash: 0 }
+    { name: 'Aggressive', equity: 85, fixedIncome: 10, cash: 5 }
   ];
+
+  // Map risk levels to allocation presets
+  private readonly riskLevelToAllocation: Record<string, { equity: number; fixedIncome: number; cash: number }> = {
+    'conservative': { equity: 30, fixedIncome: 60, cash: 10 },
+    'balanced': { equity: 60, fixedIncome: 30, cash: 10 },
+    'growth': { equity: 75, fixedIncome: 20, cash: 5 },
+    'aggressive': { equity: 85, fixedIncome: 10, cash: 5 }
+  };
 
   protected readonly taxStrategyOptions = [
     { value: 'none', label: 'No Special Strategy' },
@@ -148,20 +188,50 @@ export class PreferencesComponent implements OnInit {
     if (current === 'risk') {
       if (this.riskForm.invalid) {
         this.riskForm.markAllAsTouched();
+        console.error('Risk form is invalid:', this.riskForm.errors, this.riskForm.value);
         return;
       }
+      console.log('Moving to allocation step. Risk form value:', this.riskForm.value);
+      
+      // Auto-populate allocation based on selected risk level
+      const riskLevel = this.riskForm.value.riskLevel;
+      if (riskLevel && this.riskLevelToAllocation[riskLevel]) {
+        const allocation = this.riskLevelToAllocation[riskLevel];
+        this.allocationForm.patchValue({
+          equityTarget: allocation.equity,
+          fixedIncomeTarget: allocation.fixedIncome,
+          cashTarget: allocation.cash
+        });
+        console.log('Auto-populated allocation for risk level', riskLevel, ':', allocation);
+      }
+      
       this.currentStep.set('allocation');
     } else if (current === 'allocation') {
-      if (this.allocationForm.invalid || !this.allocationValid()) {
+      if (this.allocationForm.invalid) {
         this.allocationForm.markAllAsTouched();
+        console.error('Allocation form is invalid:', this.allocationForm.errors, this.allocationForm.value);
         return;
       }
+      
+      // Check for validation errors
+      if (this.hasValidationErrors()) {
+        this.allocationForm.markAllAsTouched();
+        console.error('Allocation has validation errors:', {
+          allocationValid: this.allocationValid(),
+          concentrationWarnings: this.concentrationWarning()
+        });
+        return;
+      }
+      
+      console.log('Moving to constraints step. Allocation form value:', this.allocationForm.value);
       this.currentStep.set('constraints');
     } else if (current === 'constraints') {
       if (this.constraintsForm.invalid) {
         this.constraintsForm.markAllAsTouched();
+        console.error('Constraints form is invalid:', this.constraintsForm.errors, this.constraintsForm.value);
         return;
       }
+      console.log('Moving to review step. Constraints form value:', this.constraintsForm.value);
       this.currentStep.set('review');
     }
   }
@@ -191,8 +261,8 @@ export class PreferencesComponent implements OnInit {
       return;
     }
 
-    if (!this.allocationValid()) {
-      this.error.set('Allocation targets must sum to 100%');
+    if (this.hasValidationErrors()) {
+      this.error.set('Please fix validation errors before saving');
       return;
     }
 
@@ -205,6 +275,7 @@ export class PreferencesComponent implements OnInit {
 
     const request: PreferenceUpdateRequest = {
       risk_profile: {
+        risk_profile_id: this.currentPreferences()?.risk_profile?.risk_profile_id || `risk_${riskValues.riskLevel}`,
         risk_level: riskValues.riskLevel,
         max_single_position_pct: String(riskValues.maxSinglePositionPct),
         max_sector_pct: String(riskValues.maxSectorPct),

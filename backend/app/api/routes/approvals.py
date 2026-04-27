@@ -28,7 +28,8 @@ async def apply_approval_action(
     if approval is None:
         raise HTTPException(status_code=404, detail="Approval artifact not found")
 
-    if approval.recommendation.workflow_state == "BLOCKED":
+    # Only block APPROVE actions on blocked recommendations, allow REJECT
+    if approval.recommendation.workflow_state == "BLOCKED" and action.action == ApprovalAction.APPROVE:
         raise HTTPException(status_code=409, detail="Blocked recommendations cannot be approved")
 
     if action.action in {"REJECT", "REQUEST_REVISION"} and not action.note:

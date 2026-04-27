@@ -129,6 +129,8 @@ async def update_preferences(
     Returns:
         Updated preference profile
     """
+    from decimal import Decimal
+    
     # Find portfolio by client_id
     portfolios = store.list_portfolios()
     portfolio = next(
@@ -142,13 +144,15 @@ async def update_preferences(
     # Update fields if provided
     if "risk_profile" in request:
         risk_data = request["risk_profile"]
+        # Convert string percentages to Decimal
+        max_single = risk_data.get("max_single_position_pct", portfolio.risk_profile.max_single_position_pct)
+        max_sector = risk_data.get("max_sector_pct", portfolio.risk_profile.max_sector_pct)
+        
         portfolio.risk_profile = RiskProfile(
             risk_profile_id=risk_data.get("risk_profile_id", portfolio.risk_profile.risk_profile_id),
             risk_level=risk_data.get("risk_level", portfolio.risk_profile.risk_level),
-            max_single_position_pct=risk_data.get(
-                "max_single_position_pct", portfolio.risk_profile.max_single_position_pct
-            ),
-            max_sector_pct=risk_data.get("max_sector_pct", portfolio.risk_profile.max_sector_pct),
+            max_single_position_pct=Decimal(str(max_single)),
+            max_sector_pct=Decimal(str(max_sector)),
             allowed_asset_classes=risk_data.get(
                 "allowed_asset_classes", portfolio.risk_profile.allowed_asset_classes
             ),
@@ -156,18 +160,34 @@ async def update_preferences(
 
     if "allocation_target" in request:
         alloc_data = request["allocation_target"]
+        
+        # Convert string percentages to Decimal for targets and tolerances
+        asset_class_targets = alloc_data.get(
+            "asset_class_targets", portfolio.allocation_target.asset_class_targets
+        )
+        tolerance_bands = alloc_data.get(
+            "tolerance_bands", portfolio.allocation_target.tolerance_bands
+        )
+        
+        # Ensure all values are Decimals
+        if asset_class_targets:
+            asset_class_targets = {
+                k: Decimal(str(v)) for k, v in asset_class_targets.items()
+            }
+        
+        if tolerance_bands:
+            tolerance_bands = {
+                k: Decimal(str(v)) for k, v in tolerance_bands.items()
+            }
+        
         portfolio.allocation_target = AllocationTarget(
             target_id=portfolio.allocation_target.target_id,
             account_id=portfolio.allocation_target.account_id,
-            asset_class_targets=alloc_data.get(
-                "asset_class_targets", portfolio.allocation_target.asset_class_targets
-            ),
+            asset_class_targets=asset_class_targets,
             security_targets=alloc_data.get(
                 "security_targets", portfolio.allocation_target.security_targets
             ),
-            tolerance_bands=alloc_data.get(
-                "tolerance_bands", portfolio.allocation_target.tolerance_bands
-            ),
+            tolerance_bands=tolerance_bands,
         )
 
     # Update timestamp

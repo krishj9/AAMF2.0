@@ -17,8 +17,8 @@
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       line-height: 1.6;
-      color: #f8f8f2;
-      background: linear-gradient(135deg, #1e1f29 0%, #282a36 55%, #2d2f3d 100%);
+      color: #e4e7eb;
+      background: #0f1419;
       min-height: 100vh;
       padding: 2rem;
     }
@@ -26,16 +26,16 @@
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      background: #282a36;
-      border-radius: 16px;
+      background: #1a1f2e;
+      border-radius: 8px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       overflow: hidden;
-      border: 1px solid #44475a;
+      border: 1px solid #2d3548;
     }
 
     .header {
-      background: linear-gradient(135deg, #bd93f9 0%, #ff79c6 100%);
-      color: #282a36;
+      background: #3b82f6;
+      color: white;
       padding: 3rem 2rem;
       text-align: center;
     }
@@ -44,7 +44,6 @@
       font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: 0.5rem;
-      text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
     }
 
     .header p {
@@ -53,20 +52,20 @@
     }
 
     .nav {
-      background: #44475a;
+      background: #252b3b;
       padding: 1rem 2rem;
-      border-bottom: 1px solid #6272a4;
+      border-bottom: 1px solid #2d3548;
     }
 
     .nav a {
-      color: #8be9fd;
+      color: #3b82f6;
       text-decoration: none;
       font-weight: 500;
       transition: color 0.3s;
     }
 
     .nav a:hover {
-      color: #ff79c6;
+      color: #2563eb;
     }
 
     .content {
@@ -79,30 +78,31 @@
 
     .section h2 {
       font-size: 1.75rem;
-      color: #bd93f9;
+      color: #e4e7eb;
       margin-bottom: 1rem;
       padding-bottom: 0.5rem;
-      border-bottom: 3px solid #bd93f9;
-      text-shadow: 0 0 15px rgba(189, 147, 249, 0.3);
+      border-bottom: 2px solid #3b82f6;
+      font-weight: 600;
     }
 
     .section h3 {
       font-size: 1.25rem;
-      color: #ff79c6;
+      color: #9ca3af;
       margin: 1.5rem 0 0.75rem;
+      font-weight: 600;
     }
 
     .section p, .section li {
-      color: #f8f8f2;
+      color: #9ca3af;
       margin-bottom: 0.75rem;
     }
 
     .architecture-diagram {
-      background: rgba(68, 71, 90, 0.3);
-      border-radius: 12px;
+      background: #252b3b;
+      border-radius: 8px;
       padding: 2rem;
       margin: 2rem 0;
-      border: 1px solid #6272a4;
+      border: 1px solid #2d3548;
     }
 
     .architecture-diagram pre {
@@ -110,7 +110,7 @@
       font-size: 0.875rem;
       line-height: 1.4;
       overflow-x: auto;
-      color: #8be9fd;
+      color: #06b6d4;
     }
 
     .card-grid {
@@ -121,37 +121,38 @@
     }
 
     .card {
-      background: rgba(68, 71, 90, 0.4);
-      border-radius: 12px;
+      background: #252b3b;
+      border-radius: 8px;
       padding: 1.5rem;
-      border: 1px solid #6272a4;
+      border: 1px solid #2d3548;
       transition: transform 0.3s, box-shadow 0.3s;
     }
 
     .card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(189, 147, 249, 0.3);
-      border-color: #bd93f9;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+      border-color: #3b82f6;
     }
 
     .card h3 {
-      color: #bd93f9;
+      color: #e4e7eb;
       margin: 0 0 0.75rem 0;
       font-size: 1.125rem;
+      font-weight: 600;
     }
 
     .card p {
       margin: 0;
       font-size: 0.9375rem;
-      color: #f8f8f2;
+      color: #9ca3af;
     }
 
     .badge {
       display: inline-block;
-      background: #bd93f9;
-      color: #282a36;
+      background: #3b82f6;
+      color: white;
       padding: 0.25rem 0.75rem;
-      border-radius: 20px;
+      border-radius: 6px;
       font-size: 0.875rem;
       font-weight: 600;
       margin-right: 0.5rem;
@@ -159,15 +160,15 @@
     }
 
     .badge.secondary {
-      background: #ff79c6;
+      background: #06b6d4;
     }
 
     .badge.success {
-      background: #50fa7b;
+      background: #10b981;
     }
 
     .badge.warning {
-      background: #ffb86c;
+      background: #f59e0b;
     }
 
     ul {
@@ -185,40 +186,40 @@
       content: "→";
       position: absolute;
       left: 0;
-      color: #8be9fd;
+      color: #3b82f6;
       font-weight: bold;
     }
 
     .highlight-box {
-      background: rgba(68, 71, 90, 0.4);
-      border-left: 4px solid #ff79c6;
+      background: #252b3b;
+      border-left: 4px solid #3b82f6;
       padding: 1.5rem;
       border-radius: 8px;
       margin: 1.5rem 0;
-      border: 1px solid #6272a4;
+      border: 1px solid #2d3548;
     }
 
     .highlight-box h3 {
       margin-top: 0;
-      color: #ff79c6;
+      color: #e4e7eb;
     }
 
     code {
-      background: rgba(68, 71, 90, 0.6);
+      background: #252b3b;
       padding: 0.2rem 0.4rem;
       border-radius: 4px;
       font-family: 'Courier New', monospace;
       font-size: 0.875rem;
-      color: #50fa7b;
-      border: 1px solid #44475a;
+      color: #10b981;
+      border: 1px solid #2d3548;
     }
 
     .footer {
-      background: #44475a;
+      background: #252b3b;
       padding: 2rem;
       text-align: center;
-      color: #6272a4;
-      border-top: 1px solid #6272a4;
+      color: #6b7280;
+      border-top: 1px solid #2d3548;
     }
 
     @media (max-width: 768px) {
@@ -405,7 +406,7 @@
           <div class="card">
             <h3>Local Development</h3>
             <p>Uses DynamoDB Local at <code>http://localhost:55000</code></p>
-            <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6c757d;">
+            <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;">
               Perfect for testing without AWS costs
             </p>
           </div>
@@ -413,7 +414,7 @@
           <div class="card">
             <h3>AWS Deployment</h3>
             <p>Uses hosted DynamoDB by leaving endpoint unset</p>
-            <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6c757d;">
+            <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;">
               Automatic scaling and high availability
             </p>
           </div>
