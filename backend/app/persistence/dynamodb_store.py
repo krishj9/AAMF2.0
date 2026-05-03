@@ -83,6 +83,24 @@ class DynamoDBWorkflowStore:
             return None
         return ApprovalArtifact.model_validate_json(item["artifact_json"])
 
+    def list_approvals(self) -> list[ApprovalArtifact]:
+        response = self.approvals_table.scan()
+        return [
+            ApprovalArtifact.model_validate_json(item["artifact_json"])
+            for item in response.get("Items", [])
+        ]
+
+    def list_audit_events(self) -> list[AuditEvent]:
+        response = self.audit_table.scan()
+        return sorted(
+            [
+                AuditEvent.model_validate_json(item["event_json"])
+                for item in response.get("Items", [])
+            ],
+            key=lambda e: e.created_at,
+            reverse=True,
+        )
+
     def update_approval(
         self, approval_id: str, action: ApprovalActionRequest
     ) -> ApprovalTransitionResult:

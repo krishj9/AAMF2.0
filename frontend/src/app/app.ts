@@ -41,6 +41,7 @@ export class App implements OnDestroy {
   protected readonly balancedAccounts = signal<Record<string, boolean>>({});
   private readonly forcedDriftByAccount = signal<Record<string, boolean>>({});
   private readonly autoRecommendByAccount = signal<Record<string, boolean>>({});
+  private readonly hasAutoSubmittedByAccount = signal<Record<string, boolean>>({});
   protected readonly rebalanceError = signal<string | null>(null);
   protected readonly marketEvent = signal<MarketStreamEvent | null>(null);
   protected readonly portfolios = signal<PortfolioRecord[]>([]);
@@ -202,6 +203,7 @@ export class App implements OnDestroy {
     }
     this.selectedAccountId.set(accountId);
     this.recommendation.set(null);
+    this.hasAutoSubmittedByAccount.update(m => ({ ...m, [accountId]: false }));
     this.patchFormFromPortfolio(portfolio);
     this.loadPreferencesForPortfolio(portfolio.client_profile.client_id);
     this.startMarketStream(accountId);
@@ -327,11 +329,12 @@ export class App implements OnDestroy {
     this.rebalanceError.set(null);
     this.approvalMessage.set(null);
 
+    // Reset the auto-submit gate so the next drift cycle fires once
+    this.hasAutoSubmittedByAccount.update(m => ({ ...m, [accountId]: false }));
+
     // Mark as unbalanced and enable forced drift
     this.setAccountBalanced(accountId, false);
     this.enableForcedDriftForAccount(accountId);
-    // Set the flag so maybeAutoGenerateRecommendation fires exactly once
-    this.enableAutoRecommendForAccount(accountId);
 
     // Apply forced drift immediately to the current market event
     const event = this.marketEvent();
@@ -662,48 +665,34 @@ export class App implements OnDestroy {
   }
 
   private maybeAutoGenerateRecommendation(accountId: string) {
-    // Skip if already submitting
-    if (this.submitting()) {
-      return;
-    }
-
-    // Check if REBALANCE_NEEDED signal is present
-    if (this.displayMarketEvent()?.rebalance.signal !== 'REBALANCE_NEEDED') {
-      return;
-    }
+    if (this.submitting()) return;
+    if (this.displayMarketEvent()?.rebalance.signal !== 'REBALANCE_NEEDED') return;
 
     const current = this.recommendation();
 
-    // If a recommendation exists, only clear it if it's genuinely stale
-    // (portfolio was balanced and drifted again, or NO_ACTION_NEEDED while market says REBALANCE_NEEDED)
+    // If any recommendation exists (regardless of status), don't auto-generate.
+    // The user or simulateDriftAgain() must explicitly clear it first.
+    // Exception: stale NO_ACTION_NEEDED while market says REBALANCE_NEEDED.
     if (current !== null) {
       const proposalStatus = current.recommendation_package?.proposal?.proposal_status;
       const approvalStatus = current.approval_artifact?.approval_status;
-      const isStale = proposalStatus === 'NO_ACTION_NEEDED' || approvalStatus === 'APPROVED';
-      if (isStale) {
+
+      if (proposalStatus === 'NO_ACTION_NEEDED' && approvalStatus === 'PENDING') {
+        // Stale: generated when balanced, market has since drifted — clear and refresh
         this.recommendation.set(null);
         this.approvalMessage.set(null);
         // Fall through to submit
       } else {
-        // Pending, rejected, or blocked — leave it alone, don't re-submit
+        // Any other state (PENDING with trades, REJECTED, APPROVED, BLOCKED) — leave alone
         return;
       }
     }
 
-    // Only submit once per drift cycle — the autoRecommend flag gates this
-    // On initial load it's false, so we submit once. simulateDriftAgain() sets it true.
-    const shouldAutoGenerate = this.autoRecommendByAccount()[accountId] ?? false;
-    if (!shouldAutoGenerate && current === null) {
-      // First load with REBALANCE_NEEDED — submit once, don't repeat
-      this.enableAutoRecommendForAccount(accountId); // mark as handled
-      this.submitRebalance();
-      return;
-    }
-
-    if (shouldAutoGenerate) {
-      this.clearAutoRecommendForAccount(accountId);
-      this.submitRebalance();
-    }
+    // Hard gate: only submit once per drift cycle.
+    // Reset by simulateDriftAgain() and selectPortfolio().
+    if (this.hasAutoSubmittedByAccount()[accountId]) return;
+    this.hasAutoSubmittedByAccount.update(m => ({ ...m, [accountId]: true }));
+    this.submitRebalance();
   }
 
   private applyForcedDriftIfNeeded(event: MarketStreamEvent, accountId: string): MarketStreamEvent {

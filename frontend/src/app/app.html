@@ -157,27 +157,19 @@
 
             <div class="form-actions">
               @if (selectedPortfolioBalanced()) {
-                <!-- Approved/balanced: simulate drift to start a new cycle -->
                 <button type="button" class="btn btn--primary btn--full" (click)="simulateDriftAgain()">
                   ↺ Simulate Market Drift
                 </button>
               } @else if (submitting()) {
-                <!-- Generating -->
                 <button class="btn btn--primary btn--full" disabled>
                   <span class="spinner"></span> Generating Recommendation...
                 </button>
               } @else if (recommendation()) {
-                <!-- Recommendation showing — reset to try again -->
                 <button type="button" class="btn btn--ghost btn--full" (click)="simulateDriftAgain()">
                   ↺ Reset & Simulate New Drift
                 </button>
-              } @else if (displayMarketEvent()?.rebalance?.signal === 'REBALANCE_NEEDED') {
-                <!-- Drifted and waiting — auto-generate should have fired, offer manual fallback -->
-                <button type="button" class="btn btn--primary btn--full" (click)="submitRebalance()">
-                  <span class="spinner"></span> Analyzing drift...
-                </button>
               } @else {
-                <!-- Within tolerance — only action is to simulate drift -->
+                <!-- Drifted or within tolerance — same action either way -->
                 <button type="button" class="btn btn--primary btn--full" (click)="simulateDriftAgain()">
                   ↺ Simulate Market Drift
                 </button>

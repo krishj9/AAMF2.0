@@ -77,6 +77,29 @@ def _build_recommendation_context(approval) -> str:
             f"max sector {approval.risk_profile.max_sector_pct}%"
         )
 
+    # Sentiment output — include if available
+    sentiment = getattr(rec, "sentiment_output", None)
+    if sentiment:
+        overall = sentiment.get("overall_sentiment", "NEUTRAL")
+        lines.append(f"Market sentiment (from MCP Sentiment Agent): overall = {overall}")
+        for sym in sentiment.get("symbol_sentiments", []):
+            symbol = sym.get("symbol", "?")
+            sent = sym.get("overall_sentiment", "NEUTRAL")
+            score = sym.get("sentiment_score", 0.0)
+            summary = sym.get("summary", "")
+            lines.append(f"  - {symbol}: {sent} (score {score:.2f}){' — ' + summary if summary else ''}")
+
+    # Research output — include if available
+    research = getattr(rec, "research_output", None)
+    if research:
+        regime = research.get("regime", "NEUTRAL")
+        context = research.get("market_context", "")
+        lines.append(f"Market research (from A2A Research Agent): regime = {regime}")
+        if context:
+            lines.append(f"  Context: {context}")
+        for insight in research.get("key_insights", []):
+            lines.append(f"  - {insight}")
+
     return "\n".join(lines)
 
 
@@ -91,7 +114,11 @@ async def _stream_llm_response(
     system_prompt = (
         "You are a professional portfolio advisor explaining a specific rebalancing recommendation "
         "to an investor. Answer questions clearly and concisely based ONLY on the recommendation "
-        "context provided. Do not invent market data or make claims beyond what is in the context. "
+        "context provided — which includes allocation data, proposed trades, policy checks, "
+        "market sentiment analysis from the MCP Sentiment Agent, and market research insights "
+        "from the A2A Research Agent. When asked about sentiment or market conditions, refer to "
+        "the sentiment and research data in the context. "
+        "Do not invent data beyond what is provided. "
         "Keep answers under 150 words. Use plain language, not financial jargon."
     )
 

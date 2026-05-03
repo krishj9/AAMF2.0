@@ -24,7 +24,7 @@ async def get_workflow_trace(
     """
     # Find the most recent approval artifact for this account
     approvals = [
-        a for a in store.approvals.values()
+        a for a in store.list_approvals()
         if a.account_profile.account_id == account_id
     ]
     if not approvals:
@@ -96,9 +96,9 @@ async def get_memory_timeline(
     adapter = LocalMemoryAdapter()
     items = await adapter.retrieve(client_id)
 
-    # Find all approvals for this client to build decision history
+    # Get all approvals for this client to build decision history
     client_approvals = [
-        a for a in store.approvals.values()
+        a for a in store.list_approvals()
         if a.client_profile.client_id == client_id
     ]
     client_approvals.sort(key=lambda a: a.correlation.created_at, reverse=True)
@@ -173,13 +173,13 @@ async def get_audit_trail(
     """
     # Get all approvals for this account
     approvals = [
-        a for a in store.approvals.values()
+        a for a in store.list_approvals()
         if a.account_profile.account_id == account_id
     ]
     approvals.sort(key=lambda a: a.correlation.created_at, reverse=True)
 
-    # Get audit events (filter by correlation if possible)
-    all_events = store.audit_events
+    # Get audit events
+    all_events = store.list_audit_events()
     request_ids = {a.correlation.request_id for a in approvals}
     relevant_events = [
         e for e in all_events

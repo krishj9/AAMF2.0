@@ -32,6 +32,10 @@ class WorkflowStore(Protocol):
 
     def get_approval(self, approval_id: str) -> ApprovalArtifact | None: ...
 
+    def list_approvals(self) -> list[ApprovalArtifact]: ...
+
+    def list_audit_events(self) -> list[AuditEvent]: ...
+
     def update_approval(
         self, approval_id: str, action: ApprovalActionRequest
     ) -> ApprovalTransitionResult: ...
@@ -73,6 +77,12 @@ class InMemoryWorkflowStore:
 
     def get_approval(self, approval_id: str) -> ApprovalArtifact | None:
         return self.approvals.get(approval_id)
+
+    def list_approvals(self) -> list[ApprovalArtifact]:
+        return list(self.approvals.values())
+
+    def list_audit_events(self) -> list[AuditEvent]:
+        return list(self.audit_events)
 
     def update_approval(
         self, approval_id: str, action: ApprovalActionRequest
