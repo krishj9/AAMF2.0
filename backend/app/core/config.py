@@ -47,27 +47,27 @@ class LLMConfig(BaseSettings):
 
     # Model configuration per agent
     memory_agent_model: str = Field(
-        default="anthropic.claude-3-haiku-20240307-v1:0",
+        default="us.anthropic.claude-3-5-haiku-20241022-v1:0",
         description="Model for Memory Agent (fast, cost-effective)",
     )
     research_agent_model: str = Field(
-        default="anthropic.claude-3-5-sonnet-20240620-v1:0",
+        default="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
         description="Model for Research Agent (high-quality synthesis)",
     )
     sentiment_agent_model: str = Field(
-        default="anthropic.claude-3-haiku-20240307-v1:0",
+        default="us.anthropic.claude-3-5-haiku-20241022-v1:0",
         description="Model for Sentiment Agent (fast sentiment classification)",
     )
     rebalancing_agent_model: str = Field(
-        default="anthropic.claude-3-sonnet-20240229-v1:0",
+        default="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
         description="Model for Rebalancing Agent (balanced quality/cost)",
     )
     risk_agent_model: str = Field(
-        default="anthropic.claude-3-5-sonnet-20240620-v1:0",
+        default="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
         description="Model for Risk Agent (critical policy decisions)",
     )
     trade_proposal_agent_model: str = Field(
-        default="anthropic.claude-3-5-sonnet-20240620-v1:0",
+        default="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
         description="Model for Trade Proposal Agent (high-stakes recommendations)",
     )
 

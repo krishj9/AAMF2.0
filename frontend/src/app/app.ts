@@ -1,5 +1,7 @@
+import { TitleCasePipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 
@@ -14,10 +16,11 @@ import {
   PortfolioRecord
 } from './core/api/rebalance.models';
 import { RebalanceService } from './core/api/rebalance.service';
+import { apiUrl } from './core/api/api-config';
 
 @Component({
   selector: 'app-root',
-  imports: [ReactiveFormsModule, RouterOutlet],
+  imports: [ReactiveFormsModule, FormsModule, RouterOutlet, TitleCasePipe],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -95,9 +98,10 @@ export class App implements OnDestroy {
     if (status !== 'PENDING') {
       return false;
     }
-
     const trades = response.recommendation_package?.proposal?.trades ?? [];
-    return trades.length > 0;
+    const proposalStatus = response.recommendation_package?.proposal?.proposal_status;
+    // Show approve/reject if there are trades OR if the proposal is ready for review
+    return trades.length > 0 || proposalStatus === 'READY_FOR_REVIEW';
   }
   
   protected isBlockedByPolicy(response: OrchestrationResponse): boolean {
@@ -234,6 +238,7 @@ export class App implements OnDestroy {
       next: (response) => {
         this.recommendation.set(response);
         this.approvalMessage.set(null);
+        this.chatMessages.set([]); // clear chat for new recommendation
         this.setAccountBalanced(this.selectedAccountId(), false);
         this.clearForcedDriftForAccount(this.selectedAccountId());
         this.clearAutoRecommendForAccount(this.selectedAccountId());
@@ -658,24 +663,41 @@ export class App implements OnDestroy {
   }
 
   private maybeAutoGenerateRecommendation(accountId: string) {
-    // Skip if already submitting or recommendation exists
-    if (this.submitting() || this.recommendation() !== null) {
+    // Skip if already submitting
+    if (this.submitting()) {
       return;
     }
-    
+
     // Check if REBALANCE_NEEDED signal is present
     if (this.displayMarketEvent()?.rebalance.signal !== 'REBALANCE_NEEDED') {
       return;
     }
 
+    const current = this.recommendation();
+
+    // If a stale NO_ACTION_NEEDED recommendation is showing while market says REBALANCE_NEEDED,
+    // clear it so a fresh one gets generated.
+    // REJECTED is intentional — respect the user's decision, don't auto-regenerate.
+    if (current !== null) {
+      const proposalStatus = current.recommendation_package?.proposal?.proposal_status;
+      const approvalStatus = current.approval_artifact?.approval_status;
+      const isStale = proposalStatus === 'NO_ACTION_NEEDED' || approvalStatus === 'APPROVED';
+      if (isStale) {
+        this.recommendation.set(null);
+        this.approvalMessage.set(null);
+      } else {
+        // Pending, rejected, or blocked — leave it alone
+        return;
+      }
+    }
+
     // Auto-generate if flag is set OR if this is initial load with REBALANCE_NEEDED
     const shouldAutoGenerate = this.autoRecommendByAccount()[accountId] ?? false;
-    
     if (shouldAutoGenerate) {
       this.clearAutoRecommendForAccount(accountId);
     }
-    
-    // Always submit when REBALANCE_NEEDED appears without a recommendation
+
+    // Submit when REBALANCE_NEEDED appears without a valid recommendation
     this.submitRebalance();
   }
 
@@ -729,5 +751,178 @@ export class App implements OnDestroy {
 
   protected navigateToPreferences() {
     this.router.navigate(['/preferences']);
+  }
+
+  protected navigateToIntelligence() {
+    this.router.navigate(['/intelligence']);
+  }
+
+  // ── Phase 3: Q&A Chat ──────────────────────────────────────────────────────
+
+  private readonly http = inject(HttpClient);
+
+  protected readonly chatMessages = signal<Array<{role: 'user' | 'assistant'; content: string}>>([]);
+  protected readonly chatInput = signal('');
+  protected readonly chatStreaming = signal(false);
+
+  protected readonly suggestedQuestions = [
+    'Why is equity being sold?',
+    'What happens if I reject this?',
+    'Explain the policy check',
+    'What is the risk if I don\'t rebalance?',
+  ];
+
+  protected askQuestion(question: string) {
+    const approvalId = this.recommendation()?.approval_artifact?.approval_id;
+    if (!approvalId || this.chatStreaming()) return;
+
+    this.chatMessages.update(msgs => [...msgs, { role: 'user', content: question }]);
+    this.chatInput.set('');
+    this.chatStreaming.set(true);
+
+    // Add empty assistant message that will be filled by streaming
+    this.chatMessages.update(msgs => [...msgs, { role: 'assistant', content: '' }]);
+
+    // Scroll to bottom after adding messages
+    setTimeout(() => this.scrollChatToBottom(), 50);
+
+    const url = apiUrl(`/recommendations/${approvalId}/explain`);
+
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, actor_id: 'local_owner' }),
+    }).then(async (res) => {
+      if (!res.ok || !res.body) {
+        this.appendToLastMessage('Error: could not reach the explanation service.');
+        this.chatStreaming.set(false);
+        return;
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === 'token') {
+              this.appendToLastMessage(event.content);
+            } else if (event.type === 'done') {
+              this.chatStreaming.set(false);
+            }
+          } catch { /* ignore parse errors */ }
+        }
+      }
+      this.chatStreaming.set(false);
+    }).catch(() => {
+      this.appendToLastMessage('Error: connection failed.');
+      this.chatStreaming.set(false);
+    });
+  }
+
+  protected submitChatInput() {
+    const q = this.chatInput().trim();
+    if (q) this.askQuestion(q);
+  }
+
+  private appendToLastMessage(chunk: string) {
+    this.chatMessages.update(msgs => {
+      if (!msgs.length) return msgs;
+      const updated = [...msgs];
+      updated[updated.length - 1] = {
+        ...updated[updated.length - 1],
+        content: updated[updated.length - 1].content + chunk,
+      };
+      return updated;
+    });
+    // Keep scrolled to bottom as tokens stream in
+    this.scrollChatToBottom();
+  }
+
+  private scrollChatToBottom() {
+    // Use requestAnimationFrame to scroll after Angular renders
+    requestAnimationFrame(() => {
+      const el = document.querySelector('.chat-messages');
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+  }
+
+  protected clearChat() {
+    this.chatMessages.set([]);
+    this.chatInput.set('');
+  }
+
+  // ── Phase 3: What-If Simulator ─────────────────────────────────────────────
+
+  protected readonly showSimulator = signal(false);
+  protected readonly simulatorEquity = signal(60);
+  protected readonly simulatorFixedIncome = signal(30);
+  protected readonly simulatorCash = signal(10);
+  protected readonly simulatorMaxPosition = signal(85);
+  protected readonly simulatorResult = signal<{
+    drift_changes: Array<{key: string; current_pct: string; target_pct: string; drift_pct: string; within_tolerance: boolean}>;
+    policy_verdict: string;
+    would_be_blocked: boolean;
+    scenario_summary: string;
+  } | null>(null);
+  protected readonly simulatorLoading = signal(false);
+  private simulatorDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  protected toggleSimulator() {
+    this.showSimulator.update(v => !v);
+    if (this.showSimulator()) {
+      // Seed sliders from current recommendation
+      const rec = this.recommendation();
+      if (rec?.recommendation_package?.target_allocation) {
+        const t = rec.recommendation_package.target_allocation;
+        this.simulatorEquity.set(Number(t['equity'] ?? 60));
+        this.simulatorFixedIncome.set(Number(t['fixed_income'] ?? 30));
+        this.simulatorCash.set(Number(t['cash'] ?? 10));
+      }
+    }
+  }
+
+  protected onSimulatorChange() {
+    if (this.simulatorDebounce) clearTimeout(this.simulatorDebounce);
+    this.simulatorDebounce = setTimeout(() => this.runSimulation(), 500);
+  }
+
+  protected runSimulation() {
+    const approvalId = this.recommendation()?.approval_artifact?.approval_id;
+    if (!approvalId) return;
+
+    this.simulatorLoading.set(true);
+    const url = apiUrl(`/recommendations/${approvalId}/simulate`);
+
+    this.http.post<any>(url, {
+      scenario: {
+        equity_target: this.simulatorEquity(),
+        fixed_income_target: this.simulatorFixedIncome(),
+        cash_target: this.simulatorCash(),
+        max_single_position_pct: this.simulatorMaxPosition(),
+      }
+    }).subscribe({
+      next: (result) => {
+        this.simulatorResult.set(result);
+        this.simulatorLoading.set(false);
+      },
+      error: () => this.simulatorLoading.set(false),
+    });
+  }
+
+  protected applySimulatorValues() {
+    this.form.patchValue({
+      targetEquityPct: this.simulatorEquity(),
+      targetFixedIncomePct: this.simulatorFixedIncome(),
+      targetCashPct: this.simulatorCash(),
+    }, { emitEvent: false });
+    this.showSimulator.set(false);
   }
 }

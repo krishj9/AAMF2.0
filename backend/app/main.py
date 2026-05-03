@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.approvals import router as approvals_router
+from app.api.routes.explain import router as explain_router
 from app.api.routes.health import router as health_router
+from app.api.routes.intelligence import router as intelligence_router
 from app.api.routes.market import router as market_router
 from app.api.routes.portfolios import router as portfolios_router
 from app.api.routes.preferences import router as preferences_router
@@ -24,6 +26,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(approvals_router, prefix="/api")
+    app.include_router(explain_router, prefix="/api")
+    app.include_router(intelligence_router, prefix="/api")
     app.include_router(health_router)
     app.include_router(market_router, prefix="/api")
     app.include_router(portfolios_router, prefix="/api")

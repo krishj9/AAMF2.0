@@ -151,18 +151,18 @@ def default_portfolios() -> list[PortfolioRecord]:
             client_id="client_demo",
             account_id="acct_demo",
             display_label="Demo Investor",
-            equity_value=Decimal("7000"),
-            fixed_income_value=Decimal("2000"),
-            cash_value=Decimal("1000"),
+            equity_value=Decimal("6750"),   # 67.5% — clearly above 60% target, triggers REBALANCE_NEEDED
+            fixed_income_value=Decimal("2250"),  # 22.5% — below 30% target
+            cash_value=Decimal("1000"),     # 10% — at target
             as_of=now,
         ),
         _portfolio_record(
             client_id="client_income",
             account_id="acct_income",
             display_label="Income Investor",
-            equity_value=Decimal("4200"),
-            fixed_income_value=Decimal("4800"),
-            cash_value=Decimal("1000"),
+            equity_value=Decimal("3800"),   # 38% — below 60% target
+            fixed_income_value=Decimal("5200"),  # 52% — above 30% target
+            cash_value=Decimal("1000"),     # 10% — at target
             as_of=now,
         ),
     ]

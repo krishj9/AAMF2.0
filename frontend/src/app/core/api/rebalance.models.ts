@@ -104,6 +104,24 @@ export interface OrchestrationResponse {
     approval_status: string;
     recommendation_hash: string;
   };
+  // Agent outputs surfaced for UI display
+  research_output?: {
+    market_context?: string;
+    key_insights?: string[];
+    regime?: 'BULL' | 'BEAR' | 'NEUTRAL' | 'VOLATILE';
+    confidence?: number;
+    source?: string;
+  };
+  sentiment_output?: {
+    overall_sentiment?: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' | 'MIXED';
+    average_sentiment_score?: number;
+    symbol_sentiments?: Array<{
+      symbol: string;
+      overall_sentiment: string;
+      sentiment_score: number;
+      summary?: string;
+    }>;
+  };
 }
 
 export interface ApprovalTransitionResult {

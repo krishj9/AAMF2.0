@@ -5,7 +5,7 @@ from typing import Literal, Optional, TypedDict
 
 from app.contracts.analysis import AgentStageResult, RecommendationPackage, RiskPolicyResponse
 from app.contracts.common import WorkflowState
-from app.contracts.domain import ApprovalArtifact
+from app.contracts.analysis import ApprovalArtifact
 from app.contracts.workflow import PortfolioRebalanceRequest
 
 

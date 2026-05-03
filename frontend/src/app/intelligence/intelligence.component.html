@@ -1,0 +1,385 @@
+<div class="intel-shell">
+
+  <!-- Header -->
+  <header class="intel-header">
+    <div class="intel-header__brand">
+      <span class="intel-header__title">Asset Management</span>
+      <span class="intel-header__subtitle">System Intelligence</span>
+    </div>
+    <div class="intel-header__center">
+      <select class="portfolio-select" (change)="selectPortfolio($event)">
+        @for (p of portfolios(); track p.account_profile.account_id) {
+          <option [value]="p.account_profile.account_id">
+            {{ p.client_profile.display_label }}
+          </option>
+        }
+      </select>
+    </div>
+    <div class="intel-header__actions">
+      <button type="button" class="btn btn--ghost" (click)="goBack()">← Dashboard</button>
+    </div>
+  </header>
+
+  <!-- Intro -->
+  <div class="intel-intro">
+    <div class="intel-intro__text">
+      <h1 class="intel-intro__title">Multi-Agent AI System</h1>
+      <p class="intel-intro__desc">
+        This page exposes the internal mechanics of the LangGraph orchestration — how agents
+        coordinate, how memory persists across sessions, and how every human decision is
+        captured in an immutable audit trail.
+      </p>
+    </div>
+    <div class="intel-intro__pills">
+      <span class="tech-pill">LangGraph</span>
+      <span class="tech-pill">AWS Bedrock</span>
+      <span class="tech-pill">A2A Protocol</span>
+      <span class="tech-pill">MCP Protocol</span>
+      <span class="tech-pill">Human-in-the-Loop</span>
+      <span class="tech-pill">Agent Memory</span>
+    </div>
+  </div>
+
+  <!-- Tab Nav -->
+  <div class="intel-tabs">
+    <button class="intel-tab" [class.intel-tab--active]="activeTab() === 'workflow'" (click)="setTab('workflow')">
+      <span class="intel-tab__icon">⬡</span>
+      Workflow Trace
+    </button>
+    <button class="intel-tab" [class.intel-tab--active]="activeTab() === 'memory'" (click)="setTab('memory')">
+      <span class="intel-tab__icon">🧠</span>
+      Agent Memory
+    </button>
+    <button class="intel-tab" [class.intel-tab--active]="activeTab() === 'audit'" (click)="setTab('audit')">
+      <span class="intel-tab__icon">📋</span>
+      HITL Audit Trail
+    </button>
+  </div>
+
+  <div class="intel-body">
+
+    <!-- ── TAB 1: WORKFLOW TRACE ──────────────────────────────── -->
+    @if (activeTab() === 'workflow') {
+      @if (workflowLoading()) {
+        <div class="intel-loading">Loading workflow trace...</div>
+      } @else if (workflowError()) {
+        <div class="intel-empty">
+          <div class="intel-empty__icon">⬡</div>
+          <p>{{ workflowError() }}</p>
+          <p class="intel-empty__hint">Run a rebalance from the dashboard to generate a workflow trace.</p>
+        </div>
+      } @else if (workflowTrace(); as trace) {
+
+        <!-- Graph Summary -->
+        <div class="intel-section">
+          <h2 class="intel-section__title">Graph Execution Summary</h2>
+          <div class="summary-grid">
+            <div class="summary-stat">
+              <span class="summary-stat__label">Total Agents</span>
+              <strong class="summary-stat__value">{{ trace.graph_summary?.total_agents }}</strong>
+            </div>
+            <div class="summary-stat">
+              <span class="summary-stat__label">LLM Enhanced</span>
+              <strong class="summary-stat__value">{{ trace.graph_summary?.llm_enhanced }}</strong>
+            </div>
+            <div class="summary-stat">
+              <span class="summary-stat__label">Remote A2A</span>
+              <strong class="summary-stat__value">{{ trace.graph_summary?.remote_agents }}</strong>
+            </div>
+            <div class="summary-stat">
+              <span class="summary-stat__label">MCP Tools</span>
+              <strong class="summary-stat__value">{{ trace.graph_summary?.mcp_agents }}</strong>
+            </div>
+            <div class="summary-stat">
+              <span class="summary-stat__label">Workflow State</span>
+              <strong class="summary-stat__value">{{ trace.workflow_state }}</strong>
+            </div>
+            <div class="summary-stat">
+              <span class="summary-stat__label">Approval</span>
+              <strong class="summary-stat__value">{{ trace.approval_status }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parallel execution callout -->
+        <div class="intel-callout">
+          <span class="intel-callout__icon">⚡</span>
+          <div>
+            <strong>Parallel Execution:</strong>
+            {{ trace.graph_summary?.parallel_nodes?.join(' and ') }} run concurrently after
+            log_request_audit_event — LangGraph fan-out reduces total latency.
+          </div>
+        </div>
+
+        <!-- Agent Pipeline with I/O -->
+        <div class="intel-section">
+          <h2 class="intel-section__title">Agent Pipeline — State Flow</h2>
+          <p class="intel-section__desc">
+            Each node receives state from the previous node and writes its output back into the
+            shared <code>WorkflowGraphState</code>. The graph routes conditionally based on
+            policy verdicts and guardrail results.
+          </p>
+
+          <div class="trace-graph">
+            @for (stage of trace.stages; track stage.index; let last = $last) {
+              <div class="trace-node" [class]="statusClass(stage.status)">
+                <div class="trace-node__header">
+                  <span class="trace-node__index">{{ stage.index }}</span>
+                  <span class="trace-node__name">{{ stage.agent_name }}</span>
+                  <div class="trace-node__badges">
+                    <span class="badge badge--muted">{{ stage.protocol }}</span>
+                    @if (stage.is_llm_enhanced) {
+                      <span class="badge badge--info">LLM</span>
+                    }
+                    @if (stage.execution_location === 'remote') {
+                      <span class="badge badge--warning">A2A Remote</span>
+                    }
+                    @if (stage.protocol === 'MCP') {
+                      <span class="badge badge--warning">MCP Tool</span>
+                    }
+                  </div>
+                </div>
+                <div class="trace-node__io">
+                  <div class="trace-io trace-io--in">
+                    <span class="trace-io__label">IN</span>
+                    <span class="trace-io__value">{{ stage.received }}</span>
+                  </div>
+                  <div class="trace-io trace-io--out">
+                    <span class="trace-io__label">OUT</span>
+                    <span class="trace-io__value">{{ stage.produced }}</span>
+                  </div>
+                </div>
+                <div class="trace-node__summary">{{ stage.summary }}</div>
+              </div>
+              @if (!last) {
+                <div class="trace-edge">
+                  @if (stage.index === 2) {
+                    <span class="trace-edge__label">parallel fan-out →</span>
+                  } @else {
+                    <span class="trace-edge__label">→</span>
+                  }
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- State Transitions -->
+        <div class="intel-section">
+          <h2 class="intel-section__title">Conditional Routing Decisions</h2>
+          <p class="intel-section__desc">
+            LangGraph uses conditional edges to route the workflow based on runtime state.
+            These are the routing decisions made during this execution.
+          </p>
+          <div class="transitions">
+            @for (t of trace.state_transitions; track t.from_node) {
+              <div class="transition">
+                <span class="transition__from">{{ t.from_node }}</span>
+                <span class="transition__arrow">→</span>
+                <span class="transition__to">{{ t.to_node }}</span>
+                @if (t.condition) {
+                  <span class="transition__condition">if: {{ t.condition }}</span>
+                }
+                <span class="transition__change">{{ t.state_change }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="intel-meta">
+          Request ID: {{ trace.request_id }} · Approval: {{ trace.approval_id }}
+          · {{ formatDate(trace.created_at) }}
+        </div>
+      }
+    }
+
+    <!-- ── TAB 2: AGENT MEMORY ────────────────────────────────── -->
+    @if (activeTab() === 'memory') {
+      @if (memoryLoading()) {
+        <div class="intel-loading">Loading memory timeline...</div>
+      } @else if (memoryError()) {
+        <div class="intel-empty"><p>{{ memoryError() }}</p></div>
+      } @else if (memoryData(); as mem) {
+
+        <!-- Architecture explanation -->
+        <div class="intel-callout">
+          <span class="intel-callout__icon">🧠</span>
+          <div>{{ mem.architecture_note }}</div>
+        </div>
+
+        <!-- Memory stats -->
+        <div class="intel-section">
+          <h2 class="intel-section__title">Memory Store</h2>
+          <div class="summary-grid">
+            <div class="summary-stat">
+              <span class="summary-stat__label">Total Items</span>
+              <strong class="summary-stat__value">{{ mem.total_memories }}</strong>
+            </div>
+            @if (mem.memory_influence) {
+              <div class="summary-stat">
+                <span class="summary-stat__label">Items Retrieved (last run)</span>
+                <strong class="summary-stat__value">{{ mem.memory_influence.items_retrieved }}</strong>
+              </div>
+              <div class="summary-stat">
+                <span class="summary-stat__label">Items Used</span>
+                <strong class="summary-stat__value">{{ mem.memory_influence.items_used }}</strong>
+              </div>
+            }
+          </div>
+        </div>
+
+        @if (mem.memory_influence) {
+          <div class="intel-callout intel-callout--success">
+            <span class="intel-callout__icon">✓</span>
+            <div>
+              <strong>Memory influenced recommendation {{ mem.memory_influence.recommendation_id?.slice(0, 12) }}...</strong><br>
+              {{ mem.memory_influence.note }}
+            </div>
+          </div>
+        }
+
+        <!-- Memory timeline -->
+        <div class="intel-section">
+          <h2 class="intel-section__title">Memory Timeline</h2>
+          @if (mem.memories?.length) {
+            <div class="memory-timeline">
+              @for (item of mem.memories; track item.memory_id) {
+                <div class="memory-item" [class.memory-item--decision]="item.source === 'approval_artifact'">
+                  <div class="memory-item__header">
+                    <span class="badge"
+                      [class.badge--success]="item.approval_status === 'APPROVED'"
+                      [class.badge--danger]="item.approval_status === 'REJECTED'"
+                      [class.badge--muted]="!item.approval_status">
+                      {{ item.category | titlecase }}
+                    </span>
+                    <span class="memory-item__source">{{ item.source }}</span>
+                    <span class="memory-item__confidence">confidence: {{ (item.confidence * 100).toFixed(0) }}%</span>
+                    <span class="memory-item__time">{{ formatDate(item.timestamp) }}</span>
+                  </div>
+                  <p class="memory-item__content">{{ item.content }}</p>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="intel-empty">
+              <p>No memory items yet. Approve or reject a recommendation to create decision memories.</p>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- ── TAB 3: HITL AUDIT TRAIL ───────────────────────────── -->
+    @if (activeTab() === 'audit') {
+      @if (auditLoading()) {
+        <div class="intel-loading">Loading audit trail...</div>
+      } @else if (auditError()) {
+        <div class="intel-empty"><p>{{ auditError() }}</p></div>
+      } @else if (auditData(); as audit) {
+
+        <!-- HITL Architecture explanation -->
+        <div class="intel-section">
+          <h2 class="intel-section__title">Human-in-the-Loop Architecture</h2>
+          <div class="hitl-arch">
+            @for (entry of objectEntries(audit.hitl_architecture); track entry[0]) {
+              <div class="hitl-arch__row">
+                <span class="hitl-arch__key">{{ entry[0] | titlecase }}</span>
+                <span class="hitl-arch__val">{{ entry[1] }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="summary-grid">
+          <div class="summary-stat">
+            <span class="summary-stat__label">Total Workflows</span>
+            <strong class="summary-stat__value">{{ audit.total_workflows }}</strong>
+          </div>
+          <div class="summary-stat">
+            <span class="summary-stat__label">Human Decisions</span>
+            <strong class="summary-stat__value">{{ audit.total_decisions }}</strong>
+          </div>
+          <div class="summary-stat">
+            <span class="summary-stat__label">Pending</span>
+            <strong class="summary-stat__value">{{ audit.total_workflows - audit.total_decisions }}</strong>
+          </div>
+        </div>
+
+        <!-- Decision records -->
+        @if (audit.decisions?.length) {
+          <div class="intel-section">
+            <h2 class="intel-section__title">Decision Records</h2>
+            <div class="decision-list">
+              @for (d of audit.decisions; track d.approval_id) {
+                <div class="decision-card">
+                  <div class="decision-card__header">
+                    <span class="badge" [class]="approvalClass(d.approval_status)">
+                      {{ d.approval_status }}
+                    </span>
+                    <span class="badge" [class]="verdictClass(d.policy_verdict)">
+                      {{ d.policy_verdict }}
+                    </span>
+                    <span class="badge badge--muted">{{ d.trade_count }} trades</span>
+                    <span class="decision-card__time">{{ formatDate(d.created_at) }}</span>
+                  </div>
+
+                  <div class="decision-card__meta">
+                    <span>Artifact: {{ d.approval_id }}</span>
+                    <span>Hash: {{ d.recommendation_hash }}</span>
+                    <span>Transition: {{ d.state_transition }}</span>
+                    @if (d.approved_by) {
+                      <span>Approved by: {{ d.approved_by }} at {{ formatDate(d.approved_at) }}</span>
+                    }
+                    @if (d.rejection_note) {
+                      <span>Rejection note: {{ d.rejection_note }}</span>
+                    }
+                  </div>
+
+                  @if (d.trades?.length) {
+                    <div class="decision-card__trades">
+                      @for (t of d.trades; track t.trade_id) {
+                        <div class="mini-trade">
+                          <span class="mini-trade__action"
+                            [class.mini-trade__action--buy]="t.action === 'BUY'"
+                            [class.mini-trade__action--sell]="t.action === 'SELL'">
+                            {{ t.action }}
+                          </span>
+                          <span>{{ t.symbol }}</span>
+                          <span>${{ t.estimated_value }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="intel-empty">
+            <div class="intel-empty__icon">📋</div>
+            <p>No decisions recorded yet. Approve or reject a recommendation from the dashboard.</p>
+          </div>
+        }
+
+        <!-- Raw audit events -->
+        @if (audit.audit_events?.length) {
+          <div class="intel-section">
+            <h2 class="intel-section__title">Raw Audit Event Log</h2>
+            <div class="event-log">
+              @for (e of audit.audit_events; track e.event_id) {
+                <div class="event-row">
+                  <span class="event-row__type">{{ e.event_type }}</span>
+                  <span class="event-row__outcome">{{ e.outcome }}</span>
+                  <span class="event-row__actor">{{ e.actor_id ?? 'system' }}</span>
+                  <span class="event-row__time">{{ formatDate(e.created_at) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    }
+
+  </div><!-- /intel-body -->
+</div>

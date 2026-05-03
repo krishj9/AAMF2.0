@@ -1,570 +1,1309 @@
-// Professional Theme Colors - Subdued & Corporate
-$color-bg-primary: #0f1419;
-$color-bg-secondary: #1a1f2e;
-$color-bg-tertiary: #252b3b;
-$color-border: #2d3548;
-$color-text-primary: #e4e7eb;
-$color-text-secondary: #9ca3af;
-$color-text-muted: #6b7280;
-$color-accent: #3b82f6;
-$color-accent-hover: #2563eb;
-$color-success: #10b981;
-$color-warning: #f59e0b;
-$color-danger: #ef4444;
-$color-info: #06b6d4;
+// ─── Design Tokens ────────────────────────────────────────────────────────────
+$color-bg-primary:    #0f1419;
+$color-bg-secondary:  #1a1f2e;
+$color-bg-tertiary:   #252b3b;
+$color-border:        #2d3548;
+$color-text-primary:  #e4e7eb;
+$color-text-secondary:#9ca3af;
+$color-text-muted:    #6b7280;
+$color-accent:        #3b82f6;
+$color-accent-hover:  #2563eb;
+$color-success:       #10b981;
+$color-warning:       #f59e0b;
+$color-danger:        #ef4444;
+$color-info:          #06b6d4;
 
+$font-stack: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+
+// ─── Reset / Base ─────────────────────────────────────────────────────────────
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: $color-bg-primary;
+  color: $color-text-primary;
+  font-family: $font-stack;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+// ─── App Shell ────────────────────────────────────────────────────────────────
 .app-shell {
   min-height: 100dvh;
-  padding: 4rem clamp(1rem, 4vw, 4rem);
-  color: $color-text-primary;
+  display: flex;
+  flex-direction: column;
   background: $color-bg-primary;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
-.hero {
-  margin-bottom: 2rem;
-}
-
-.eyebrow {
-  margin: 0 0 0.75rem;
-  color: $color-accent;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-h1 {
-  margin: 0;
-  color: $color-text-primary;
-  font-size: clamp(2.5rem, 6vw, 5rem);
-  font-weight: 700;
-}
-
-.lede {
-  margin: 1.25rem 0 0;
-  color: $color-text-secondary;
-}
-
-.hero-actions {
-  margin-top: 1rem;
-}
-
-.hero-link {
-  display: inline-flex;
+// ─── Header ───────────────────────────────────────────────────────────────────
+.app-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 0.65rem 1.25rem;
-  border-radius: 6px;
-  color: white;
-  background: $color-accent;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: $color-accent-hover;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba($color-accent, 0.3);
-  }
-}
-
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   gap: 1rem;
-}
-
-.status-card {
-  padding: 1.25rem;
-  border: 1px solid $color-border;
-  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
   background: $color-bg-secondary;
+  border-bottom: 1px solid $color-border;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 
-  .label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: $color-text-muted;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  &__brand {
+    display: flex;
+    flex-direction: column;
   }
 
-  strong {
-    display: block;
+  &__title {
+    font-size: 1rem;
+    font-weight: 700;
     color: $color-text-primary;
-    font-size: 1.5rem;
-    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
-  p {
-    margin: 0.75rem 0 0;
-    color: $color-text-secondary;
-    line-height: 1.6;
+  &__subtitle {
+    font-size: 0.7rem;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  &__center {
+    display: flex;
+    justify-content: center;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
   }
 }
 
-.market-panel {
-  max-width: 72rem;
-  margin-top: 1rem;
-  padding: 1.25rem;
+.portfolio-select {
+  padding: 0.45rem 0.75rem;
   border: 1px solid $color-border;
-  border-radius: 8px;
-  background: $color-bg-secondary;
-
-  h2 {
-    margin: 0 0 1rem;
-    color: $color-text-primary;
-    font-weight: 600;
-  }
-}
-
-.market-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  gap: 0.75rem;
-
-  article {
-    padding: 1rem;
-    border-radius: 6px;
-    background: $color-bg-tertiary;
-    border: 1px solid $color-border;
-  }
-
-  span {
-    display: block;
-    color: $color-text-muted;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  strong {
-    display: block;
-    margin-top: 0.35rem;
-    color: $color-text-primary;
-    font-size: 1.35rem;
-    font-weight: 600;
-  }
-
-  p {
-    margin: 0.75rem 0 0;
-    color: $color-text-secondary;
-    font-size: 0.875rem;
-    line-height: 1.5;
-  }
-}
-
-.rebalance-alert {
-  display: grid;
-  gap: 0.25rem;
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 6px;
-  color: $color-text-secondary;
+  border-radius: $radius-sm;
   background: $color-bg-tertiary;
-  border: 1px solid $color-border;
-
-  &.needs-rebalance {
-    color: white;
-    background: $color-danger;
-    border-color: $color-danger;
-  }
-}
-
-.workflow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 1rem;
-  max-width: 72rem;
-  margin-top: 1rem;
-}
-
-.intake-card,
-.review-card {
-  padding: 1.25rem;
-  border: 1px solid $color-border;
-  border-radius: 8px;
-  background: $color-bg-secondary;
-
-  h2,
-  h3 {
-    margin-top: 0;
-    color: $color-text-primary;
-    font-weight: 600;
-  }
-}
-
-label {
-  display: grid;
-  gap: 0.35rem;
-  margin-bottom: 0.9rem;
-  color: $color-text-secondary;
-  font-weight: 500;
-}
-
-input,
-select {
-  width: 100%;
-  padding: 0.7rem 0.8rem;
-  border: 1px solid $color-border;
-  border-radius: 6px;
   color: $color-text-primary;
-  background: $color-bg-tertiary;
-  
+  font-size: 0.875rem;
+  font-family: $font-stack;
+  cursor: pointer;
+  min-width: 220px;
+
   &:focus {
     outline: none;
     border-color: $color-accent;
-    box-shadow: 0 0 0 3px rgba($color-accent, 0.1);
   }
 }
 
-button {
-  padding: 0.7rem 1.25rem;
-  border: 0;
-  border-radius: 6px;
-  color: white;
-  background: $color-success;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: $color-danger;
+  flex-shrink: 0;
 
-  &:hover:not(:disabled) {
-    background: darken($color-success, 5%);
-    transform: translateY(-1px);
+  &--ok { background: $color-success; }
+}
+
+// ─── Dashboard Layout ─────────────────────────────────────────────────────────
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  flex: 1;
+  align-items: start;
+
+  &__left,
+  &__right {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+// ─── Card ─────────────────────────────────────────────────────────────────────
+.card {
+  background: $color-bg-secondary;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 1.25rem;
+
+  &--compact { padding: 1rem; }
+
+  &__header {
+    margin-bottom: 1rem;
   }
 
+  &__title {
+    margin: 0.2rem 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+}
+
+.eyebrow {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $color-accent;
+}
+
+// ─── Stat Grid ────────────────────────────────────────────────────────────────
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.stat {
+  background: $color-bg-tertiary;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0.6rem 0.75rem;
+
+  &__label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $color-text-muted;
+    margin-bottom: 0.2rem;
+  }
+
+  &__value {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+}
+
+// ─── Signal Banner ────────────────────────────────────────────────────────────
+.signal-banner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: $radius-sm;
+  border: 1px solid $color-border;
+  background: $color-bg-tertiary;
+  margin-bottom: 0.75rem;
+
+  &__signal {
+    grid-row: 1;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: $color-text-muted;
+  }
+
+  &__reason {
+    grid-row: 1;
+    font-size: 0.8rem;
+    color: $color-text-secondary;
+  }
+
+  &__meta {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 0.7rem;
+    color: $color-text-muted;
+    margin-top: 0.2rem;
+  }
+
+  &--rebalance {
+    background: rgba($color-danger, 0.12);
+    border-color: rgba($color-danger, 0.4);
+
+    .signal-banner__signal { color: $color-danger; }
+    .signal-banner__reason { color: $color-text-primary; }
+  }
+
+  &--watch {
+    background: rgba($color-warning, 0.1);
+    border-color: rgba($color-warning, 0.4);
+
+    .signal-banner__signal { color: $color-warning; }
+  }
+
+  &--ok {
+    background: rgba($color-success, 0.08);
+    border-color: rgba($color-success, 0.3);
+
+    .signal-banner__signal { color: $color-success; }
+  }
+}
+
+// ─── Drift Grid ───────────────────────────────────────────────────────────────
+.drift-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.drift-card {
+  background: $color-bg-tertiary;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0.6rem 0.75rem;
+
+  &__label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $color-text-muted;
+    margin-bottom: 0.2rem;
+  }
+
+  &__current {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  &__drift {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $color-text-muted;
+
+    &--positive { color: $color-danger; }
+    &--negative { color: $color-info; }
+  }
+}
+
+// ─── Form Fields ──────────────────────────────────────────────────────────────
+.section-label {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $color-text-muted;
+}
+
+.field-group {
+  margin-bottom: 0.75rem;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: $color-text-secondary;
+  margin-bottom: 0.3rem;
+}
+
+.field-input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-bg-tertiary;
+  color: $color-text-primary;
+  font-size: 0.875rem;
+  font-family: $font-stack;
+  transition: border-color 0.15s;
+
+  &:focus {
+    outline: none;
+    border-color: $color-accent;
+    box-shadow: 0 0 0 2px rgba($color-accent, 0.15);
+  }
+
+  &--readonly {
+    color: $color-text-muted;
+    cursor: default;
+  }
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+// ─── Buttons ──────────────────────────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: $font-stack;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+  white-space: nowrap;
+
   &:disabled {
+    opacity: 0.45;
     cursor: not-allowed;
+    transform: none !important;
+  }
+
+  &:not(:disabled):hover { transform: translateY(-1px); }
+
+  &--primary {
+    background: $color-accent;
+    color: white;
+    &:not(:disabled):hover { background: $color-accent-hover; }
+  }
+
+  &--success {
+    background: $color-success;
+    color: white;
+    &:not(:disabled):hover { background: color-mix(in srgb, $color-success 85%, black); }
+  }
+
+  &--danger {
+    background: $color-danger;
+    color: white;
+    &:not(:disabled):hover { background: color-mix(in srgb, $color-danger 85%, black); }
+  }
+
+  &--warning {
+    background: $color-warning;
+    color: #1a1a1a;
+    &:not(:disabled):hover { background: color-mix(in srgb, $color-warning 85%, black); }
+  }
+
+  &--ghost {
+    background: transparent;
+    border-color: $color-border;
+    color: $color-text-secondary;
+    &:not(:disabled):hover {
+      border-color: $color-accent;
+      color: $color-accent;
+      background: rgba($color-accent, 0.06);
+    }
+  }
+
+  &--full { width: 100%; }
+}
+
+// ─── Callouts ─────────────────────────────────────────────────────────────────
+.callout {
+  padding: 0.75rem 1rem;
+  border-radius: $radius-sm;
+  border: 1px solid $color-border;
+  background: $color-bg-tertiary;
+  color: $color-text-secondary;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+
+  &--info {
+    background: rgba($color-accent, 0.08);
+    border-color: rgba($color-accent, 0.35);
+    color: $color-text-primary;
+  }
+
+  &--success {
+    background: rgba($color-success, 0.08);
+    border-color: rgba($color-success, 0.35);
+    color: $color-text-primary;
+  }
+
+  &--warning {
+    background: rgba($color-warning, 0.1);
+    border-color: rgba($color-warning, 0.4);
+    color: $color-text-primary;
+  }
+
+  &--danger {
+    background: rgba($color-danger, 0.1);
+    border-color: rgba($color-danger, 0.4);
+    color: $color-text-primary;
+  }
+}
+
+// ─── Badges ───────────────────────────────────────────────────────────────────
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: $color-bg-tertiary;
+  color: $color-text-muted;
+  border: 1px solid $color-border;
+
+  &--info    { background: rgba($color-accent, 0.15);   color: $color-accent;   border-color: rgba($color-accent, 0.3); }
+  &--success { background: rgba($color-success, 0.15);  color: $color-success;  border-color: rgba($color-success, 0.3); }
+  &--warning { background: rgba($color-warning, 0.15);  color: $color-warning;  border-color: rgba($color-warning, 0.3); }
+  &--danger  { background: rgba($color-danger, 0.15);   color: $color-danger;   border-color: rgba($color-danger, 0.3); }
+  &--muted   { background: $color-bg-tertiary; color: $color-text-muted; }
+}
+
+.status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+// ─── Approval Actions ─────────────────────────────────────────────────────────
+.approval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+// ─── Section Divider ──────────────────────────────────────────────────────────
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0.6rem;
+
+  span {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: $color-text-muted;
+    white-space: nowrap;
+  }
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $color-border;
+  }
+}
+
+// ─── Rule List ────────────────────────────────────────────────────────────────
+.rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: $radius-sm;
+  font-size: 0.8rem;
+  background: $color-bg-tertiary;
+  border: 1px solid $color-border;
+
+  &__icon {
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+    color: $color-text-muted;
+  }
+
+  &__message { color: $color-text-secondary; }
+
+  &--pass {
+    border-color: rgba($color-success, 0.3);
+    .rule-item__icon { color: $color-success; }
+  }
+
+  &--fail {
+    border-color: rgba($color-danger, 0.3);
+    background: rgba($color-danger, 0.05);
+    .rule-item__icon { color: $color-danger; }
+    .rule-item__message { color: $color-text-primary; }
+  }
+}
+
+// ─── Allocation Comparison ────────────────────────────────────────────────────
+.alloc-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.alloc-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 120px;
+  align-items: center;
+  gap: 0.6rem;
+
+  &__label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: $color-text-secondary;
+    text-transform: capitalize;
+  }
+
+  &__bars {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  &__values {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+  }
+}
+
+.alloc-bar {
+  height: 6px;
+  border-radius: 3px;
+  min-width: 2px;
+  transition: width 0.4s ease;
+
+  &--current { background: $color-accent; }
+  &--target  { background: rgba($color-success, 0.6); }
+}
+
+.alloc-val {
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--current { color: $color-accent; }
+  &--target  { color: $color-success; }
+
+  &__arrow { color: $color-text-muted; }
+}
+
+// ─── Trade List ───────────────────────────────────────────────────────────────
+.trade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.trade-item {
+  display: grid;
+  grid-template-columns: 50px 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 0.6rem;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  background: $color-bg-tertiary;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  font-size: 0.8rem;
+
+  &__action {
+    grid-row: 1;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    text-align: center;
+
+    &--buy  { background: rgba($color-success, 0.15); color: $color-success; }
+    &--sell { background: rgba($color-danger, 0.15);  color: $color-danger; }
+  }
+
+  &__symbol {
+    grid-row: 1;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  &__value {
+    grid-row: 1;
+    font-weight: 600;
+    color: $color-text-primary;
+    text-align: right;
+  }
+
+  &__rationale {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 0.75rem;
+    color: $color-text-muted;
+    margin-top: 0.3rem;
+    line-height: 1.4;
+  }
+}
+
+// ─── Agent Pipeline ───────────────────────────────────────────────────────────
+.pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pipeline__stage {
+  display: grid;
+  grid-template-columns: 24px 1fr 20px;
+  gap: 0.6rem;
+  align-items: start;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-bg-tertiary;
+  margin-bottom: 2px;
+  transition: border-color 0.2s;
+
+  &--done {
+    border-color: rgba($color-success, 0.35);
+    background: rgba($color-success, 0.04);
+  }
+
+  &--blocked {
+    border-color: rgba($color-danger, 0.35);
+    background: rgba($color-danger, 0.04);
+  }
+
+  &--skeleton {
     opacity: 0.5;
   }
 }
 
-.secondary-action {
-  margin-top: 0.75rem;
-  color: white;
+.pipeline__index {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
   background: $color-accent;
-  
-  &:hover:not(:disabled) {
-    background: $color-accent-hover;
-  }
-}
-
-.simulation-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.85rem;
-}
-
-.simulation-mode {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.45rem 0.7rem;
-  border-radius: 6px;
   color: white;
-  background: $color-info;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.pipeline__content {
+  min-width: 0;
+}
+
+.pipeline__agent-name {
   font-size: 0.8rem;
   font-weight: 600;
-
-  &.balanced {
-    background: $color-success;
-  }
+  color: $color-text-primary;
 }
 
-.approval-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
-}
-
-.approval-status,
-.balanced-note {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.55rem 0.75rem;
-  border-radius: 6px;
-  color: white;
-  background: $color-success;
+.pipeline__meta {
+  font-size: 0.68rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $color-text-muted;
+  margin-top: 0.1rem;
 }
 
-.balanced-note {
-  display: block;
-  line-height: 1.5;
-}
-
-.decision-summary {
-  margin: 1rem 0;
-  padding: 1rem;
-  border-radius: 6px;
+.pipeline__summary {
+  font-size: 0.78rem;
   color: $color-text-secondary;
+  margin-top: 0.2rem;
+  line-height: 1.35;
+}
+
+.pipeline__status-icon {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: $color-text-muted;
+  text-align: right;
+  margin-top: 2px;
+
+  .pipeline__stage--done & { color: $color-success; }
+  .pipeline__stage--blocked & { color: $color-danger; }
+}
+
+.pipeline__connector {
+  width: 1px;
+  height: 6px;
+  background: $color-border;
+  margin: 0 0 2px 11px;
+}
+
+// ─── Architecture Info ────────────────────────────────────────────────────────
+.arch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.arch-item {
   background: $color-bg-tertiary;
   border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0.6rem 0.75rem;
 
-  span {
+  &__tag {
     display: block;
-    color: $color-text-muted;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 600;
-    letter-spacing: 0.05em;
     text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: $color-accent;
+    margin-bottom: 0.2rem;
   }
 
   strong {
     display: block;
-    margin-top: 0.25rem;
-    color: $color-text-primary;
-    font-size: 1.35rem;
+    font-size: 0.78rem;
     font-weight: 600;
+    color: $color-text-primary;
+  }
+}
+
+// ─── Empty State ──────────────────────────────────────────────────────────────
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: $color-text-muted;
+
+  &__icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.4;
   }
 
-  &.needs-rebalance {
-    color: white;
-    background: $color-danger;
-    border-color: $color-danger;
+  p { font-size: 0.875rem; margin: 0; }
+}
 
-    span,
-    strong {
+// ─── Skeleton Loading ─────────────────────────────────────────────────────────
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+%skeleton {
+  background: linear-gradient(90deg, $color-bg-tertiary 25%, $color-border 50%, $color-bg-tertiary 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: $radius-sm;
+}
+
+.skeleton-box {
+  @extend %skeleton;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.skeleton-line {
+  @extend %skeleton;
+  height: 10px;
+  margin-bottom: 6px;
+
+  &--short  { width: 40%; }
+  &--medium { width: 65%; }
+  &--long   { width: 90%; }
+}
+
+.skeleton-block {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(white, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+// ─── Utility ──────────────────────────────────────────────────────────────────
+.text-muted { color: $color-text-muted; }
+.text-sm    { font-size: 0.78rem; }
+
+.artifact-footer {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid $color-border;
+}
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: 1024px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0.5rem;
+
+    &__center { justify-content: stretch; }
+    &__actions { justify-content: flex-start; }
+  }
+
+  .portfolio-select { width: 100%; }
+
+  .field-row { grid-template-columns: 1fr; }
+
+  .drift-grid { grid-template-columns: repeat(3, 1fr); }
+
+  .arch-grid { grid-template-columns: 1fr; }
+}
+
+// ─── Full-Width Alert Strip ───────────────────────────────────────────────────
+.alert-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.8rem;
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__signal {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.55rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  &__reason { color: $color-text-primary; }
+
+  &__meta {
+    font-size: 0.72rem;
+    color: $color-text-muted;
+    white-space: nowrap;
+  }
+
+  &--rebalance {
+    background: rgba($color-danger, 0.12);
+    border-bottom: 1px solid rgba($color-danger, 0.35);
+
+    .alert-strip__signal {
+      background: $color-danger;
       color: white;
+    }
+  }
+
+  &--watch {
+    background: rgba($color-warning, 0.1);
+    border-bottom: 1px solid rgba($color-warning, 0.3);
+
+    .alert-strip__signal {
+      background: $color-warning;
+      color: #1a1a1a;
     }
   }
 }
 
-.allocation-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+// ─── Drift Card Alert State ───────────────────────────────────────────────────
+.drift-card--alert {
+  border-color: rgba($color-danger, 0.35);
+  background: rgba($color-danger, 0.05);
+}
 
-  article {
-    padding: 1rem;
-    border-radius: 6px;
+// ─── Decision Situation Block ─────────────────────────────────────────────────
+.decision-situation {
+  padding: 0.85rem 1rem;
+  border-radius: $radius-sm;
+  border: 1px solid $color-border;
+  background: $color-bg-tertiary;
+  margin-bottom: 0.75rem;
+
+  &__headline {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $color-text-primary;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  &__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  &--action {
+    border-color: rgba($color-accent, 0.4);
+    background: rgba($color-accent, 0.06);
+  }
+
+  &--blocked {
+    border-color: rgba($color-danger, 0.4);
+    background: rgba($color-danger, 0.06);
+  }
+
+  &--ok {
+    border-color: rgba($color-success, 0.4);
+    background: rgba($color-success, 0.06);
+  }
+}
+
+// ─── Decision Bar ─────────────────────────────────────────────────────────────
+.decision-bar {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: $radius-sm;
+  border: 1px solid $color-border;
+  background: $color-bg-tertiary;
+
+  &__prompt {
+    font-size: 0.8rem;
+    color: $color-text-secondary;
+    margin-bottom: 0.65rem;
+
+    &--blocked { color: $color-danger; }
+    &--approved { color: $color-success; font-weight: 600; }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+}
+
+.btn--decision {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+}
+
+// ─── Trade List Compact ───────────────────────────────────────────────────────
+.trade-list--compact {
+  margin-top: 0.5rem;
+}
+
+// ─── Pipeline Summary (collapsed state) ──────────────────────────────────────
+.pipeline-summary {
+  font-size: 0.8rem;
+  color: $color-text-muted;
+  padding: 0.25rem 0;
+}
+
+// ─── Collapsible Card Header ──────────────────────────────────────────────────
+.card__header--toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover .card__title { color: $color-accent; }
+}
+
+.toggle-chevron {
+  font-size: 1.1rem;
+  color: $color-text-muted;
+  transition: transform 0.2s;
+  line-height: 1;
+
+  &--open { transform: rotate(180deg); }
+}
+
+// ─── AI Insight Cards (Research + Sentiment) ─────────────────────────────────
+.insight-card {
+  background: $color-bg-tertiary;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  &__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: $color-text-muted;
+  }
+
+  &__source {
+    font-size: 0.68rem;
+    color: $color-accent;
+    margin-left: auto;
+    font-style: italic;
+  }
+
+  &__context {
+    font-size: 0.8rem;
+    color: $color-text-secondary;
+    line-height: 1.5;
+    margin: 0 0 0.5rem;
+  }
+}
+
+.insight-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style-type: disc;
+
+  li {
+    font-size: 0.78rem;
+    color: $color-text-secondary;
+    margin-bottom: 0.2rem;
+    line-height: 1.4;
+  }
+}
+
+// ─── Sentiment Symbols ────────────────────────────────────────────────────────
+.sentiment-symbols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sentiment-symbol {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  background: $color-bg-secondary;
+  border: 1px solid $color-border;
+  border-radius: 3px;
+  font-size: 0.75rem;
+
+  &__name {
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  &__label {
+    color: $color-text-muted;
+    font-size: 0.68rem;
+  }
+}
+
+.sentiment-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: $color-text-muted;
+  flex-shrink: 0;
+
+  &--positive { background: $color-success; }
+  &--negative { background: $color-danger; }
+  &--mixed    { background: $color-warning; }
+}
+
+// ─── Q&A Chat Panel ───────────────────────────────────────────────────────────
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: rgba($color-accent, 0.12);
+    border: 1px solid rgba($color-accent, 0.3);
+    color: $color-accent;
+    width: fit-content;
+  }
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 400px;
+  min-height: 120px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: $color-bg-primary;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  scroll-behavior: smooth;
+}
+
+.chat-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  &__role {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $color-text-muted;
+  }
+
+  &__content {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: $color-text-secondary;
+    padding: 0.5rem 0.65rem;
+    border-radius: $radius-sm;
     background: $color-bg-tertiary;
     border: 1px solid $color-border;
   }
 
-  span,
-  small {
-    display: block;
-    color: $color-text-muted;
-    font-weight: 600;
-  }
-
-  strong {
-    display: block;
-    margin: 0.35rem 0;
+  &--user .chat-msg__content {
+    background: rgba($color-accent, 0.08);
+    border-color: rgba($color-accent, 0.2);
     color: $color-text-primary;
-    font-size: 1.4rem;
-    font-weight: 600;
+  }
+
+  &--assistant .chat-msg__content {
+    border-left: 3px solid $color-accent;
   }
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.state {
-  display: inline-flex;
-  padding: 0.35rem 0.65rem;
-  border-radius: 6px;
-  color: white;
-  background: $color-info;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.review-headline {
-  margin: 0 0 0.7rem;
-  color: $color-text-primary;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.review-meta {
-  margin: 0 0 0.7rem;
-  color: $color-text-muted;
-}
-
-.review-note {
-  color: $color-text-secondary;
-  font-weight: 500;
-}
-
-.trade-table {
-  border: 1px solid $color-border;
-  border-radius: 6px;
-  overflow: hidden;
-  margin-bottom: 1rem;
-}
-
-.trade-row {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr 1fr;
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.65rem 0.75rem;
-  background: $color-bg-tertiary;
-  border-top: 1px solid $color-border;
-
-  &:first-child {
-    border-top: 0;
-  }
-}
-
-.trade-header {
-  color: $color-text-muted;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  background: $color-bg-secondary;
-}
-
-.agent-stage-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-}
-
-.toggle-button {
-  padding: 0.4rem 0.7rem;
-  border: 1px solid $color-border;
-  border-radius: 6px;
-  color: $color-text-secondary;
-  background: $color-bg-tertiary;
-  font-size: 0.8rem;
-  font-weight: 500;
-  
-  &:hover {
-    border-color: $color-accent;
-    background: $color-bg-secondary;
-  }
-}
-
-.pipeline-summary {
-  margin: 0.25rem 0 1rem;
-  color: $color-text-muted;
-}
-
-.pipeline-graph {
-  display: grid;
-  gap: 0.45rem;
-  padding: 0.3rem 0 0.8rem;
-}
-
-.graph-stage {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.6rem;
-  padding: 0.75rem;
-  border-radius: 6px;
-  border: 1px solid $color-border;
-  background: $color-bg-tertiary;
-
-  &.done {
-    border-color: rgba($color-success, 0.5);
-    background: rgba($color-success, 0.05);
-  }
-
-  &.running {
-    border-color: rgba($color-info, 0.5);
-    background: rgba($color-info, 0.05);
-  }
-}
-
-.graph-stage-index {
-  width: 1.5rem;
-  height: 1.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: white;
-  background: $color-accent;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.graph-stage-content {
-  strong {
-    display: block;
-    color: $color-text-primary;
-    font-weight: 600;
-  }
-
-  span {
-    display: block;
-    margin-top: 0.1rem;
-    color: $color-text-muted;
-    font-size: 0.77rem;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  p {
-    margin: 0.45rem 0 0;
-    color: $color-text-secondary;
-    line-height: 1.35;
-  }
-}
-
-.graph-edge {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-left: 0.2rem;
-  color: $color-text-muted;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.graph-edge::before {
-  content: "|";
-  margin-right: 0.4rem;
+.chat-cursor {
+  animation: blink 1s step-end infinite;
   color: $color-accent;
 }
 
-@media (max-width: 800px) {
-  .workflow,
-  .allocation-grid,
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .trade-row {
-    grid-template-columns: 1fr;
-  }
+@keyframes blink {
+  50% { opacity: 0; }
 }
 
-.preferences-link {
-  margin: 1rem 0;
-  
-  .btn-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.25rem;
-    border-radius: 6px;
-    color: white;
-    background: $color-accent;
-    border: 1px solid $color-accent;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    font-size: 1rem;
-    
-    &:hover {
-      background: $color-accent-hover;
-      transform: translateY(-1px);
-    }
+.chat-clear {
+  align-self: flex-end;
+  font-size: 0.7rem;
+}
+
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.chip {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid $color-border;
+  border-radius: 999px;
+  background: $color-bg-tertiary;
+  color: $color-text-secondary;
+  font-size: 0.72rem;
+  font-family: $font-stack;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: $color-accent;
+    color: $color-accent;
   }
+
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input {
+  flex: 1;
+}
+
+// ─── section-divider with button
+.section-divider {
+  justify-content: flex-start;
+
+  button { margin-left: auto; }
+}
+
+// ─── Chat Thinking Indicator ──────────────────────────────────────────────────
+.chat-msg__thinking {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: $radius-sm;
+  background: $color-bg-tertiary;
+  border: 1px solid $color-border;
+  border-left: 3px solid $color-accent;
+}
+
+.thinking-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: $color-accent;
+  animation: thinking-bounce 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+
+  &:nth-child(1) { animation-delay: 0s; }
+  &:nth-child(2) { animation-delay: 0.2s; }
+  &:nth-child(3) { animation-delay: 0.4s; }
+}
+
+@keyframes thinking-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%            { transform: translateY(-5px); opacity: 1; }
+}
+
+.thinking-label {
+  font-size: 0.78rem;
+  color: $color-accent;
+  font-style: italic;
+  margin-left: 0.2rem;
 }

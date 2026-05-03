@@ -1,275 +1,557 @@
-<main class="app-shell">
-  <div class="bg-glow"></div>
+<main class="app-shell" [class.preferences-active]="!showMainContent()">
+
   @if (showMainContent()) {
-  <section class="hero">
-    <p class="eyebrow">Personal Portfolio Multi-Agent Platform</p>
-    <h1>{{ title() }}</h1>
-    <p class="lede">
-      Advisory-only portfolio construction and rebalancing with traceable evidence,
-      policy checks, and manual approval controls.
-    </p>
-    <div class="hero-actions">
-      <a class="hero-link" href="/architecture.html">View AWS Architecture</a>
-    </div>
-  </section>
-
-  <section class="market-panel">
-    <p class="eyebrow">Agentic AI Architecture</p>
-    <h2>Supervisor + Local Agents + Remote Protocols</h2>
-    <div class="market-grid">
-      <article>
-        <span>Supervisor</span>
-        <strong>FastAPI Orchestrator</strong>
-        <p>Coordinates local agents, remote A2A research, MCP sentiment, approval, and audit.</p>
-      </article>
-      <article>
-        <span>Remote Agent</span>
-        <strong>A2A Research Agent</strong>
-        <p>Runs as a dedicated remote service over A2A with automatic local fallback in the backend.</p>
-      </article>
-      <article>
-        <span>MCP Tool Server</span>
-        <strong>Sentiment Analysis</strong>
-        <p>Runs as an MCP-compatible JSON-RPC tool service consumed by the orchestrator.</p>
-      </article>
-    </div>
-  </section>
-
-  <section class="market-panel">
-    <div>
-      <p class="eyebrow">Live Market Simulation</p>
-      <h2>Streaming Portfolio Monitor</h2>
-    </div>
-    @if (displayMarketEvent(); as event) {
-      <div class="market-grid">
-        <article>
-          <span>Regime</span>
-          <strong>{{ event.tick.regime }}</strong>
-        </article>
-        <article>
-          <span>Equity Move</span>
-          <strong>{{ event.tick.equity_change_pct }}%</strong>
-        </article>
-        <article>
-          <span>Rate Move</span>
-          <strong>{{ event.tick.rate_change_bps }} bps</strong>
-        </article>
-        <article>
-          <span>Portfolio Value</span>
-          <strong>${{ event.monitoring.portfolio_value }}</strong>
-        </article>
+    <!-- ── HEADER ─────────────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="app-header__brand">
+        <span class="app-header__title">Asset Management</span>
+        <span class="app-header__subtitle">AI-Powered Portfolio Advisor</span>
       </div>
-      <div class="rebalance-alert" [class.needs-rebalance]="event.rebalance.signal === 'REBALANCE_NEEDED'">
-        <strong>{{ event.rebalance.signal }}</strong>
-        <span>{{ event.rebalance.reason }}</span>
-      </div>
-      <div class="simulation-controls">
-        <button class="secondary-action" type="button" (click)="simulateDriftAgain()">
-          Simulate drift for selected client
-        </button>
-      </div>
-      <p>
-        Max drift: {{ event.monitoring.max_abs_drift_pct }}%
-        (threshold {{ event.rebalance.threshold_pct }}%)
-      </p>
-    } @else {
-      <p>{{ marketStreamError() ?? 'Connecting to market simulation stream...' }}</p>
-    }
-  </section>
 
-  <section class="workflow">
-    <form class="intake-card" [formGroup]="form" (ngSubmit)="submitRebalance()">
-      <h2>Live Rebalance Decision</h2>
-      <p>
-        Intake values are synced from the latest simulated market tick so the recommendation
-        explains the same drift shown above.
-      </p>
-      <label>
-        Client portfolio
-        <select [value]="selectedAccountId()" (change)="selectPortfolio($event)">
+      <div class="app-header__center">
+        <select class="portfolio-select" [value]="selectedAccountId()" (change)="selectPortfolio($event)">
           @for (portfolio of portfolios(); track portfolio.account_profile.account_id) {
             <option [value]="portfolio.account_profile.account_id">
-              {{ portfolio.client_profile.display_label }} -
-              {{ portfolio.account_profile.account_id }} ({{ portfolioModeLabel(portfolio.account_profile.account_id) }})
+              {{ portfolio.client_profile.display_label }}
+              ({{ portfolioModeLabel(portfolio.account_profile.account_id) }})
             </option>
           }
         </select>
-      </label>
-      <div class="preferences-link">
-        <button type="button" (click)="navigateToPreferences()" class="btn-link">⚙️ Manage Investment Preferences</button>
       </div>
-      <label>
-        Investor label
-        <input type="text" formControlName="displayLabel" />
-      </label>
 
-      @if (displayMarketEvent(); as event) {
-        @if (selectedPortfolioBalanced()) {
-          <p class="balanced-note">
-            Approved recommendation is applied in simulation. Portfolio values are held at target
-            allocation until you simulate drift again.
-          </p>
-        }
+      <div class="app-header__actions">
+        <button type="button" class="btn btn--ghost" (click)="navigateToIntelligence()">
+          ⬡ System Intelligence
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="navigateToPreferences()">
+          ⚙ Preferences
+        </button>
+        <span class="health-dot" [class.health-dot--ok]="backendHealth()"
+          [title]="backendHealth() ? 'Backend connected' : 'Backend unreachable'"></span>
+      </div>
+    </header>
 
-        <h3>Current Simulated Allocation</h3>
-        <div class="allocation-grid">
-          <article>
-            <span>Equity</span>
-            <strong>{{ event.monitoring.current_allocation['equity'] }}%</strong>
-            <small>Drift {{ event.monitoring.drift['equity'] }}%</small>
-          </article>
-          <article>
-            <span>Fixed Income</span>
-            <strong>{{ event.monitoring.current_allocation['fixed_income'] }}%</strong>
-            <small>Drift {{ event.monitoring.drift['fixed_income'] }}%</small>
-          </article>
-          <article>
-            <span>Cash</span>
-            <strong>{{ event.monitoring.current_allocation['cash'] }}%</strong>
-            <small>Drift {{ event.monitoring.drift['cash'] }}%</small>
-          </article>
+    <!-- ── FULL-WIDTH ALERT BANNER (only when action needed) ──── -->
+    @if (displayMarketEvent(); as event) {
+      @if (event.rebalance.signal === 'REBALANCE_NEEDED' || event.rebalance.signal === 'WATCH') {
+        <div class="alert-strip"
+          [class.alert-strip--rebalance]="event.rebalance.signal === 'REBALANCE_NEEDED'"
+          [class.alert-strip--watch]="event.rebalance.signal === 'WATCH'">
+          <div class="alert-strip__left">
+            <strong class="alert-strip__signal">{{ event.rebalance.signal }}</strong>
+            <span class="alert-strip__reason">{{ event.rebalance.reason }}</span>
+          </div>
+          <span class="alert-strip__meta">
+            Max drift {{ event.monitoring.max_abs_drift_pct }}% · Threshold {{ event.rebalance.threshold_pct }}%
+          </span>
         </div>
       }
+    }
 
-      <h3>Simulated Position Values</h3>
-      <div class="form-grid">
-        <label>
-          Equity value
-          <input type="number" formControlName="equityValue" readonly />
-        </label>
-        <label>
-          Fixed income value
-          <input type="number" formControlName="fixedIncomeValue" readonly />
-        </label>
-        <label>
-          Cash value
-          <input type="number" formControlName="cashValue" readonly />
-        </label>
-      </div>
+    <!-- ── TWO-COLUMN DASHBOARD ───────────────────────────────── -->
+    <div class="dashboard">
 
-      <h3>Target Allocation</h3>
-      <div class="form-grid">
-        <label>
-          Target equity %
-          <input type="number" formControlName="targetEquityPct" />
-        </label>
-        <label>
-          Target fixed income %
-          <input type="number" formControlName="targetFixedIncomePct" />
-        </label>
-        <label>
-          Target cash %
-          <input type="number" formControlName="targetCashPct" />
-        </label>
-      </div>
+      <!-- LEFT COLUMN: Portfolio & Market ──────────────────────── -->
+      <div class="dashboard__left">
 
-      @if (submitting()) {
-        <p class="review-note">Generating rebalance recommendation...</p>
-      }
-      @if (rebalanceError()) {
-        <p class="error">{{ rebalanceError() }}</p>
-      }
-    </form>
+        <!-- Market Monitor -->
+        <section class="card">
+          <div class="card__header">
+            <span class="eyebrow">Live Market Simulation</span>
+            <h2 class="card__title">Portfolio Monitor</h2>
+          </div>
 
-    <article class="review-card">
-      <h2>Recommendation Review</h2>
-      @if (recommendation(); as response) {
-        <p class="review-headline">{{ reviewHeadline(response) }}</p>
-        <p class="review-meta">
-          State: {{ response.workflow_state }} | Approval: {{ response.approval_artifact?.approval_status ?? 'PENDING' }} | Trades:
-          {{ response.recommendation_package?.proposal?.trades?.length ?? 0 }} | Policy:
-          {{ response.recommendation_package?.risk_policy?.verdict ?? 'N/A' }}
-        </p>
-        <div class="approval-actions">
-          @if (canReviewDecision(response)) {
-            <button
-              type="button"
-              [disabled]="!response.recommendation_package?.approval_eligibility"
-              (click)="approveRecommendation()"
-            >
-              Approve
-            </button>
-            <button type="button" (click)="rejectRecommendation()">Reject</button>
-          } @else if (isBlockedByPolicy(response)) {
-            <button type="button" class="secondary-action" (click)="acknowledgeBlockedRecommendation()">
-              Acknowledge Policy Block
-            </button>
-            <span class="review-note">Recommendation blocked by policy checks. Click to acknowledge and clear.</span>
-          } @else if (response.approval_artifact?.approval_status === 'PENDING') {
-            <span class="review-note">No decision required: portfolio already within target tolerance.</span>
-          } @else {
-            <span class="review-note">Decision: {{ response.approval_artifact?.approval_status }}</span>
-          }
-        </div>
-        @if (approvalMessage()) {
-          <p>{{ approvalMessage() }}</p>
-        }
-        <p>{{ decisionSummary(response.approval_artifact?.approval_status) }}</p>
-        <p>{{ response.recommendation_package?.summary }}</p>
-
-        <h3>Proposed Trades</h3>
-        @if (response.recommendation_package?.proposal?.trades?.length) {
-          <div class="trade-table">
-            <div class="trade-row trade-header">
-              <span>Action</span>
-              <span>Symbol</span>
-              <span>Estimated Value</span>
+          @if (displayMarketEvent(); as event) {
+            <div class="stat-grid">
+              <div class="stat">
+                <span class="stat__label">Regime</span>
+                <strong class="stat__value">{{ event.tick.regime }}</strong>
+              </div>
+              <div class="stat">
+                <span class="stat__label">Equity Move</span>
+                <strong class="stat__value">{{ event.tick.equity_change_pct }}%</strong>
+              </div>
+              <div class="stat">
+                <span class="stat__label">Rate Move</span>
+                <strong class="stat__value">{{ event.tick.rate_change_bps }} bps</strong>
+              </div>
+              <div class="stat">
+                <span class="stat__label">Portfolio Value</span>
+                <strong class="stat__value">${{ event.monitoring.portfolio_value }}</strong>
+              </div>
             </div>
-            @for (trade of response.recommendation_package?.proposal?.trades; track trade.trade_id) {
-              <div class="trade-row">
-                <strong>{{ trade.action }}</strong>
-                <span>{{ trade.symbol }}</span>
-                <span>${{ trade.estimated_value }}</span>
+
+            <!-- Drift Breakdown — always visible, no banner duplication -->
+            <div class="drift-grid">
+              @for (entry of driftEntries(event); track entry[0]) {
+                <div class="drift-card"
+                  [class.drift-card--alert]="event.rebalance.signal === 'REBALANCE_NEEDED' && +(entry[1]) !== 0">
+                  <span class="drift-card__label">{{ entry[0] | titlecase }}</span>
+                  <strong class="drift-card__current">{{ event.monitoring.current_allocation[entry[0]] }}%</strong>
+                  <span class="drift-card__drift"
+                    [class.drift-card__drift--positive]="+(entry[1]) > 0"
+                    [class.drift-card__drift--negative]="+(entry[1]) < 0">
+                    {{ +(entry[1]) > 0 ? '+' : '' }}{{ entry[1] }}%
+                  </span>
+                </div>
+              }
+            </div>
+
+          } @else {
+            <p class="text-muted">{{ marketStreamError() ?? 'Connecting to market stream...' }}</p>
+          }
+        </section>
+
+        <!-- Portfolio Intake Form -->
+        <section class="card">
+          <div class="card__header">
+            <span class="eyebrow">Portfolio Intake</span>
+            <h2 class="card__title">Position & Targets</h2>
+          </div>
+
+          <form [formGroup]="form" (ngSubmit)="submitRebalance()">
+
+            @if (selectedPortfolioBalanced()) {
+              <div class="callout callout--success">
+                Portfolio is balanced. Values held at target allocation until you simulate drift again.
               </div>
             }
-          </div>
-        } @else {
-          <p>No trades proposed.</p>
-        }
 
-        <h3>Policy Verdict</h3>
-        <p>{{ response.recommendation_package?.risk_policy?.verdict }}</p>
+            <div class="field-group">
+              <label class="field-label">Investor Label</label>
+              <input class="field-input" type="text" formControlName="displayLabel" />
+            </div>
 
-        <div class="agent-stage-header">
-          <h3>Agent Stages</h3>
-          <button class="toggle-button" type="button" (click)="toggleAgentStages()">
-            {{ showAgentStages() ? 'Hide pipeline' : 'View pipeline' }}
-          </button>
-        </div>
-        @if (showAgentStages()) {
-          <div class="pipeline-graph">
-            @for (stage of response.recommendation_package?.agent_stages; track stage.agent_name; let idx = $index) {
-              <div class="graph-stage" [class.done]="stageTone(stage.status) === 'done'" [class.running]="stageTone(stage.status) === 'running'">
-                <span class="graph-stage-index">{{ idx + 1 }}</span>
-                <div class="graph-stage-content">
-                  <strong>{{ stage.agent_name }}</strong>
-                  <span>{{ stage.protocol }} / {{ stage.execution_location }}</span>
-                  <p>{{ stage.summary }}</p>
-                </div>
+            <h3 class="section-label">Simulated Position Values</h3>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label">Equity ($)</label>
+                <input class="field-input field-input--readonly" type="number" formControlName="equityValue" readonly />
               </div>
-              @if (idx < (response.recommendation_package?.agent_stages?.length ?? 0) - 1) {
-                <div class="graph-edge">
-                  <span>{{ stage.status }}</span>
+              <div class="field-group">
+                <label class="field-label">Fixed Income ($)</label>
+                <input class="field-input field-input--readonly" type="number" formControlName="fixedIncomeValue" readonly />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Cash ($)</label>
+                <input class="field-input field-input--readonly" type="number" formControlName="cashValue" readonly />
+              </div>
+            </div>
+
+            <h3 class="section-label">Target Allocation</h3>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label">Equity %</label>
+                <input class="field-input" type="number" formControlName="targetEquityPct" />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Fixed Income %</label>
+                <input class="field-input" type="number" formControlName="targetFixedIncomePct" />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Cash %</label>
+                <input class="field-input" type="number" formControlName="targetCashPct" />
+              </div>
+            </div>
+
+            @if (rebalanceError()) {
+              <div class="callout callout--danger">{{ rebalanceError() }}</div>
+            }
+
+            <div class="form-actions">
+              @if (selectedPortfolioBalanced()) {
+                <button type="button" class="btn btn--primary btn--full" (click)="simulateDriftAgain()">
+                  Simulate Drift to Trigger Rebalance
+                </button>
+              } @else if (submitting()) {
+                <button class="btn btn--primary btn--full" disabled>
+                  <span class="spinner"></span> Generating Recommendation...
+                </button>
+              } @else if (recommendation()) {
+                <button type="button" class="btn btn--ghost btn--full" (click)="simulateDriftAgain()">
+                  Simulate New Drift Scenario
+                </button>
+              } @else {
+                <button type="button" class="btn btn--primary btn--full" (click)="simulateDriftAgain()">
+                  Simulate Drift
+                </button>
+              }
+            </div>
+          </form>
+        </section>
+
+        <!-- Architecture Info -->
+        <section class="card card--compact">
+          <span class="eyebrow">Agentic Architecture</span>
+          <div class="arch-grid">
+            <div class="arch-item">
+              <span class="arch-item__tag">Supervisor</span>
+              <strong>FastAPI + LangGraph</strong>
+            </div>
+            <div class="arch-item">
+              <span class="arch-item__tag">Remote A2A</span>
+              <strong>Research Agent</strong>
+            </div>
+            <div class="arch-item">
+              <span class="arch-item__tag">MCP Tool</span>
+              <strong>Sentiment Server</strong>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /dashboard__left -->
+
+      <!-- RIGHT COLUMN: Decision first, then pipeline ──────────── -->
+      <div class="dashboard__right">
+
+        <!-- ── RECOMMENDATION REVIEW (always first on right) ──── -->
+        <section class="card">
+          <div class="card__header">
+            <span class="eyebrow">AI Decision Support</span>
+            <h2 class="card__title">Recommendation Review</h2>
+          </div>
+
+          @if (recommendation(); as response) {
+
+            <!-- 1. SITUATION: What is happening -->
+            <div class="decision-situation"
+              [class.decision-situation--action]="canReviewDecision(response)"
+              [class.decision-situation--blocked]="isBlockedByPolicy(response)"
+              [class.decision-situation--ok]="response.approval_artifact?.approval_status === 'APPROVED'">
+              <div class="decision-situation__headline">{{ reviewHeadline(response) }}</div>
+              <div class="decision-situation__badges">
+                <span class="badge"
+                  [class.badge--info]="response.workflow_state === 'NORMAL'"
+                  [class.badge--warning]="response.workflow_state === 'DEGRADED'"
+                  [class.badge--danger]="response.workflow_state === 'BLOCKED'">
+                  {{ response.workflow_state }}
+                </span>
+                <span class="badge"
+                  [class.badge--success]="response.approval_artifact?.approval_status === 'APPROVED'"
+                  [class.badge--danger]="response.approval_artifact?.approval_status === 'REJECTED'"
+                  [class.badge--muted]="response.approval_artifact?.approval_status === 'PENDING'">
+                  {{ response.approval_artifact?.approval_status ?? 'PENDING' }}
+                </span>
+                <span class="badge"
+                  [class.badge--success]="response.recommendation_package?.risk_policy?.verdict === 'COMPLIANT'"
+                  [class.badge--danger]="response.recommendation_package?.risk_policy?.verdict === 'NON_COMPLIANT'"
+                  [class.badge--warning]="response.recommendation_package?.risk_policy?.verdict === 'UNRESOLVED'">
+                  {{ response.recommendation_package?.risk_policy?.verdict ?? 'N/A' }}
+                </span>
+                <span class="badge badge--muted">
+                  {{ response.recommendation_package?.proposal?.trades?.length ?? 0 }} trades
+                </span>
+              </div>
+            </div>
+
+            <!-- 2. WHAT CHANGES: Allocation comparison + trades -->
+            @if (response.recommendation_package?.current_allocation) {
+              <div class="section-divider"><span>What Changes</span></div>
+
+              <!-- Allocation bars: current → target side by side -->
+              <div class="alloc-compare">
+                @for (key of ['equity', 'fixed_income', 'cash']; track key) {
+                  <div class="alloc-row">
+                    <span class="alloc-row__label">{{ key | titlecase }}</span>
+                    <div class="alloc-row__bars">
+                      <div class="alloc-bar alloc-bar--current"
+                        [style.width.%]="+(response.recommendation_package?.current_allocation?.[key] ?? 0)"
+                        [title]="'Current: ' + response.recommendation_package?.current_allocation?.[key] + '%'">
+                      </div>
+                      <div class="alloc-bar alloc-bar--target"
+                        [style.width.%]="+(response.recommendation_package?.target_allocation?.[key] ?? 0)"
+                        [title]="'Target: ' + response.recommendation_package?.target_allocation?.[key] + '%'">
+                      </div>
+                    </div>
+                    <div class="alloc-row__values">
+                      <span class="alloc-val alloc-val--current">{{ response.recommendation_package?.current_allocation?.[key] }}%</span>
+                      <span class="alloc-val__arrow">→</span>
+                      <span class="alloc-val alloc-val--target">{{ response.recommendation_package?.target_allocation?.[key] }}%</span>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Trades inline under allocation -->
+              @if (response.recommendation_package?.proposal?.trades?.length) {
+                <div class="trade-list trade-list--compact">
+                  @for (trade of response.recommendation_package?.proposal?.trades; track trade.trade_id) {
+                    <div class="trade-item">
+                      <span class="trade-item__action"
+                        [class.trade-item__action--buy]="trade.action === 'BUY'"
+                        [class.trade-item__action--sell]="trade.action === 'SELL'">
+                        {{ trade.action }}
+                      </span>
+                      <span class="trade-item__symbol">{{ trade.symbol }}</span>
+                      <span class="trade-item__value">${{ trade.estimated_value }}</span>
+                      @if (trade.rationale) {
+                        <span class="trade-item__rationale">{{ trade.rationale }}</span>
+                      }
+                    </div>
+                  }
                 </div>
               }
             }
-          </div>
-        } @else {
-          <p class="pipeline-summary">
-            {{ response.recommendation_package?.agent_stages?.length ?? 0 }} stages completed. Expand for details.
-          </p>
-        }
 
-        <h3>Approval Artifact</h3>
-        <p>
-          {{ response.approval_artifact?.approval_id }} -
-          {{ response.approval_artifact?.approval_status }}
-        </p>
-      } @else {
-        <p>Submit the intake form to generate a local deterministic recommendation.</p>
-      }
-    </article>
-  </section>
+            <!-- 3. POLICY: Did it pass checks -->
+            @if (response.recommendation_package?.risk_policy?.rule_results?.length) {
+              <div class="section-divider"><span>Policy Checks</span></div>
+              <div class="rule-list">
+                @for (rule of response.recommendation_package?.risk_policy?.rule_results; track rule['rule_id']) {
+                  <div class="rule-item"
+                    [class.rule-item--pass]="rule['passed']"
+                    [class.rule-item--fail]="!rule['passed']">
+                    <span class="rule-item__icon">{{ rule['passed'] ? '✓' : '✗' }}</span>
+                    <span class="rule-item__message">{{ rule['message'] }}</span>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- 4. DECISION: Approve / Reject — always at the bottom, prominent -->
+            <div class="decision-bar">
+              @if (canReviewDecision(response)) {
+                <div class="decision-bar__prompt">Review the trades above and make your decision:</div>
+                <div class="decision-bar__actions">
+                  <button type="button" class="btn btn--success btn--decision"
+                    [disabled]="!response.recommendation_package?.approval_eligibility"
+                    (click)="approveRecommendation()">
+                    ✓ Approve & Apply
+                  </button>
+                  <button type="button" class="btn btn--danger btn--decision" (click)="rejectRecommendation()">
+                    ✗ Reject
+                  </button>
+                </div>
+              } @else if (isBlockedByPolicy(response)) {
+                <div class="decision-bar__prompt decision-bar__prompt--blocked">
+                  Recommendation blocked by policy. Adjust preferences or portfolio to resolve.
+                </div>
+                <div class="decision-bar__actions">
+                  <button type="button" class="btn btn--warning btn--decision" (click)="acknowledgeBlockedRecommendation()">
+                    Acknowledge & Clear
+                  </button>
+                </div>
+              } @else if (response.approval_artifact?.approval_status === 'APPROVED') {
+                <div class="decision-bar__prompt decision-bar__prompt--approved">
+                  ✓ Approved and applied to portfolio.
+                </div>
+              } @else if (response.approval_artifact?.approval_status === 'REJECTED') {
+                <div class="decision-bar__prompt">
+                  Recommendation rejected. Portfolio remains in drift simulation mode.
+                </div>
+                <div class="decision-bar__actions">
+                  <button type="button" class="btn btn--primary btn--decision" (click)="simulateDriftAgain()">
+                    ↺ Simulate New Drift Scenario
+                  </button>
+                </div>
+              } @else if (response.recommendation_package?.proposal?.proposal_status === 'NO_ACTION_NEEDED') {
+                <div class="decision-bar__prompt">
+                  Portfolio is within tolerance — no rebalancing required.
+                </div>
+              } @else {
+                <div class="decision-bar__prompt">
+                  Awaiting recommendation — submit the portfolio intake form.
+                </div>
+              }
+            </div>
+
+            @if (approvalMessage()) {
+              <div class="callout callout--success">{{ approvalMessage() }}</div>
+            }
+
+            <!-- Artifact footer -->
+            <div class="artifact-footer">
+              <span class="text-muted text-sm">Artifact: {{ response.approval_artifact?.approval_id }}</span>
+            </div>
+
+            <!-- Research & Sentiment Insights (below decision) -->
+            @if (response.research_output?.market_context || response.sentiment_output?.overall_sentiment) {
+              <div class="section-divider"><span>AI Insights</span></div>
+              @if (response.research_output?.market_context) {
+                <div class="insight-card">
+                  <div class="insight-card__header">
+                    <span class="insight-card__label">Market Research</span>
+                    <span class="badge"
+                      [class.badge--success]="response.research_output?.regime === 'BULL'"
+                      [class.badge--danger]="response.research_output?.regime === 'BEAR'"
+                      [class.badge--warning]="response.research_output?.regime === 'VOLATILE'"
+                      [class.badge--muted]="response.research_output?.regime === 'NEUTRAL' || !response.research_output?.regime">
+                      {{ response.research_output?.regime ?? 'NEUTRAL' }}
+                    </span>
+                    <span class="insight-card__source">via A2A Research Agent</span>
+                  </div>
+                  <p class="insight-card__context">{{ response.research_output?.market_context }}</p>
+                  @if (response.research_output?.key_insights?.length) {
+                    <ul class="insight-list">
+                      @for (insight of response.research_output?.key_insights; track insight) {
+                        <li>{{ insight }}</li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+
+              @if (response.sentiment_output?.overall_sentiment) {
+                <div class="insight-card">
+                  <div class="insight-card__header">
+                    <span class="insight-card__label">Market Sentiment</span>
+                    <span class="badge"
+                      [class.badge--success]="response.sentiment_output?.overall_sentiment === 'POSITIVE'"
+                      [class.badge--danger]="response.sentiment_output?.overall_sentiment === 'NEGATIVE'"
+                      [class.badge--warning]="response.sentiment_output?.overall_sentiment === 'MIXED'"
+                      [class.badge--muted]="response.sentiment_output?.overall_sentiment === 'NEUTRAL'">
+                      {{ response.sentiment_output?.overall_sentiment }}
+                    </span>
+                    <span class="insight-card__source">via MCP Sentiment Server</span>
+                  </div>
+                  @if (response.sentiment_output?.symbol_sentiments?.length) {
+                    <div class="sentiment-symbols">
+                      @for (sym of response.sentiment_output?.symbol_sentiments; track sym.symbol) {
+                        <div class="sentiment-symbol">
+                          <span class="sentiment-symbol__name">{{ sym.symbol }}</span>
+                          <span class="sentiment-dot"
+                            [class.sentiment-dot--positive]="sym.overall_sentiment === 'POSITIVE'"
+                            [class.sentiment-dot--negative]="sym.overall_sentiment === 'NEGATIVE'"
+                            [class.sentiment-dot--mixed]="sym.overall_sentiment === 'MIXED'">
+                          </span>
+                          <span class="sentiment-symbol__label">{{ sym.overall_sentiment }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            }
+
+            <!-- ── Q&A CHAT PANEL — only when pending decision ── -->
+            @if (response.approval_artifact?.approval_status === 'PENDING') {
+              <div class="section-divider"><span>Ask the AI</span></div>
+              <div class="chat-panel">
+              <div class="chat-panel__badge">Grounded in this recommendation</div>
+
+              @if (chatMessages().length) {
+                <div class="chat-messages">
+                  @for (msg of chatMessages(); track $index; let last = $last) {
+                    <div class="chat-msg" [class.chat-msg--user]="msg.role === 'user'" [class.chat-msg--assistant]="msg.role === 'assistant'">
+                      <span class="chat-msg__role">{{ msg.role === 'user' ? 'You' : 'AI Advisor' }}</span>
+                      @if (chatStreaming() && last && msg.role === 'assistant' && msg.content === '') {
+                        <div class="chat-msg__thinking">
+                          <span class="thinking-dot"></span>
+                          <span class="thinking-dot"></span>
+                          <span class="thinking-dot"></span>
+                          <span class="thinking-label">Analyzing recommendation...</span>
+                        </div>
+                      } @else {
+                        <div class="chat-msg__content">{{ msg.content }}@if (chatStreaming() && last && msg.role === 'assistant') {<span class="chat-cursor">▌</span>}</div>
+                      }
+                    </div>
+                  }
+                </div>
+                <button type="button" class="btn btn--ghost btn--sm chat-clear" (click)="clearChat()">Clear</button>
+              }
+
+              <div class="chat-suggestions">
+                @for (q of suggestedQuestions; track q) {
+                  <button type="button" class="chip" (click)="askQuestion(q)" [disabled]="chatStreaming()">{{ q }}</button>
+                }
+              </div>
+
+              <div class="chat-input-row">
+                <input class="field-input chat-input" type="text" placeholder="Ask about this recommendation..."
+                  [(ngModel)]="chatInput"
+                  (keydown.enter)="submitChatInput()"
+                  [disabled]="chatStreaming()" />
+                <button type="button" class="btn btn--primary" (click)="submitChatInput()" [disabled]="chatStreaming() || !chatInput().trim()">
+                  @if (chatStreaming()) { <span class="spinner"></span> } @else { Send }
+                </button>
+              </div>
+            </div>
+            }<!-- /chat panel @if -->
+
+          } @else if (submitting()) {
+            <div class="skeleton-block">
+              <div class="skeleton-line skeleton-line--short"></div>
+              <div class="skeleton-line skeleton-line--long"></div>
+              <div class="skeleton-line skeleton-line--medium"></div>
+              <div class="skeleton-line skeleton-line--short"></div>
+            </div>
+          } @else {
+            <div class="empty-state">
+              <div class="empty-state__icon">◈</div>
+              <p>Submit the portfolio intake form to generate an AI-powered recommendation.</p>
+            </div>
+          }
+        </section>
+
+        <!-- ── AGENT PIPELINE (below decision, collapsible) ────── -->
+        <section class="card">
+          <div class="card__header card__header--toggle" (click)="toggleAgentStages()">
+            <div>
+              <span class="eyebrow">LangGraph Workflow</span>
+              <h2 class="card__title">Agent Pipeline</h2>
+            </div>
+            <span class="toggle-chevron" [class.toggle-chevron--open]="showAgentStages()">▾</span>
+          </div>
+
+          @if (showAgentStages()) {
+            @if (submitting() && !recommendation()) {
+              <div class="pipeline">
+                @for (i of [1,2,3,4,5,6]; track i) {
+                  <div class="pipeline__stage pipeline__stage--skeleton">
+                    <div class="pipeline__index skeleton-box"></div>
+                    <div class="pipeline__content">
+                      <div class="skeleton-line skeleton-line--short"></div>
+                      <div class="skeleton-line skeleton-line--long"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else if (recommendation(); as response) {
+              <div class="pipeline">
+                @for (stage of response.recommendation_package?.agent_stages; track stage.agent_name; let idx = $index) {
+                  <div class="pipeline__stage"
+                    [class.pipeline__stage--done]="stageTone(stage.status) === 'done'"
+                    [class.pipeline__stage--blocked]="stage.status.toLowerCase().includes('block') || stage.status.toLowerCase().includes('fail')">
+                    <span class="pipeline__index">{{ idx + 1 }}</span>
+                    <div class="pipeline__content">
+                      <div class="pipeline__agent-name">{{ stage.agent_name }}</div>
+                      <div class="pipeline__meta">{{ stage.protocol }} · {{ stage.execution_location }}</div>
+                      <div class="pipeline__summary">{{ stage.summary }}</div>
+                    </div>
+                    <span class="pipeline__status-icon">
+                      @if (stageTone(stage.status) === 'done') { ✓ }
+                      @else if (stage.status.toLowerCase().includes('block') || stage.status.toLowerCase().includes('fail')) { ✗ }
+                      @else { · }
+                    </span>
+                  </div>
+                  @if (idx < (response.recommendation_package?.agent_stages?.length ?? 0) - 1) {
+                    <div class="pipeline__connector"></div>
+                  }
+                }
+              </div>
+            } @else {
+              <div class="empty-state">
+                <div class="empty-state__icon">⬡</div>
+                <p>Submit a portfolio to activate the agent pipeline.</p>
+              </div>
+            }
+          } @else {
+            <!-- Collapsed summary -->
+            <div class="pipeline-summary">
+              @if (recommendation(); as response) {
+                {{ response.recommendation_package?.agent_stages?.length ?? 0 }} agents completed
+                · {{ response.workflow_state }}
+              } @else if (submitting()) {
+                Agents running...
+              } @else {
+                Awaiting submission
+              }
+            </div>
+          }
+        </section>
+
+      </div><!-- /dashboard__right -->
+    </div><!-- /dashboard -->
   }
 
   <router-outlet />
