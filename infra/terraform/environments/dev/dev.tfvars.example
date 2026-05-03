@@ -3,4 +3,5 @@ project_name = "asset-management"
 environment  = "dev"
 lambda_runtime = "python3.13"
 cors_allow_origins = ["*"]
+api_key = aIJ3WTclVQs6xIGhm9d-s89aBR0aq3wqB1GE4hM0TNw
 # frontend_bucket_name = "asset-management-dev-frontend-your-suffix"

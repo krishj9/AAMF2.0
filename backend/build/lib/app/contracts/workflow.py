@@ -55,3 +55,5 @@ class OrchestrationResponse(ContractModel):
     approval_artifact: ApprovalArtifact | None = None
     structured_error: StructuredError | None = None
     provider_trace_url: str | None = None
+    research_output: dict[str, Any] | None = None
+    sentiment_output: dict[str, Any] | None = None

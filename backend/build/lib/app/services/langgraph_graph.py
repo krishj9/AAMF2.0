@@ -213,45 +213,46 @@ async def hydrate_memory_node(state: WorkflowGraphState) -> WorkflowGraphState:
 
 
 async def _placeholder_research_node(state: WorkflowGraphState) -> WorkflowGraphState:
-    """Placeholder for research agent node."""
-    logger.info(f"[PLACEHOLDER] Research agent for {state['request_id']}")
+    """Research node — calls ResearchAgent (remote A2A with local fallback)."""
+    logger.info(f"Research agent for {state['request_id']}")
 
-    from app.agents.base import completed_stage
+    from app.agents.research import ResearchAgent
     from app.services.langgraph_state import add_agent_stage
 
-    # Placeholder output
-    state["research_output"] = {
-        "market_context": "Placeholder market context",
-        "key_insights": [],
-    }
-
-    # Add stage result
-    stage = completed_stage(
-        "Research Agent", "Placeholder: Research not yet implemented"
-    )
-    add_agent_stage(state, stage)
+    try:
+        agent = ResearchAgent()
+        stage_result, payload = await agent.run(state["request"])
+        state["research_output"] = payload
+        add_agent_stage(state, stage_result)
+    except Exception as e:
+        logger.error(f"Research agent failed: {e}", exc_info=True)
+        from app.agents.base import failed_stage
+        from app.services.langgraph_state import add_agent_stage
+        stage = failed_stage("Research Agent", f"Research failed: {str(e)}")
+        add_agent_stage(state, stage)
+        state["research_output"] = {"market_context": "Research unavailable.", "key_insights": []}
 
     return state
 
 
 async def _placeholder_sentiment_node(state: WorkflowGraphState) -> WorkflowGraphState:
-    """Placeholder for sentiment agent node."""
-    logger.info(f"[PLACEHOLDER] Sentiment agent for {state['request_id']}")
+    """Sentiment node — calls SentimentAnalysisAgent (MCP with local fallback)."""
+    logger.info(f"Sentiment agent for {state['request_id']}")
 
-    from app.agents.base import completed_stage
+    from app.agents.sentiment import SentimentAnalysisAgent
     from app.services.langgraph_state import add_agent_stage
 
-    # Placeholder output
-    state["sentiment_output"] = {
-        "overall_sentiment": "NEUTRAL",
-        "symbol_sentiments": [],
-    }
-
-    # Add stage result
-    stage = completed_stage(
-        "Sentiment Agent", "Placeholder: Sentiment analysis not yet implemented"
-    )
-    add_agent_stage(state, stage)
+    try:
+        agent = SentimentAnalysisAgent()
+        stage_result, payload = await agent.run(state["request"])
+        state["sentiment_output"] = payload
+        add_agent_stage(state, stage_result)
+    except Exception as e:
+        logger.error(f"Sentiment agent failed: {e}", exc_info=True)
+        from app.agents.base import failed_stage
+        stage = failed_stage("Sentiment Analysis Agent", f"Sentiment analysis failed: {str(e)}")
+        add_agent_stage(state, stage)
+        state["sentiment_output"] = {"overall_sentiment": "NEUTRAL", "symbol_sentiments": []}
 
     return state
 
@@ -315,30 +316,53 @@ async def _placeholder_risk_node(state: WorkflowGraphState) -> WorkflowGraphStat
 async def _placeholder_trade_proposal_node(
     state: WorkflowGraphState,
 ) -> WorkflowGraphState:
-    """Placeholder for trade proposal agent node."""
-    logger.info(f"[PLACEHOLDER] Trade proposal agent for {state['request_id']}")
+    """Trade proposal node — calls TradeExecutionProposalAgent with real deterministic logic."""
+    logger.info(f"Trade proposal agent for {state['request_id']}")
 
-    from app.agents.base import completed_stage
+    from app.adapters.bedrock import BedrockModelAdapter
+    from app.adapters.prompts import PromptTemplateLoader
+    from app.adapters.validation import ResponseValidator
+    from app.agents.trade_execution import TradeExecutionProposalAgent
+    from app.core.config import get_feature_flags
     from app.services.langgraph_state import add_agent_stage
 
     risk_policy = state.get("risk_policy_output")
+    if not risk_policy:
+        from app.agents.base import failed_stage
+        stage = failed_stage("Trade Execution Proposal Agent", "No risk policy output available.")
+        add_agent_stage(state, stage)
+        state["trade_proposal_output"] = {"proposal_status": "BLOCKED", "trades": [], "estimated_impact": {}}
+        return state
 
-    # Simple placeholder logic
-    if risk_policy and risk_policy.verdict.value == "COMPLIANT":
-        proposal_status = "READY_FOR_REVIEW"
-        summary = "Trade proposal generated and ready for review."
-    else:
-        proposal_status = "BLOCKED"
-        summary = "Trade proposal blocked by policy."
+    try:
+        feature_flags = get_feature_flags()
+        request = state["request"]
 
-    state["trade_proposal_output"] = {
-        "proposal_status": proposal_status,
-        "estimated_impact": state.get("rebalancing_output", {}).get("current_allocation", {}),
-    }
+        if feature_flags.trade_proposal_agent_llm_enabled:
+            agent = TradeExecutionProposalAgent(
+                bedrock_adapter=BedrockModelAdapter(),
+                prompt_loader=PromptTemplateLoader(),
+                validator=ResponseValidator(),
+            )
+        else:
+            agent = TradeExecutionProposalAgent()
 
-    # Add stage result
-    stage = completed_stage("Trade Execution Proposal Agent", summary)
-    add_agent_stage(state, stage)
+        stage_result, proposal = await agent.run(request.portfolio_snapshot, risk_policy)
+        add_agent_stage(state, stage_result)
+
+        state["trade_proposal_output"] = {
+            "proposal_status": proposal.proposal_status,
+            "trades": [t.model_dump(mode="json") for t in proposal.trades],
+            "estimated_impact": {k: str(v) for k, v in proposal.estimated_impact.items()},
+            "estimated_cost": str(proposal.estimated_cost),
+        }
+
+    except Exception as e:
+        logger.error(f"Trade proposal agent failed: {e}", exc_info=True)
+        from app.agents.base import failed_stage
+        stage = failed_stage("Trade Execution Proposal Agent", f"Trade proposal failed: {str(e)}")
+        add_agent_stage(state, stage)
+        state["trade_proposal_output"] = {"proposal_status": "BLOCKED", "trades": [], "estimated_impact": {}}
 
     return state
 
@@ -381,6 +405,8 @@ class LangGraphOrchestrator:
             workflow_state=final_state.get("workflow_state"),
             recommendation_package=final_state.get("recommendation_package"),
             approval_artifact=final_state.get("approval_artifact"),
+            research_output=final_state.get("research_output"),
+            sentiment_output=final_state.get("sentiment_output"),
         )
 
         logger.info(

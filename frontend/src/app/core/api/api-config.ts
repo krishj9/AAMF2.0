@@ -2,6 +2,7 @@ declare global {
   interface Window {
     assetManagementConfig?: {
       apiBaseUrl?: string;
+      apiToken?: string;
     };
   }
 }

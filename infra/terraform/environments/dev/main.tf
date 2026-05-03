@@ -250,6 +250,7 @@ module "backend_lambda" {
     FEATURE_RISK_AGENT_LLM_ENABLED        = "true"
     FEATURE_TRADE_PROPOSAL_AGENT_LLM_ENABLED = "true"
     FEATURE_FALLBACK_ON_LLM_FAILURE       = "true"
+    API_TOKEN                             = var.api_token
   }
 }
 

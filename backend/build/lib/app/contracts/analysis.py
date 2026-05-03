@@ -96,6 +96,8 @@ class RecommendationPackage(ContractModel):
     workflow_state: WorkflowState
     approval_eligibility: bool
     evidence: list[dict[str, str]] = Field(default_factory=list)
+    sentiment_output: dict | None = None
+    research_output: dict | None = None
 
 
 class ApprovalArtifact(ContractModel):

@@ -209,6 +209,8 @@ async def assemble_recommendation(state: WorkflowGraphState) -> WorkflowGraphSta
         workflow_state=workflow_state,
         approval_eligibility=approval_eligibility,
         evidence=risk_policy.evidence if risk_policy else [],
+        sentiment_output=state.get("sentiment_output"),
+        research_output=state.get("research_output"),
     )
 
     state["recommendation_package"] = recommendation
@@ -329,7 +331,7 @@ async def return_response(state: WorkflowGraphState) -> WorkflowGraphState:
 
 
 def _generate_summary(state: WorkflowGraphState) -> str:
-    """Generate summary based on workflow state."""
+    """Generate summary based on workflow state, incorporating sentiment signals."""
     if state.get("blockers"):
         return f"Recommendation is blocked: {', '.join(state['blockers'])}"
 
@@ -342,5 +344,75 @@ def _generate_summary(state: WorkflowGraphState) -> str:
         return "Portfolio is already within configured allocation tolerances."
     elif state.get("degraded_reasons"):
         return f"Recommendation generated with degraded quality: {', '.join(state['degraded_reasons'])}"
-    else:
-        return "Portfolio has drift outside tolerance and is ready for manual review."
+
+    # Base summary for READY_FOR_REVIEW
+    base = "Portfolio has drift outside tolerance and is ready for manual review."
+
+    # Append sentiment context if available and relevant
+    sentiment_notes = _sentiment_notes(state)
+    if sentiment_notes:
+        return f"{base} {sentiment_notes}"
+
+    return base
+
+
+def _sentiment_notes(state: WorkflowGraphState) -> str:
+    """
+    Build a sentiment context note for the recommendation summary.
+
+    Looks at the sentiment output and the proposed trades to surface
+    any meaningful signal: e.g. selling an asset with positive sentiment,
+    or buying an asset with negative sentiment.
+    """
+    sentiment_output = state.get("sentiment_output")
+    trade_proposal = state.get("trade_proposal_output", {})
+
+    if not sentiment_output:
+        return ""
+
+    # Build a symbol → sentiment map from the MCP output
+    symbol_sentiments: dict[str, dict] = {}
+    for item in sentiment_output.get("symbol_sentiments", []):
+        sym = item.get("symbol", "").upper()
+        if sym:
+            symbol_sentiments[sym] = item
+
+    # Also check overall sentiment
+    overall = sentiment_output.get("overall_sentiment", "NEUTRAL")
+
+    trades = trade_proposal.get("trades", [])
+    if not trades:
+        # No trades — just surface overall sentiment if non-neutral
+        if overall in ("POSITIVE", "NEGATIVE"):
+            return f"Market sentiment is currently {overall.lower()} across monitored asset classes."
+        return ""
+
+    notes = []
+    for trade in trades:
+        symbol = (trade.get("symbol") or "").upper()
+        action = (trade.get("action") or "").upper()
+        sentiment = symbol_sentiments.get(symbol, {})
+        sent_label = sentiment.get("overall_sentiment", overall)
+
+        if action == "SELL" and sent_label == "POSITIVE":
+            notes.append(
+                f"Sentiment for {symbol} is positive — this sell is driven by allocation drift, "
+                f"not market weakness."
+            )
+        elif action == "BUY" and sent_label == "NEGATIVE":
+            notes.append(
+                f"Sentiment for {symbol} is currently negative — consider timing this buy carefully."
+            )
+        elif action == "BUY" and sent_label == "POSITIVE":
+            notes.append(
+                f"Sentiment for {symbol} is positive, supporting this buy."
+            )
+
+    if notes:
+        return "Sentiment context: " + " ".join(notes)
+
+    # No notable signal — mention overall if non-neutral
+    if overall in ("POSITIVE", "NEGATIVE", "MIXED"):
+        return f"Overall market sentiment: {overall.lower()}."
+
+    return ""

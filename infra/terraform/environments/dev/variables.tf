@@ -62,3 +62,9 @@ variable "skip_metadata_api_check" {
   type        = bool
   default     = false
 }
+
+variable "api_token" {
+  description = "Shared API token required in x-api-token header for all API requests."
+  type        = string
+  sensitive   = true
+}
