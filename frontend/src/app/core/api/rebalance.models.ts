@@ -98,6 +98,21 @@ export interface OrchestrationResponse {
         message: string;
       }>;
     };
+    sentiment_output?: {
+      overall_sentiment?: string;
+      symbol_sentiments?: Array<{
+        symbol: string;
+        overall_sentiment: string;
+        sentiment_score: number;
+        summary?: string;
+      }>;
+    } | null;
+    research_output?: {
+      market_context?: string;
+      key_insights?: string[];
+      regime?: string;
+      confidence?: number;
+    } | null;
   };
   approval_artifact?: {
     approval_id: string;

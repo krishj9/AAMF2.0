@@ -20,10 +20,7 @@
       </div>
 
       <div class="app-header__actions">
-        <button type="button" class="btn btn--ghost" (click)="navigateToIntelligence()">
-          ⬡ System Intelligence
-        </button>
-        <button type="button" class="btn btn--ghost" (click)="navigateToPreferences()">
+        <button type="button" class="btn btn--primary btn--sm" (click)="navigateToPreferences()">
           ⚙ Preferences
         </button>
         <span class="health-dot" [class.health-dot--ok]="backendHealth()"
@@ -160,20 +157,29 @@
 
             <div class="form-actions">
               @if (selectedPortfolioBalanced()) {
+                <!-- Approved/balanced: simulate drift to start a new cycle -->
                 <button type="button" class="btn btn--primary btn--full" (click)="simulateDriftAgain()">
-                  Simulate Drift to Trigger Rebalance
+                  ↺ Simulate Market Drift
                 </button>
               } @else if (submitting()) {
+                <!-- Generating -->
                 <button class="btn btn--primary btn--full" disabled>
                   <span class="spinner"></span> Generating Recommendation...
                 </button>
               } @else if (recommendation()) {
+                <!-- Recommendation showing — reset to try again -->
                 <button type="button" class="btn btn--ghost btn--full" (click)="simulateDriftAgain()">
-                  Simulate New Drift Scenario
+                  ↺ Reset & Simulate New Drift
+                </button>
+              } @else if (displayMarketEvent()?.rebalance?.signal === 'REBALANCE_NEEDED') {
+                <!-- Drifted and waiting — auto-generate should have fired, offer manual fallback -->
+                <button type="button" class="btn btn--primary btn--full" (click)="submitRebalance()">
+                  <span class="spinner"></span> Analyzing drift...
                 </button>
               } @else {
+                <!-- Within tolerance — only action is to simulate drift -->
                 <button type="button" class="btn btn--primary btn--full" (click)="simulateDriftAgain()">
-                  Simulate Drift
+                  ↺ Simulate Market Drift
                 </button>
               }
             </div>
@@ -206,9 +212,14 @@
 
         <!-- ── RECOMMENDATION REVIEW (always first on right) ──── -->
         <section class="card">
-          <div class="card__header">
-            <span class="eyebrow">AI Decision Support</span>
-            <h2 class="card__title">Recommendation Review</h2>
+          <div class="card__header card__header--with-action">
+            <div>
+              <span class="eyebrow">AI Decision Support</span>
+              <h2 class="card__title">Recommendation Review</h2>
+            </div>
+            <button type="button" class="btn btn--workflow-viz" (click)="navigateToIntelligence()" title="View agent workflow, memory, and audit trail">
+              <span class="btn--workflow-viz__icon">⬡</span> View Agent Workflow
+            </button>
           </div>
 
           @if (recommendation(); as response) {
@@ -308,6 +319,107 @@
               </div>
             }
 
+            <!-- 3b. AI INSIGHTS: Sentiment + Research — shown BEFORE decision bar -->
+            <div class="section-divider"><span>AI Market Intelligence</span></div>
+
+              <!-- Sentiment — always shown, with clear verdict message -->
+              <div class="insight-card insight-card--decision">
+                <div class="insight-card__header">
+                  <span class="insight-card__label">Market Sentiment</span>
+                  @if ((response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment) {
+                    <span class="badge"
+                      [class.badge--success]="(response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment === 'POSITIVE'"
+                      [class.badge--danger]="(response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment === 'NEGATIVE'"
+                      [class.badge--warning]="(response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment === 'MIXED'"
+                      [class.badge--muted]="(response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment === 'NEUTRAL'">
+                      {{ (response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment }}
+                    </span>
+                  } @else {
+                    <span class="badge badge--muted">NEUTRAL</span>
+                  }
+                  <span class="insight-card__source">via MCP Sentiment Server</span>
+                </div>
+
+                <!-- Verdict message — always visible -->
+                <div class="sentiment-verdict"
+                  [class.sentiment-verdict--positive]="(response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment === 'POSITIVE'"
+                  [class.sentiment-verdict--negative]="(response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment === 'NEGATIVE'"
+                  [class.sentiment-verdict--mixed]="(response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment === 'MIXED'"
+                  [class.sentiment-verdict--neutral]="!(response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment || (response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment === 'NEUTRAL'">
+                  @switch ((response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.overall_sentiment) {
+                    @case ('POSITIVE') {
+                      ✓ Sentiment is favorable — market conditions support these trades.
+                    }
+                    @case ('NEGATIVE') {
+                      ⚠ Sentiment is negative — consider timing before approving.
+                    }
+                    @case ('MIXED') {
+                      ~ Mixed signals — some asset classes show conflicting sentiment.
+                    }
+                    @default {
+                      · Sentiment is neutral — no strong market signal for or against these trades.
+                    }
+                  }
+                </div>
+
+                <!-- Per-symbol breakdown -->
+                @if ((response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.symbol_sentiments?.length) {
+                  <div class="sentiment-detail">
+                    @for (sym of (response.recommendation_package?.sentiment_output ?? response.sentiment_output)?.symbol_sentiments; track sym.symbol) {
+                      <div class="sentiment-row">
+                        <span class="sentiment-row__symbol">{{ sym.symbol }}</span>
+                        <span class="sentiment-dot"
+                          [class.sentiment-dot--positive]="sym.overall_sentiment === 'POSITIVE'"
+                          [class.sentiment-dot--negative]="sym.overall_sentiment === 'NEGATIVE'"
+                          [class.sentiment-dot--mixed]="sym.overall_sentiment === 'MIXED'">
+                        </span>
+                        <span class="sentiment-row__label"
+                          [class.sentiment-row__label--positive]="sym.overall_sentiment === 'POSITIVE'"
+                          [class.sentiment-row__label--negative]="sym.overall_sentiment === 'NEGATIVE'">
+                          {{ sym.overall_sentiment }}
+                        </span>
+                        <div class="sentiment-bar-track">
+                          <div class="sentiment-bar-fill"
+                            [style.width.%]="((+(sym.sentiment_score ?? 0) + 1) / 2) * 100"
+                            [class.sentiment-bar-fill--positive]="+(sym.sentiment_score ?? 0) > 0.1"
+                            [class.sentiment-bar-fill--negative]="+(sym.sentiment_score ?? 0) < -0.1">
+                          </div>
+                        </div>
+                        <span class="sentiment-row__score">{{ (+(sym.sentiment_score ?? 0)).toFixed(2) }}</span>
+                        @if (sym.summary) {
+                          <span class="sentiment-row__summary">{{ sym.summary }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Research -->
+              @if ((response.recommendation_package?.research_output ?? response.research_output)?.market_context) {
+                <div class="insight-card insight-card--decision">
+                  <div class="insight-card__header">
+                    <span class="insight-card__label">Market Research</span>
+                    <span class="badge"
+                      [class.badge--success]="(response.recommendation_package?.research_output ?? response.research_output)?.regime === 'BULL'"
+                      [class.badge--danger]="(response.recommendation_package?.research_output ?? response.research_output)?.regime === 'BEAR'"
+                      [class.badge--warning]="(response.recommendation_package?.research_output ?? response.research_output)?.regime === 'VOLATILE'"
+                      [class.badge--muted]="!(response.recommendation_package?.research_output ?? response.research_output)?.regime || (response.recommendation_package?.research_output ?? response.research_output)?.regime === 'NEUTRAL'">
+                      {{ (response.recommendation_package?.research_output ?? response.research_output)?.regime ?? 'NEUTRAL' }}
+                    </span>
+                    <span class="insight-card__source">via A2A Research Agent</span>
+                  </div>
+                  <p class="insight-card__context">{{ (response.recommendation_package?.research_output ?? response.research_output)?.market_context }}</p>
+                  @if ((response.recommendation_package?.research_output ?? response.research_output)?.key_insights?.length) {
+                    <ul class="insight-list">
+                      @for (insight of (response.recommendation_package?.research_output ?? response.research_output)?.key_insights; track insight) {
+                        <li>{{ insight }}</li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+
             <!-- 4. DECISION: Approve / Reject — always at the bottom, prominent -->
             <div class="decision-bar">
               @if (canReviewDecision(response)) {
@@ -358,11 +470,6 @@
             @if (approvalMessage()) {
               <div class="callout callout--success">{{ approvalMessage() }}</div>
             }
-
-            <!-- Artifact footer -->
-            <div class="artifact-footer">
-              <span class="text-muted text-sm">Artifact: {{ response.approval_artifact?.approval_id }}</span>
-            </div>
 
             <!-- Research & Sentiment Insights (below decision) -->
             @if (response.research_output?.market_context || response.sentiment_output?.overall_sentiment) {
@@ -483,70 +590,54 @@
           }
         </section>
 
-        <!-- ── AGENT PIPELINE (below decision, collapsible) ────── -->
-        <section class="card">
-          <div class="card__header card__header--toggle" (click)="toggleAgentStages()">
-            <div>
-              <span class="eyebrow">LangGraph Workflow</span>
-              <h2 class="card__title">Agent Pipeline</h2>
-            </div>
-            <span class="toggle-chevron" [class.toggle-chevron--open]="showAgentStages()">▾</span>
+        <!-- ── AGENT STATUS STRIP ─────────────────────────────── -->
+        <section class="card card--compact">
+          <div class="agent-strip-header">
+            <span class="eyebrow">LangGraph Workflow</span>
+            <button type="button" class="btn--workflow-viz" (click)="navigateToIntelligence()">
+              <span class="btn--workflow-viz__icon">⬡</span> View Workflow
+            </button>
           </div>
 
-          @if (showAgentStages()) {
-            @if (submitting() && !recommendation()) {
-              <div class="pipeline">
-                @for (i of [1,2,3,4,5,6]; track i) {
-                  <div class="pipeline__stage pipeline__stage--skeleton">
-                    <div class="pipeline__index skeleton-box"></div>
-                    <div class="pipeline__content">
-                      <div class="skeleton-line skeleton-line--short"></div>
-                      <div class="skeleton-line skeleton-line--long"></div>
-                    </div>
-                  </div>
-                }
-              </div>
-            } @else if (recommendation(); as response) {
-              <div class="pipeline">
-                @for (stage of response.recommendation_package?.agent_stages; track stage.agent_name; let idx = $index) {
-                  <div class="pipeline__stage"
-                    [class.pipeline__stage--done]="stageTone(stage.status) === 'done'"
-                    [class.pipeline__stage--blocked]="stage.status.toLowerCase().includes('block') || stage.status.toLowerCase().includes('fail')">
-                    <span class="pipeline__index">{{ idx + 1 }}</span>
-                    <div class="pipeline__content">
-                      <div class="pipeline__agent-name">{{ stage.agent_name }}</div>
-                      <div class="pipeline__meta">{{ stage.protocol }} · {{ stage.execution_location }}</div>
-                      <div class="pipeline__summary">{{ stage.summary }}</div>
-                    </div>
-                    <span class="pipeline__status-icon">
-                      @if (stageTone(stage.status) === 'done') { ✓ }
-                      @else if (stage.status.toLowerCase().includes('block') || stage.status.toLowerCase().includes('fail')) { ✗ }
-                      @else { · }
-                    </span>
-                  </div>
-                  @if (idx < (response.recommendation_package?.agent_stages?.length ?? 0) - 1) {
-                    <div class="pipeline__connector"></div>
-                  }
-                }
-              </div>
-            } @else {
-              <div class="empty-state">
-                <div class="empty-state__icon">⬡</div>
-                <p>Submit a portfolio to activate the agent pipeline.</p>
-              </div>
-            }
-          } @else {
-            <!-- Collapsed summary -->
-            <div class="pipeline-summary">
-              @if (recommendation(); as response) {
-                {{ response.recommendation_package?.agent_stages?.length ?? 0 }} agents completed
-                · {{ response.workflow_state }}
-              } @else if (submitting()) {
-                Agents running...
-              } @else {
-                Awaiting submission
+          @if (submitting() && !recommendation()) {
+            <!-- Running: pulse animation on all dots -->
+            <div class="agent-strip">
+              @for (name of ['Memory', 'Research', 'Sentiment', 'Rebalancing', 'Risk', 'Trade', 'Approval']; track name) {
+                <div class="agent-dot-item">
+                  <span class="agent-dot agent-dot--running"></span>
+                  <span class="agent-dot-label">{{ name }}</span>
+                </div>
               }
             </div>
+          } @else if (recommendation(); as response) {
+            <!-- Completed: show actual status per stage -->
+            <div class="agent-strip">
+              @for (stage of response.recommendation_package?.agent_stages; track stage.agent_name) {
+                <div class="agent-dot-item" [title]="stage.agent_name + ': ' + stage.summary">
+                  <span class="agent-dot"
+                    [class.agent-dot--done]="stageTone(stage.status) === 'done'"
+                    [class.agent-dot--blocked]="stage.status.toLowerCase().includes('block') || stage.status.toLowerCase().includes('fail')"
+                    [class.agent-dot--running]="stageTone(stage.status) === 'running'">
+                  </span>
+                  <span class="agent-dot-label">{{ stage.agent_name | slice:0:8 }}</span>
+                </div>
+              }
+            </div>
+            <div class="agent-strip-meta">
+              {{ response.recommendation_package?.agent_stages?.length ?? 0 }} agents · {{ response.workflow_state }}
+              · <button type="button" class="link-btn" (click)="navigateToIntelligence()">full trace →</button>
+            </div>
+          } @else {
+            <!-- Idle -->
+            <div class="agent-strip">
+              @for (name of ['Memory', 'Research', 'Sentiment', 'Rebalancing', 'Risk', 'Trade', 'Approval']; track name) {
+                <div class="agent-dot-item">
+                  <span class="agent-dot agent-dot--idle"></span>
+                  <span class="agent-dot-label">{{ name }}</span>
+                </div>
+              }
+            </div>
+            <div class="agent-strip-meta">Awaiting submission</div>
           }
         </section>
 

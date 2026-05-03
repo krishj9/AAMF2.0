@@ -1,4 +1,4 @@
-import { TitleCasePipe } from '@angular/common';
+import { SlicePipe, TitleCasePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -20,7 +20,7 @@ import { apiUrl } from './core/api/api-config';
 
 @Component({
   selector: 'app-root',
-  imports: [ReactiveFormsModule, FormsModule, RouterOutlet, TitleCasePipe],
+  imports: [ReactiveFormsModule, FormsModule, RouterOutlet, TitleCasePipe, SlicePipe],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -325,23 +325,22 @@ export class App implements OnDestroy {
     this.recommendation.set(null);
     this.showAgentStages.set(false);
     this.rebalanceError.set(null);
+    this.approvalMessage.set(null);
 
-    if (!this.isAccountBalanced(accountId)) {
-      this.enableForcedDriftForAccount(accountId);
-      this.enableAutoRecommendForAccount(accountId);
-      this.approvalMessage.set(
-        'Drift simulation is active. Rebalance will remain required for this client until balanced again.'
-      );
-      return;
-    }
-
+    // Mark as unbalanced and enable forced drift
     this.setAccountBalanced(accountId, false);
     this.enableForcedDriftForAccount(accountId);
+    // Set the flag so maybeAutoGenerateRecommendation fires exactly once
     this.enableAutoRecommendForAccount(accountId);
-    this.approvalMessage.set('Market drift simulation resumed. Rebalance trigger can activate again.');
+
+    // Apply forced drift immediately to the current market event
     const event = this.marketEvent();
     if (event) {
-      this.syncFormToMarket(event);
+      const driftedEvent = this.toForcedDriftEvent(event);
+      this.marketEvent.set(driftedEvent);
+      this.syncFormToMarket(driftedEvent);
+      // Trigger auto-generate immediately
+      this.maybeAutoGenerateRecommendation(accountId);
     }
   }
 
@@ -675,9 +674,8 @@ export class App implements OnDestroy {
 
     const current = this.recommendation();
 
-    // If a stale NO_ACTION_NEEDED recommendation is showing while market says REBALANCE_NEEDED,
-    // clear it so a fresh one gets generated.
-    // REJECTED is intentional — respect the user's decision, don't auto-regenerate.
+    // If a recommendation exists, only clear it if it's genuinely stale
+    // (portfolio was balanced and drifted again, or NO_ACTION_NEEDED while market says REBALANCE_NEEDED)
     if (current !== null) {
       const proposalStatus = current.recommendation_package?.proposal?.proposal_status;
       const approvalStatus = current.approval_artifact?.approval_status;
@@ -685,20 +683,27 @@ export class App implements OnDestroy {
       if (isStale) {
         this.recommendation.set(null);
         this.approvalMessage.set(null);
+        // Fall through to submit
       } else {
-        // Pending, rejected, or blocked — leave it alone
+        // Pending, rejected, or blocked — leave it alone, don't re-submit
         return;
       }
     }
 
-    // Auto-generate if flag is set OR if this is initial load with REBALANCE_NEEDED
+    // Only submit once per drift cycle — the autoRecommend flag gates this
+    // On initial load it's false, so we submit once. simulateDriftAgain() sets it true.
     const shouldAutoGenerate = this.autoRecommendByAccount()[accountId] ?? false;
-    if (shouldAutoGenerate) {
-      this.clearAutoRecommendForAccount(accountId);
+    if (!shouldAutoGenerate && current === null) {
+      // First load with REBALANCE_NEEDED — submit once, don't repeat
+      this.enableAutoRecommendForAccount(accountId); // mark as handled
+      this.submitRebalance();
+      return;
     }
 
-    // Submit when REBALANCE_NEEDED appears without a valid recommendation
-    this.submitRebalance();
+    if (shouldAutoGenerate) {
+      this.clearAutoRecommendForAccount(accountId);
+      this.submitRebalance();
+    }
   }
 
   private applyForcedDriftIfNeeded(event: MarketStreamEvent, accountId: string): MarketStreamEvent {

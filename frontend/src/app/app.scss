@@ -407,6 +407,7 @@ body {
   }
 
   &--full { width: 100%; }
+  &--sm   { padding: 0.4rem 0.8rem; font-size: 0.78rem; }
 }
 
 // ─── Callouts ─────────────────────────────────────────────────────────────────
@@ -1045,6 +1046,13 @@ body {
   &:hover .card__title { color: $color-accent; }
 }
 
+.card__header--with-action {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .toggle-chevron {
   font-size: 1.1rem;
   color: $color-text-muted;
@@ -1306,4 +1314,231 @@ body {
   color: $color-accent;
   font-style: italic;
   margin-left: 0.2rem;
+}
+
+// ─── Sentiment Detail (decision-time display) ─────────────────────────────────
+.insight-card--decision {
+  border-left: 3px solid $color-accent;
+}
+
+.sentiment-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.sentiment-row {
+  display: grid;
+  grid-template-columns: 80px 10px 70px 1fr 40px;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+
+  &__symbol {
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  &__label {
+    color: $color-text-muted;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    &--positive { color: $color-success; }
+    &--negative { color: $color-danger; }
+  }
+
+  &__score {
+    font-size: 0.72rem;
+    color: $color-text-muted;
+    text-align: right;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  &__summary {
+    grid-column: 1 / -1;
+    font-size: 0.75rem;
+    color: $color-text-muted;
+    font-style: italic;
+    line-height: 1.4;
+    padding-left: 0.5rem;
+    border-left: 2px solid $color-border;
+  }
+}
+
+.sentiment-bar-track {
+  height: 6px;
+  background: $color-bg-primary;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid $color-border;
+}
+
+.sentiment-bar-fill {
+  height: 100%;
+  background: $color-text-muted;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+
+  &--positive { background: $color-success; }
+  &--negative { background: $color-danger; }
+}
+
+// ─── Sentiment Verdict Message ────────────────────────────────────────────────
+.sentiment-verdict {
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.5rem 0.65rem;
+  border-radius: $radius-sm;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+
+  &--positive {
+    background: rgba($color-success, 0.1);
+    border: 1px solid rgba($color-success, 0.3);
+    color: $color-success;
+  }
+
+  &--negative {
+    background: rgba($color-danger, 0.1);
+    border: 1px solid rgba($color-danger, 0.3);
+    color: $color-danger;
+  }
+
+  &--mixed {
+    background: rgba($color-warning, 0.1);
+    border: 1px solid rgba($color-warning, 0.3);
+    color: $color-warning;
+  }
+
+  &--neutral {
+    background: $color-bg-tertiary;
+    border: 1px solid $color-border;
+    color: $color-text-muted;
+  }
+}
+
+// ─── Workflow Visualization Button ────────────────────────────────────────────
+$color-purple: #a855f7;
+
+.btn--workflow-viz {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba($color-purple, 0.4);
+  border-radius: $radius-sm;
+  background: rgba($color-purple, 0.08);
+  color: $color-purple;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: $font-stack;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba($color-purple, 0.16);
+    border-color: $color-purple;
+    transform: translateY(-1px);
+  }
+
+  &__icon {
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+}
+
+// ─── Agent Status Strip ───────────────────────────────────────────────────────
+.agent-strip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.agent-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.agent-dot-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 44px;
+}
+
+.agent-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: $color-bg-tertiary;
+  border: 1px solid $color-border;
+  flex-shrink: 0;
+
+  &--idle {
+    background: $color-bg-tertiary;
+    border-color: $color-border;
+  }
+
+  &--done {
+    background: $color-success;
+    border-color: $color-success;
+  }
+
+  &--blocked {
+    background: $color-danger;
+    border-color: $color-danger;
+  }
+
+  &--running {
+    background: $color-accent;
+    border-color: $color-accent;
+    animation: pulse-dot 1s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+.agent-dot-label {
+  font-size: 0.6rem;
+  color: $color-text-muted;
+  text-align: center;
+  line-height: 1.2;
+  max-width: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-strip-meta {
+  font-size: 0.72rem;
+  color: $color-text-muted;
+  margin-top: 0.5rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: $color-accent;
+  font-size: 0.72rem;
+  font-family: $font-stack;
+  cursor: pointer;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
 }
