@@ -1,498 +1,1244 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AWS Architecture - Asset Management Platform</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asset Management Platform — Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1419;
+    --bg2: #1a1f2e;
+    --bg3: #252b3b;
+    --border: #2d3548;
+    --blue: #3b82f6;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --purple: #a855f7;
+    --text: #e4e7eb;
+    --text2: #9ca3af;
+    --sidebar-width: 260px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 4px;
+  }
+
+  .sidebar-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    line-height: 1.4;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue);
+    text-decoration: none;
+    padding: 5px 10px;
+    border: 1px solid rgba(59,130,246,0.35);
+    border-radius: 5px;
+    background: rgba(59,130,246,0.08);
+    transition: background 0.15s;
+  }
+
+  .back-link:hover {
+    background: rgba(59,130,246,0.16);
+  }
+
+  .sidebar-nav {
+    padding: 12px 0;
+    flex: 1;
+  }
+
+  .nav-item {
+    display: block;
+    padding: 8px 20px;
+    font-size: 13px;
+    color: var(--text2);
+    text-decoration: none;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+    line-height: 1.4;
+  }
+
+  .nav-item:hover {
+    color: var(--text);
+    background: var(--bg3);
+    border-left-color: var(--blue);
+  }
+
+  .nav-item.active {
+    color: var(--blue);
+    background: rgba(59,130,246,0.08);
+    border-left-color: var(--blue);
+  }
+
+  .nav-num {
+    display: inline-block;
+    width: 20px;
+    font-size: 11px;
+    color: var(--text2);
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Main content ── */
+  .main {
+    margin-left: var(--sidebar-width);
+    padding: 48px 48px 80px;
+    max-width: 1100px;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .page-header .subtitle {
+    font-size: 15px;
+    color: var(--text2);
+  }
+
+  .page-header .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  /* ── Section cards ── */
+  .section-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 32px;
+    margin-bottom: 28px;
+    scroll-margin-top: 24px;
+  }
+
+  .section-card h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--blue);
+    flex-shrink: 0;
+  }
+
+  .section-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 20px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .section-card p {
+    color: var(--text2);
+    margin-bottom: 12px;
+  }
+
+  .section-card ul, .section-card ol {
+    color: var(--text2);
+    padding-left: 20px;
+    margin-bottom: 12px;
+  }
+
+  .section-card li {
+    margin-bottom: 5px;
+  }
+
+  .section-card strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* ── Code blocks ── */
+  pre {
+    margin: 16px 0;
+    border-radius: 8px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+  }
+
+  pre code.hljs {
+    font-size: 13px;
+    line-height: 1.6;
+    border-radius: 8px;
+  }
+
+  /* ASCII diagrams */
+  pre.ascii {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--blue);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  code:not(.hljs) {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    font-family: 'Courier New', Courier, monospace;
+    color: var(--amber);
+  }
+
+  /* ── Tables ── */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 16px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+
+  thead tr {
+    background: var(--bg3);
+  }
+
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 10px 14px;
+    color: var(--text2);
+    border-bottom: 1px solid rgba(45,53,72,0.5);
+    vertical-align: top;
+  }
+
+  td strong { color: var(--text); }
+
+  tbody tr:nth-child(even) { background: rgba(37,43,59,0.4); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(59,130,246,0.05); }
+
+  /* ── Tech pills ── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid;
+  }
+
+  .pill-blue  { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.35); color: #60a5fa; }
+  .pill-green { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color: #34d399; }
+  .pill-amber { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.35); color: #fbbf24; }
+  .pill-purple{ background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.35); color: #c084fc; }
+  .pill-red   { background: rgba(239,68,68,0.12);  border-color: rgba(239,68,68,0.35);  color: #f87171; }
+  .pill-gray  { background: rgba(156,163,175,0.12);border-color: rgba(156,163,175,0.35);color: #d1d5db; }
+
+  /* ── Agent cards ── */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .agent-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 18px 18px 22px;
+    border-left-width: 4px;
+    position: relative;
+  }
+
+  .agent-card.local    { border-left-color: var(--blue); }
+  .agent-card.a2a      { border-left-color: var(--purple); }
+  .agent-card.mcp      { border-left-color: var(--amber); }
+  .agent-card.determ   { border-left-color: var(--green); }
+
+  .agent-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+
+  .agent-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .agent-type-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .badge-local  { background: rgba(59,130,246,0.2);  color: #60a5fa; }
+  .badge-a2a    { background: rgba(168,85,247,0.2);  color: #c084fc; }
+  .badge-mcp    { background: rgba(245,158,11,0.2);  color: #fbbf24; }
+  .badge-determ { background: rgba(16,185,129,0.2);  color: #34d399; }
+
+  .agent-card p {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 8px;
+  }
+
+  .agent-card .model-tag {
+    font-size: 11px;
+    color: var(--text2);
+    opacity: 0.7;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* ── Back to top ── */
+  #back-to-top {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 42px;
+    height: 42px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.4);
+    transition: all 0.2s;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 200;
+  }
+
+  #back-to-top.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #back-to-top:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+  }
+
+  /* ── Mobile hamburger ── */
+  .menu-toggle {
+    display: none;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 300;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 18px;
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 99;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .main {
+      margin-left: 0;
+      padding: 72px 20px 80px;
     }
 
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      line-height: 1.6;
-      color: #e4e7eb;
-      background: #0f1419;
-      min-height: 100vh;
-      padding: 2rem;
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: #1a1f2e;
-      border-radius: 8px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      overflow: hidden;
-      border: 1px solid #2d3548;
+    .sidebar.open {
+      transform: translateX(0);
     }
 
-    .header {
-      background: #3b82f6;
-      color: white;
-      padding: 3rem 2rem;
-      text-align: center;
+    .sidebar-overlay.open {
+      display: block;
     }
 
-    .header h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
+    .menu-toggle {
+      display: flex;
     }
 
-    .header p {
-      font-size: 1.125rem;
-      opacity: 0.95;
+    .agent-grid {
+      grid-template-columns: 1fr;
     }
+  }
 
-    .nav {
-      background: #252b3b;
-      padding: 1rem 2rem;
-      border-bottom: 1px solid #2d3548;
-    }
+  @media (max-width: 600px) {
+    .main { padding: 72px 14px 80px; }
+    .section-card { padding: 20px; }
+    .page-header h1 { font-size: 22px; }
+  }
 
-    .nav a {
-      color: #3b82f6;
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.3s;
-    }
+  /* ── Misc ── */
+  .design-principle {
+    background: rgba(59,130,246,0.07);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: var(--text);
+  }
 
-    .nav a:hover {
-      color: #2563eb;
-    }
+  .design-principle strong {
+    color: var(--blue);
+  }
 
-    .content {
-      padding: 3rem 2rem;
-    }
+  .info-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-size: 13.5px;
+  }
 
-    .section {
-      margin-bottom: 3rem;
-    }
+  .kv-list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    font-size: 13.5px;
+    margin: 10px 0;
+  }
 
-    .section h2 {
-      font-size: 1.75rem;
-      color: #e4e7eb;
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid #3b82f6;
-      font-weight: 600;
-    }
+  .kv-key {
+    color: var(--text2);
+    font-weight: 500;
+    white-space: nowrap;
+  }
 
-    .section h3 {
-      font-size: 1.25rem;
-      color: #9ca3af;
-      margin: 1.5rem 0 0.75rem;
-      font-weight: 600;
-    }
-
-    .section p, .section li {
-      color: #9ca3af;
-      margin-bottom: 0.75rem;
-    }
-
-    .architecture-diagram {
-      background: #252b3b;
-      border-radius: 8px;
-      padding: 2rem;
-      margin: 2rem 0;
-      border: 1px solid #2d3548;
-    }
-
-    .architecture-diagram pre {
-      font-family: 'Courier New', monospace;
-      font-size: 0.875rem;
-      line-height: 1.4;
-      overflow-x: auto;
-      color: #06b6d4;
-    }
-
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
-      margin: 2rem 0;
-    }
-
-    .card {
-      background: #252b3b;
-      border-radius: 8px;
-      padding: 1.5rem;
-      border: 1px solid #2d3548;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
-      border-color: #3b82f6;
-    }
-
-    .card h3 {
-      color: #e4e7eb;
-      margin: 0 0 0.75rem 0;
-      font-size: 1.125rem;
-      font-weight: 600;
-    }
-
-    .card p {
-      margin: 0;
-      font-size: 0.9375rem;
-      color: #9ca3af;
-    }
-
-    .badge {
-      display: inline-block;
-      background: #3b82f6;
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      margin-right: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .badge.secondary {
-      background: #06b6d4;
-    }
-
-    .badge.success {
-      background: #10b981;
-    }
-
-    .badge.warning {
-      background: #f59e0b;
-    }
-
-    ul {
-      list-style: none;
-      padding-left: 0;
-    }
-
-    ul li {
-      padding-left: 1.5rem;
-      position: relative;
-      margin-bottom: 0.5rem;
-    }
-
-    ul li:before {
-      content: "→";
-      position: absolute;
-      left: 0;
-      color: #3b82f6;
-      font-weight: bold;
-    }
-
-    .highlight-box {
-      background: #252b3b;
-      border-left: 4px solid #3b82f6;
-      padding: 1.5rem;
-      border-radius: 8px;
-      margin: 1.5rem 0;
-      border: 1px solid #2d3548;
-    }
-
-    .highlight-box h3 {
-      margin-top: 0;
-      color: #e4e7eb;
-    }
-
-    code {
-      background: #252b3b;
-      padding: 0.2rem 0.4rem;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-      font-size: 0.875rem;
-      color: #10b981;
-      border: 1px solid #2d3548;
-    }
-
-    .footer {
-      background: #252b3b;
-      padding: 2rem;
-      text-align: center;
-      color: #6b7280;
-      border-top: 1px solid #2d3548;
-    }
-
-    @media (max-width: 768px) {
-      body {
-        padding: 1rem;
-      }
-
-      .header h1 {
-        font-size: 1.75rem;
-      }
-
-      .content {
-        padding: 2rem 1rem;
-      }
-
-      .card-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+  .kv-val {
+    color: var(--text);
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🏗️ AWS Architecture</h1>
-      <p>Lambda + LangGraph + Bedrock Multi-Agent Platform</p>
-    </div>
 
-    <div class="nav">
-      <a href="/">← Back to Application</a>
-    </div>
+<button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">&#9776;</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <div class="content">
-      <!-- Runtime Architecture -->
-      <section class="section">
-        <h2>Runtime Architecture</h2>
-        <div class="architecture-diagram">
-          <pre>
-┌─────────────────────────────────────────────────────────────┐
-│                         AWS Cloud                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────┐         ┌──────────────────────────┐      │
-│  │   S3 Bucket  │         │   API Gateway (HTTP)     │      │
-│  │   (Angular)  │         │   /api/* → Backend       │      │
-│  │   Frontend   │         │   /a2a/research → Agent  │      │
-│  └──────────────┘         │   /mcp → Sentiment       │      │
-│         │                 └──────────────────────────┘      │
-│         │                            │                        │
-│         │                            ▼                        │
-│         │                  ┌──────────────────┐              │
-│         │                  │  Lambda Functions │              │
-│         │                  ├──────────────────┤              │
-│         │                  │ • Backend API    │              │
-│         │                  │ • Research Agent │              │
-│         │                  │ • Sentiment MCP  │              │
-│         │                  └──────────────────┘              │
-│         │                            │                        │
-│         │                            ▼                        │
-│         │                  ┌──────────────────┐              │
-│         │                  │   DynamoDB       │              │
-│         │                  │   Bedrock LLMs   │              │
-│         │                  │   AgentCore      │              │
-│         │                  └──────────────────┘              │
-│         │                                                     │
-└─────────┴─────────────────────────────────────────────────────┘
-          │
-          ▼
-    ┌──────────┐
-    │  Users   │
-    └──────────┘
-          </pre>
-        </div>
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Architecture Docs</div>
+    <div class="sidebar-title">Asset Management Platform</div>
+    <a href="javascript:void(0)" onclick="window.close(); return false;" class="back-link">← Close &amp; Return to Dashboard</a>
+  </div>
+  <div class="sidebar-nav">
+    <a class="nav-item" href="#s1"><span class="nav-num">01</span> System Overview</a>
+    <a class="nav-item" href="#s2"><span class="nav-num">02</span> High-Level Architecture</a>
+    <a class="nav-item" href="#s3"><span class="nav-num">03</span> Frontend Architecture</a>
+    <a class="nav-item" href="#s4"><span class="nav-num">04</span> Backend Architecture</a>
+    <a class="nav-item" href="#s5"><span class="nav-num">05</span> LangGraph Orchestration</a>
+    <a class="nav-item" href="#s6"><span class="nav-num">06</span> Agent Implementations</a>
+    <a class="nav-item" href="#s7"><span class="nav-num">07</span> Human-in-the-Loop</a>
+    <a class="nav-item" href="#s8"><span class="nav-num">08</span> Conversational AI</a>
+    <a class="nav-item" href="#s9"><span class="nav-num">09</span> AWS Infrastructure</a>
+    <a class="nav-item" href="#s10"><span class="nav-num">10</span> Local Development</a>
+    <a class="nav-item" href="#s11"><span class="nav-num">11</span> Deployment</a>
+    <a class="nav-item" href="#s12"><span class="nav-num">12</span> Key Design Decisions</a>
+  </div>
+</nav>
 
-        <p>The platform uses a serverless architecture on AWS with the following components:</p>
-        <ul>
-          <li><strong>Angular Frontend</strong> hosted on S3 static website</li>
-          <li><strong>API Gateway</strong> HTTP API for routing requests</li>
-          <li><strong>Lambda Functions</strong> running FastAPI services</li>
-          <li><strong>DynamoDB</strong> for durable workflow and portfolio persistence</li>
-          <li><strong>Bedrock</strong> for LLM-powered agent capabilities</li>
-          <li><strong>AgentCore</strong> for memory and observability</li>
-        </ul>
-      </section>
-
-      <!-- Deployment Units -->
-      <section class="section">
-        <h2>Deployment Units</h2>
-        <div class="card-grid">
-          <div class="card">
-            <h3>Backend Lambda</h3>
-            <p>Portfolio APIs, rebalance orchestration, approvals, and market monitoring</p>
-            <div style="margin-top: 1rem;">
-              <span class="badge">FastAPI</span>
-              <span class="badge">Mangum</span>
-              <span class="badge">Python 3.13</span>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>Research Agent Lambda</h3>
-            <p>Remote A2A research endpoint with automatic local fallback</p>
-            <div style="margin-top: 1rem;">
-              <span class="badge secondary">A2A Protocol</span>
-              <span class="badge secondary">Remote</span>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>Sentiment MCP Lambda</h3>
-            <p>JSON-RPC MCP tool server for sentiment analysis</p>
-            <div style="margin-top: 1rem;">
-              <span class="badge success">MCP</span>
-              <span class="badge success">JSON-RPC</span>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>Angular Frontend</h3>
-            <p>S3 static website with runtime API configuration</p>
-            <div style="margin-top: 1rem;">
-              <span class="badge warning">Angular</span>
-              <span class="badge warning">S3</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Environment Model -->
-      <section class="section">
-        <h2>Environment Model</h2>
-        <p>Each environment has isolated configuration, IAM, data boundaries, and deployment artifacts:</p>
-        <div style="margin: 1.5rem 0;">
-          <span class="badge">dev</span>
-          <span class="badge">test</span>
-          <span class="badge">staging</span>
-          <span class="badge">main</span>
-        </div>
-        <p>This ensures safe promotion paths and prevents cross-environment data leakage.</p>
-      </section>
-
-      <!-- Configuration -->
-      <section class="section">
-        <h2>Configuration Baseline</h2>
-        <div class="highlight-box">
-          <h3>Key Configuration Parameters</h3>
-          <ul>
-            <li><strong>Schema Version:</strong> Ensures data contract compatibility</li>
-            <li><strong>Policy Version:</strong> Tracks risk compliance rules</li>
-            <li><strong>Model Configuration:</strong> Bedrock model selection and guardrails</li>
-            <li><strong>Tracing Provider:</strong> <code>bedrock_agentcore</code> or <code>langsmith</code></li>
-            <li><strong>Timeout/Retry Budgets:</strong> Lambda execution limits</li>
-            <li><strong>Market Stream Limit:</strong> <code>MARKET_STREAM_MAX_EVENTS</code> for bounded streams</li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- Infrastructure as Code -->
-      <section class="section">
-        <h2>Infrastructure as Code</h2>
-        <p>All AWS resources are managed with Terraform:</p>
-        <ul>
-          <li>Reusable modules under <code>infra/terraform/modules/</code></li>
-          <li>Environment-specific inputs under <code>infra/terraform/environments/&lt;env&gt;/</code></li>
-          <li>Example variable files as <code>*.tfvars.example</code></li>
-          <li>Always run <code>terraform plan</code> before <code>terraform apply</code></li>
-        </ul>
-
-        <div class="highlight-box">
-          <h3>⚠️ Important</h3>
-          <p>Never commit:</p>
-          <ul>
-            <li><code>.tfstate</code> files (contain sensitive data)</li>
-            <li><code>.terraform/</code> directories (local cache)</li>
-            <li>Real <code>*.tfvars</code> files (contain secrets)</li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- DynamoDB Runtime -->
-      <section class="section">
-        <h2>DynamoDB Runtime Selection</h2>
-        <div class="card-grid">
-          <div class="card">
-            <h3>Local Development</h3>
-            <p>Uses DynamoDB Local at <code>http://localhost:55000</code></p>
-            <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;">
-              Perfect for testing without AWS costs
-            </p>
-          </div>
-
-          <div class="card">
-            <h3>AWS Deployment</h3>
-            <p>Uses hosted DynamoDB by leaving endpoint unset</p>
-            <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;">
-              Automatic scaling and high availability
-            </p>
-          </div>
-        </div>
-
-        <p style="margin-top: 1rem;">
-          <strong>Design Principle:</strong> The application repository layer must not branch business logic between local and AWS modes. Configuration is environment-based only.
-        </p>
-      </section>
-
-      <!-- Lambda Packaging -->
-      <section class="section">
-        <h2>Lambda Packaging</h2>
-        <p>Build packages before Terraform plan/apply:</p>
-        <div class="highlight-box">
-          <code>./infra/scripts/package_lambda.sh</code>
-        </div>
-
-        <h3>Packaging Details</h3>
-        <ul>
-          <li>Packages written to <code>infra/build/</code> (not committed)</li>
-          <li>Each FastAPI service has a Mangum handler for API Gateway events</li>
-          <li>Uses AWS SAM Python 3.13 Docker image for consistent native wheels</li>
-          <li>For large dependencies, switch to container-image Lambdas using ECR</li>
-        </ul>
-      </section>
-
-      <!-- Frontend Hosting -->
-      <section class="section">
-        <h2>Frontend Hosting</h2>
-        <p>The Angular frontend is hosted on S3 as a static website:</p>
-        <ul>
-          <li>S3 bucket provisioned per environment</li>
-          <li>Runtime configuration via <code>app-config.js</code></li>
-          <li>API Gateway URL injected before upload</li>
-          <li>CloudFront optional for HTTPS and custom domains</li>
-        </ul>
-
-        <div class="highlight-box">
-          <h3>Deployment Script</h3>
-          <code>./infra/scripts/publish_frontend.sh &lt;api_url&gt; &lt;bucket_name&gt;</code>
-        </div>
-      </section>
-
-      <!-- Promotion Checklist -->
-      <section class="section">
-        <h2>Promotion Checklist</h2>
-        <p>Before promoting to the next environment, ensure:</p>
-        <div class="card-grid">
-          <div class="card">
-            <h3>✅ Testing</h3>
-            <p>All required eval suites pass thresholds</p>
-          </div>
-
-          <div class="card">
-            <h3>🔒 Security</h3>
-            <p>No unresolved critical policy/safety findings</p>
-          </div>
-
-          <div class="card">
-            <h3>📊 Observability</h3>
-            <p>Dashboards and alarms verified</p>
-          </div>
-
-          <div class="card">
-            <h3>🔄 Rollback</h3>
-            <p>Rollback path tested and documented</p>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <div class="footer">
-      <p>Asset Management Multi-Agent Platform</p>
-      <p style="margin-top: 0.5rem; font-size: 0.875rem;">
-        Built with AWS Lambda, LangGraph, and Bedrock
-      </p>
+<main class="main">
+  <div class="page-header">
+    <h1>Asset Management Platform</h1>
+    <p class="subtitle">Comprehensive Architecture Reference &mdash; AI-powered portfolio rebalancing with human-in-the-loop approval</p>
+    <div class="badge-row">
+      <span class="pill pill-blue">Angular 19</span>
+      <span class="pill pill-blue">TypeScript</span>
+      <span class="pill pill-green">Python 3.12</span>
+      <span class="pill pill-green">FastAPI</span>
+      <span class="pill pill-green">LangGraph</span>
+      <span class="pill pill-green">Pydantic v2</span>
+      <span class="pill pill-amber">AWS Bedrock</span>
+      <span class="pill pill-amber">Claude Sonnet</span>
+      <span class="pill pill-amber">Claude Haiku</span>
+      <span class="pill pill-purple">A2A Protocol</span>
+      <span class="pill pill-purple">MCP Protocol</span>
+      <span class="pill pill-red">DynamoDB</span>
+      <span class="pill pill-gray">Terraform</span>
+      <span class="pill pill-gray">AWS Lambda</span>
+      <span class="pill pill-gray">API Gateway v2</span>
     </div>
   </div>
+
+  <!-- ── Section 1: System Overview ── -->
+  <section class="section-card" id="s1">
+    <h2><span class="section-num">1</span> System Overview</h2>
+    <p>An AI-powered portfolio rebalancing decision-support platform. It monitors a simulated portfolio for allocation drift, orchestrates a multi-agent AI workflow to generate rebalancing recommendations, and requires explicit human approval before any trades are applied.</p>
+
+    <div class="design-principle">
+      <strong>Core design principle:</strong> The system never executes trades autonomously. Every recommendation goes through a human-in-the-loop approval step backed by an immutable audit trail.
+    </div>
+
+    <h3>Key Technologies</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Layer</th><th>Technology</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Frontend</strong></td><td>Angular 19, TypeScript, Angular Signals, SCSS</td></tr>
+          <tr><td><strong>Backend</strong></td><td>Python 3.12, FastAPI, LangGraph, Pydantic v2</td></tr>
+          <tr><td><strong>AI</strong></td><td>AWS Bedrock (Claude models via cross-region inference profiles)</td></tr>
+          <tr><td><strong>Agent protocols</strong></td><td>A2A (Agent-to-Agent) for Research, MCP (Model Context Protocol) for Sentiment</td></tr>
+          <tr><td><strong>Persistence</strong></td><td>DynamoDB (AWS hosted in prod, DynamoDB Local in dev)</td></tr>
+          <tr><td><strong>Infrastructure</strong></td><td>Terraform, AWS Lambda (Mangum adapter), API Gateway v2, S3</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Section 2: High-Level Architecture ── -->
+  <section class="section-card" id="s2">
+    <h2><span class="section-num">2</span> High-Level Architecture</h2>
+<pre class="ascii">&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+&#x2502;  Browser (Angular 19 SPA)                                           &#x2502;
+&#x2502;  - Two-panel dashboard: market monitor + AI recommendation          &#x2502;
+&#x2502;  - Angular Signals for reactive state                               &#x2502;
+&#x2502;  - HTTP interceptor injects x-api-token on every request            &#x2502;
+&#x2502;  - SSE subscription for live market stream                          &#x2502;
+&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+                           &#x2502; HTTPS + x-api-token
+                           &#x25BC;
+&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+&#x2502;  API Gateway v2 HTTP API (us-east-1)                                &#x2502;
+&#x2502;  - CORS: GET/POST/PUT/DELETE/OPTIONS, allow-headers: x-api-token    &#x2502;
+&#x2502;  - Stage throttling: 10 req/s sustained, 20 burst                   &#x2502;
+&#x2502;  - Routes: ANY /{proxy+} &#x2192; Backend Lambda                           &#x2502;
+&#x2502;            ANY /a2a/research &#x2192; Research Agent Lambda                &#x2502;
+&#x2502;            ANY /mcp &#x2192; Sentiment MCP Lambda                          &#x2502;
+&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+                           &#x2502;
+          &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+          &#x25BC;                &#x25BC;                &#x25BC;
+&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;  &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;  &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+&#x2502; Backend      &#x2502;  &#x2502; Research     &#x2502;  &#x2502; Sentiment    &#x2502;
+&#x2502; Lambda       &#x2502;  &#x2502; Agent Lambda &#x2502;  &#x2502; MCP Lambda   &#x2502;
+&#x2502; 512MB &#xB7; 30s  &#x2502;  &#x2502; 256MB &#xB7; 15s  &#x2502;  &#x2502; 256MB &#xB7; 15s  &#x2502;
+&#x2502; FastAPI +    &#x2502;  &#x2502; A2A Protocol &#x2502;  &#x2502; MCP JSON-RPC &#x2502;
+&#x2502; LangGraph    &#x2502;  &#x2502; Bedrock LLM  &#x2502;  &#x2502; Bedrock LLM  &#x2502;
+&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;  &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;  &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+       &#x2502;
+       &#x251C;&#x2500;&#x2500;&#x2192; DynamoDB (6 tables)
+       &#x251C;&#x2500;&#x2500;&#x2192; Bedrock (Claude Sonnet + Haiku)
+       &#x251C;&#x2500;&#x2500;&#x2192; Research Agent Lambda (HTTP /a2a/research)
+       &#x2514;&#x2500;&#x2500;&#x2192; Sentiment MCP Lambda (HTTP /mcp)</pre>
+  </section>
+
+  <!-- ── Section 3: Frontend Architecture ── -->
+  <section class="section-card" id="s3">
+    <h2><span class="section-num">3</span> Frontend Architecture</h2>
+
+    <h3>Technology</h3>
+    <ul>
+      <li>Angular 19 with standalone components</li>
+      <li>Angular Signals (<code>signal()</code>, <code>computed()</code>) for all reactive state — no RxJS BehaviorSubject</li>
+      <li>SCSS with a professional dark theme design system</li>
+      <li>Vite dev server with <code>/api/*</code> proxy to <code>http://localhost:8000</code> in development</li>
+    </ul>
+
+    <h3>Runtime Configuration</h3>
+    <p>The frontend reads <code>window.assetManagementConfig</code> from <code>app-config.js</code> at runtime:</p>
+<pre><code class="language-javascript">window.assetManagementConfig = {
+  apiBaseUrl: 'https://r62c0mmp4i.execute-api.us-east-1.amazonaws.com',
+  apiToken: '&lt;token&gt;'
+};</code></pre>
+    <p>This file is overwritten during S3 deployment with the actual API Gateway URL and token. In local dev, <code>apiBaseUrl</code> defaults to <code>/api</code> (proxied by Vite).</p>
+
+    <h3>Security: Token Interceptor</h3>
+    <p>An Angular <code>HttpInterceptorFn</code> reads <code>window.assetManagementConfig.apiToken</code> and injects <code>x-api-token: &lt;token&gt;</code> on every outbound HTTP request. If the token is empty (local dev), the header is omitted.</p>
+
+    <h3>Key Components</h3>
+    <ul>
+      <li><strong><code>app.ts</code></strong> — Root component. Owns all signals: <code>recommendation</code>, <code>portfolios</code>, <code>marketEvent</code>, <code>submitting</code>, <code>chatMessages</code>. Manages the market stream SSE subscription, auto-generate logic, and approval actions.</li>
+      <li><strong><code>app.html</code></strong> — Two-panel dashboard. Left: Portfolio Monitor + Position &amp; Targets form. Right: Recommendation Review (situation → what changes → policy checks → AI market intelligence → decision bar → Q&amp;A chat) + Agent Status Strip.</li>
+      <li><strong><code>preferences/</code></strong> — 4-step wizard: Risk Profile → Allocation → Constraints → Review. Validates concentration limits against <code>max_single_position_pct</code> before allowing progression.</li>
+      <li><strong><code>intelligence/</code></strong> — Separate route <code>/intelligence</code>. Three tabs: Workflow Trace, Agent Memory, HITL Audit Trail.</li>
+      <li><strong><code>core/api/</code></strong> — Service layer: <code>RebalanceService</code>, <code>PortfolioService</code>, <code>PreferenceService</code>, <code>MarketStreamService</code>, <code>HealthService</code>.</li>
+    </ul>
+
+    <h3>Auto-Generate Logic</h3>
+    <p>The market stream fires every ~1.5 seconds. On each tick, <code>maybeAutoGenerateRecommendation()</code> runs:</p>
+    <ol>
+      <li>Skip if <code>submitting()</code> is true</li>
+      <li>Skip if signal is not <code>REBALANCE_NEEDED</code></li>
+      <li>If a <code>NO_ACTION_NEEDED</code> or <code>APPROVED</code> recommendation exists → clear it (stale)</li>
+      <li>If a <code>PENDING</code>, <code>REJECTED</code>, or <code>BLOCKED</code> recommendation exists → leave it alone</li>
+      <li>Submit once — <code>submitting()</code> guard prevents double-submission</li>
+    </ol>
+  </section>
+
+  <!-- ── Section 4: Backend Architecture ── -->
+  <section class="section-card" id="s4">
+    <h2><span class="section-num">4</span> Backend Architecture</h2>
+
+    <h3>FastAPI Application (<code>app/main.py</code>)</h3>
+    <ul>
+      <li>CORS middleware: all methods, all origins, <code>x-api-token</code> in allowed headers</li>
+      <li><strong>Token gate middleware</strong>: reads <code>API_TOKEN</code> env var. If set, validates <code>x-api-token</code> header on all requests except <code>/health</code> and OPTIONS. Returns 401 if missing or wrong. Disabled locally (no env var).</li>
+      <li>8 routers registered under <code>/api</code>: rebalance, approvals, portfolios, preferences, market, health, explain, intelligence</li>
+    </ul>
+
+    <h3>API Routes</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Route</th><th>Method</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET /health</code></td><td>Public</td><td>Health check, no token required</td></tr>
+          <tr><td><code>POST /api/rebalance</code></td><td>Protected</td><td>Triggers full LangGraph workflow</td></tr>
+          <tr><td><code>POST /api/approvals/{id}/actions</code></td><td>Protected</td><td>APPROVE / REJECT / REQUEST_REVISION</td></tr>
+          <tr><td><code>GET /api/portfolios</code></td><td>Protected</td><td>List all portfolios</td></tr>
+          <tr><td><code>GET/PUT /api/preferences/{client_id}</code></td><td>Protected</td><td>Read/write client preferences</td></tr>
+          <tr><td><code>GET /api/market/stream</code></td><td>Protected</td><td>SSE market simulation stream</td></tr>
+          <tr><td><code>POST /api/recommendations/{id}/explain</code></td><td>Protected</td><td>Streaming LLM Q&amp;A about recommendation</td></tr>
+          <tr><td><code>POST /api/recommendations/{id}/simulate</code></td><td>Protected</td><td>What-if scenario simulation</td></tr>
+          <tr><td><code>GET /api/intelligence/workflow-trace/{account_id}</code></td><td>Protected</td><td>Agent workflow trace</td></tr>
+          <tr><td><code>GET /api/intelligence/memory/{client_id}</code></td><td>Protected</td><td>Client memory timeline</td></tr>
+          <tr><td><code>GET /api/intelligence/audit/{account_id}</code></td><td>Protected</td><td>HITL audit trail</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Data Contracts (Pydantic v2)</h3>
+    <p>All models extend <code>ContractModel</code> (Pydantic <code>BaseModel</code> with <code>extra="forbid"</code>). All financial values use <code>Decimal</code>, never <code>float</code>.</p>
+
+    <p><strong>Key types:</strong></p>
+<pre><code class="language-python">class WorkflowState(StrEnum):
+    NORMAL = "NORMAL"       # All checks passed, trades ready
+    DEGRADED = "DEGRADED"   # Quality issues but usable
+    BLOCKED = "BLOCKED"     # Critical violation, no approval possible
+
+class PolicyVerdictStatus(StrEnum):
+    COMPLIANT = "COMPLIANT"
+    NON_COMPLIANT = "NON_COMPLIANT"
+    UNRESOLVED = "UNRESOLVED"
+
+class ApprovalAction(StrEnum):
+    APPROVE = "APPROVE"
+    REJECT = "REJECT"
+    REQUEST_REVISION = "REQUEST_REVISION"</code></pre>
+
+    <p><strong>Request/Response flow:</strong></p>
+<pre><code class="language-python">PortfolioRebalanceRequest
+  → correlation: CorrelationMetadata (request_id, session_id, trace_id)
+  → version: VersionMetadata (schema_version, policy_version, environment)
+  → actor: ActorContext
+  → client_profile: ClientProfile
+  → account_profile: AccountProfile
+  → portfolio_snapshot: PortfolioSnapshot (holdings + cash + total_value)
+  → allocation_target: AllocationTarget (asset_class_targets + tolerance_bands)
+  → risk_profile: RiskProfile (risk_level, max_single_position_pct, max_sector_pct)
+
+OrchestrationResponse
+  → workflow_state: WorkflowState
+  → recommendation_package: RecommendationPackage
+      → summary: str (includes sentiment context)
+      → agent_stages: list[AgentStageResult]
+      → current_allocation, target_allocation, proposed_allocation
+      → risk_policy: RiskPolicyResponse (verdict + drift + rule_results)
+      → proposal: ExecutionProposalResponse (trades + estimated_impact)
+      → sentiment_output: dict | None
+      → research_output: dict | None
+  → approval_artifact: ApprovalArtifact
+      → approval_id, recommendation_hash, approval_status
+  → research_output: dict | None
+  → sentiment_output: dict | None</code></pre>
+
+    <h3>Persistence Layer</h3>
+    <p>Two implementations behind a <code>WorkflowStore</code> Protocol:</p>
+    <ul>
+      <li><strong><code>InMemoryWorkflowStore</code></strong> — local dev, seeded with 2 demo portfolios on startup</li>
+      <li><strong><code>DynamoDBWorkflowStore</code></strong> — AWS, selected via <code>DYNAMODB_MODE=aws</code></li>
+    </ul>
+    <p>Both implement: <code>save_portfolio</code>, <code>get_portfolio</code>, <code>list_portfolios</code>, <code>save_approval</code>, <code>get_approval</code>, <code>list_approvals</code>, <code>update_approval</code>, <code>list_audit_events</code>, <code>add_audit_event</code>.</p>
+  </section>
+
+  <!-- ── Section 5: LangGraph Orchestration ── -->
+  <section class="section-card" id="s5">
+    <h2><span class="section-num">5</span> LangGraph Orchestration</h2>
+
+    <h3>Graph Structure</h3>
+    <p>The workflow is a directed acyclic graph compiled by <code>build_workflow_graph()</code> using LangGraph's <code>StateGraph</code> API. All state is carried in <code>WorkflowGraphState</code> (a <code>TypedDict</code>).</p>
+
+<pre class="ascii">START
+  └─→ validate_request
+        ├─[validation failed]─→ emit_workflow_audit_event → return_response → END
+        └─[passed]─→ initialize_context_and_trace
+                       └─→ log_request_audit_event
+                             ├─→ hydrate_memory ──────────┐  (parallel fan-out)
+                             └─→ run_research ────────────┘
+                                                           └─→ run_sentiment_analysis
+                                                                 └─→ run_portfolio_rebalancing
+                                                                       └─→ run_risk_policy
+                                                                             ├─[COMPLIANT]─→ generate_execution_proposal
+                                                                             └─[NON_COMPLIANT/UNRESOLVED]─→ assemble_recommendation (BLOCKED)
+                                                                                                    └─→ assemble_recommendation
+                                                                                                          └─→ apply_output_guardrails
+                                                                                                                ├─[NONE]─→ create_approval_artifact
+                                                                                                                │           └─→ persist_workflow_artifacts
+                                                                                                                └─[BLOCKED]─→ emit_workflow_audit_event
+                                                                                                                               └─→ return_response → END</pre>
+
+    <h3>Nodes</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Node</th><th>Type</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>validate_request</code></td><td>Sync</td><td>Validates allocation sum = 100%, holdings qty &gt; 0</td></tr>
+          <tr><td><code>initialize_context_and_trace</code></td><td>Sync</td><td>Assigns trace ID, generates CloudWatch trace URL</td></tr>
+          <tr><td><code>log_request_audit_event</code></td><td>Sync</td><td>Writes REQUEST_RECEIVED to audit log</td></tr>
+          <tr><td><code>hydrate_memory</code></td><td>Async</td><td>Memory Agent — retrieves client context, LLM synthesis if enabled</td></tr>
+          <tr><td><code>run_research</code></td><td>Async</td><td>Research Agent — calls A2A remote service, LLM market analysis</td></tr>
+          <tr><td><code>run_sentiment_analysis</code></td><td>Async</td><td>Sentiment Agent — calls MCP server per symbol, aggregates scores</td></tr>
+          <tr><td><code>run_portfolio_rebalancing</code></td><td>Async</td><td>Calculates drift deterministically (current vs target allocation)</td></tr>
+          <tr><td><code>run_risk_policy</code></td><td>Async</td><td>Evaluates concentration limits, returns COMPLIANT/NON_COMPLIANT/UNRESOLVED</td></tr>
+          <tr><td><code>generate_execution_proposal</code></td><td>Async</td><td>Calculates BUY/SELL trades from drift, LLM-enhanced rationale</td></tr>
+          <tr><td><code>assemble_recommendation</code></td><td>Async</td><td>Merges all outputs, sets workflow_state, injects sentiment context into summary</td></tr>
+          <tr><td><code>apply_output_guardrails</code></td><td>Async</td><td>Content safety check (keyword-based stub, Bedrock Guardrails in future)</td></tr>
+          <tr><td><code>create_approval_artifact</code></td><td>Async</td><td>Creates ApprovalArtifact with recommendation hash</td></tr>
+          <tr><td><code>persist_workflow_artifacts</code></td><td>Async</td><td>Writes to DynamoDB</td></tr>
+          <tr><td><code>emit_workflow_audit_event</code></td><td>Async</td><td>Writes WORKFLOW_COMPLETED to audit log</td></tr>
+          <tr><td><code>return_response</code></td><td>Async</td><td>Terminal node — state ready for serialization</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Conditional Routing</h3>
+    <p><strong>After <code>validate_request</code>:</strong></p>
+    <ul>
+      <li><code>validation_error</code> set → skip to <code>emit_workflow_audit_event</code></li>
+      <li>No error → proceed to <code>initialize_context_and_trace</code></li>
+    </ul>
+    <p><strong>After <code>run_risk_policy</code>:</strong></p>
+    <ul>
+      <li><code>COMPLIANT</code> → <code>generate_execution_proposal</code></li>
+      <li><code>NON_COMPLIANT</code> or <code>UNRESOLVED</code> → set <code>workflow_state = BLOCKED</code>, skip to <code>assemble_recommendation</code></li>
+    </ul>
+    <p><strong>After <code>apply_output_guardrails</code>:</strong></p>
+    <ul>
+      <li><code>action = NONE</code> → <code>create_approval_artifact</code></li>
+      <li><code>action = BLOCKED</code> → set <code>workflow_state = BLOCKED</code>, skip to <code>emit_workflow_audit_event</code></li>
+    </ul>
+
+    <h3>WorkflowGraphState</h3>
+    <p>The shared state object passed through every node:</p>
+<pre><code class="language-python">class WorkflowGraphState(TypedDict, total=False):
+    request_id: str
+    session_id: str
+    trace_id: str
+    request: PortfolioRebalanceRequest
+    validation_error: Optional[dict]
+    memory_output: Optional[dict]
+    research_output: Optional[dict]
+    sentiment_output: Optional[dict]
+    rebalancing_output: Optional[dict]
+    risk_policy_output: Optional[RiskPolicyResponse]
+    trade_proposal_output: Optional[dict]
+    guardrail_result: Optional[dict]
+    approval_artifact: Optional[ApprovalArtifact]
+    agent_stages: list[AgentStageResult]
+    confidence_map: dict[str, float]
+    degraded_reasons: list[str]
+    blockers: list[str]
+    recommendation_package: Optional[RecommendationPackage]
+    workflow_state: WorkflowState
+    audit_event_ids: list[str]</code></pre>
+  </section>
+
+  <!-- ── Section 6: Agent Implementations ── -->
+  <section class="section-card" id="s6">
+    <h2><span class="section-num">6</span> Agent Implementations</h2>
+
+    <div class="agent-grid">
+      <!-- Memory Agent -->
+      <div class="agent-card local">
+        <div class="agent-card-header">
+          <div class="agent-card-title">Memory / Personalization Agent</div>
+          <span class="agent-type-badge badge-local">LOCAL</span>
+        </div>
+        <p>Retrieves client memory items from <code>LocalMemoryAdapter</code>. If <code>FEATURE_MEMORY_AGENT_LLM_ENABLED</code>: generates semantic query, synthesizes memories into coherent context, detects conflicts. Falls back to raw memory retrieval if LLM fails.</p>
+        <div class="model-tag">us.anthropic.claude-3-5-haiku-20241022-v1:0</div>
+      </div>
+
+      <!-- Research Agent -->
+      <div class="agent-card a2a">
+        <div class="agent-card-header">
+          <div class="agent-card-title">Research Agent</div>
+          <span class="agent-type-badge badge-a2a">A2A REMOTE</span>
+        </div>
+        <p>Backend calls <code>POST {RESEARCH_AGENT_URL}/a2a/research</code> with portfolio context. Receives <code>A2AResearchRequest</code> with symbols and portfolio snapshot. If LLM enabled: calls Bedrock for market regime, key risks, actionable insights. Returns: <code>market_context</code>, <code>key_insights</code>, <code>regime</code> (BULL/BEAR/NEUTRAL/VOLATILE), <code>confidence</code>.</p>
+        <div class="model-tag">us.anthropic.claude-sonnet-4-5-20250929-v1:0</div>
+      </div>
+
+      <!-- Sentiment Agent -->
+      <div class="agent-card mcp">
+        <div class="agent-card-header">
+          <div class="agent-card-title">Sentiment Analysis Agent</div>
+          <span class="agent-type-badge badge-mcp">MCP TOOL SERVER</span>
+        </div>
+        <p>Backend calls <code>POST {SENTIMENT_MCP_URL}/mcp</code> with JSON-RPC 2.0 envelope. Method: <code>analyze_symbol_news_sentiment</code>. Returns per-symbol: <code>overall_sentiment</code>, <code>sentiment_score</code> (-1.0 to 1.0), <code>summary</code>, <code>confidence</code>. Aggregated: <code>overall_sentiment</code>, <code>average_sentiment_score</code>, <code>symbol_sentiments</code>.</p>
+        <div class="model-tag">us.anthropic.claude-3-5-haiku-20241022-v1:0</div>
+      </div>
+
+      <!-- Portfolio Rebalancing Agent -->
+      <div class="agent-card determ">
+        <div class="agent-card-header">
+          <div class="agent-card-title">Portfolio Rebalancing Agent</div>
+          <span class="agent-type-badge badge-determ">LOCAL · DETERMINISTIC</span>
+        </div>
+        <p>Calculates <code>current_allocation</code> from holdings market values. Calculates <code>drift</code> per asset class: <code>current_pct - target_pct</code>. Flags items where <code>abs(drift_pct) &gt; tolerance_pct</code> as <code>within_tolerance = False</code>. No LLM enhancement currently (placeholder).</p>
+      </div>
+
+      <!-- Risk & Compliance Agent -->
+      <div class="agent-card determ">
+        <div class="agent-card-header">
+          <div class="agent-card-title">Risk &amp; Compliance Agent</div>
+          <span class="agent-type-badge badge-determ">LOCAL · DETERMINISTIC</span>
+        </div>
+        <p><strong>Concentration check:</strong> largest position &gt; <code>max_single_position_pct</code> → <code>NON_COMPLIANT</code>. <strong>Missing risk profile</strong> → <code>UNRESOLVED</code>. <strong>All checks pass</strong> → <code>COMPLIANT</code>. Returns <code>RiskPolicyResponse</code> with verdict, drift items, rule results, confidence.</p>
+      </div>
+
+      <!-- Trade Execution Proposal Agent -->
+      <div class="agent-card local">
+        <div class="agent-card-header">
+          <div class="agent-card-title">Trade Execution Proposal Agent</div>
+          <span class="agent-type-badge badge-local">LOCAL · DETERMINISTIC + LLM</span>
+        </div>
+        <p>For each drift item where <code>not within_tolerance</code>: <code>trade_value = abs(drift_pct / 100 * total_portfolio_value)</code>, <code>action = SELL if drift_pct &gt; 0 else BUY</code>. Creates <code>TradeProposal</code> with trade_id, symbol, action, estimated_value, rationale. If LLM enabled: enhances rationale with Bedrock.</p>
+        <div class="model-tag">us.anthropic.claude-sonnet-4-5-20250929-v1:0</div>
+      </div>
+    </div>
+
+    <h3>Sentiment → Summary Integration</h3>
+    <p>After all agents run, <code>assemble_recommendation</code> calls <code>_sentiment_notes()</code> which:</p>
+    <ul>
+      <li>Maps symbol → sentiment from <code>sentiment_output.symbol_sentiments</code></li>
+      <li>For each proposed trade: if SELL + POSITIVE sentiment → "driven by drift, not weakness"; if BUY + NEGATIVE → "consider timing"; if BUY + POSITIVE → "sentiment supports this buy"</li>
+      <li>Appends the note to the recommendation summary</li>
+    </ul>
+  </section>
+
+  <!-- ── Section 7: Human-in-the-Loop ── -->
+  <section class="section-card" id="s7">
+    <h2><span class="section-num">7</span> Human-in-the-Loop Workflow</h2>
+
+    <h3>Approval Artifact</h3>
+    <p>Created by <code>create_approval_artifact</code> node. Contains:</p>
+    <ul>
+      <li><code>approval_id</code> — unique identifier</li>
+      <li><code>recommendation_hash</code> — SHA-256 of recommendation content (stale artifact protection)</li>
+      <li><code>recommendation</code> — full <code>RecommendationPackage</code></li>
+      <li><code>original_portfolio_snapshot</code> — snapshot at time of recommendation</li>
+      <li><code>approval_status</code> — <code>PENDING | APPROVED | REJECTED | REVISION_REQUESTED</code></li>
+    </ul>
+
+    <h3>Approval Actions (<code>POST /api/approvals/{id}/actions</code>)</h3>
+<pre><code class="language-python">ApprovalActionRequest:
+  action: APPROVE | REJECT | REQUEST_REVISION
+  actor_id: str
+  note: str | None  # required for REJECT and REQUEST_REVISION
+  expected_recommendation_hash: str  # must match artifact hash</code></pre>
+
+    <p><strong>Business rules:</strong></p>
+    <ul>
+      <li><code>APPROVE</code> is forbidden when <code>workflow_state == BLOCKED</code> → 409</li>
+      <li><code>REJECT</code> and <code>REQUEST_REVISION</code> require a <code>note</code> → 422</li>
+      <li>Hash mismatch → transition rejected, stale artifact logged</li>
+    </ul>
+
+    <p><strong>On APPROVE:</strong></p>
+    <ol>
+      <li><code>approval_status</code> → <code>APPROVED</code></li>
+      <li>New <code>PortfolioRecord</code> created from <code>proposed_allocation</code></li>
+      <li>Portfolio saved to DynamoDB</li>
+      <li><code>PORTFOLIO_UPDATED_FROM_APPROVAL</code> audit event written</li>
+    </ol>
+
+    <h3>Audit Trail</h3>
+    <p>Every significant action writes an <code>AuditEvent</code> to DynamoDB:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Event</th><th>Trigger</th></tr></thead>
+        <tbody>
+          <tr><td><code>REQUEST_RECEIVED</code></td><td>On workflow start</td></tr>
+          <tr><td><code>WORKFLOW_COMPLETED</code></td><td>On workflow end</td></tr>
+          <tr><td><code>APPROVAL_ACTION</code></td><td>On every approve/reject</td></tr>
+          <tr><td><code>APPROVAL_ACTION_REJECTED</code></td><td>On hash mismatch</td></tr>
+          <tr><td><code>PORTFOLIO_UPDATED_FROM_APPROVAL</code></td><td>On successful approval</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Section 8: Conversational AI ── -->
+  <section class="section-card" id="s8">
+    <h2><span class="section-num">8</span> Conversational AI (Q&amp;A Chat)</h2>
+
+    <h3>Endpoint: <code>POST /api/recommendations/{approval_id}/explain</code></h3>
+    <p>Streams an LLM explanation of the recommendation in response to a natural language question.</p>
+
+    <h3>Context Built from Approval Artifact</h3>
+    <ul>
+      <li>Portfolio ID, workflow state, policy verdict, summary</li>
+      <li>Current and target allocation</li>
+      <li>Proposed trades with rationale</li>
+      <li>Policy rule results (PASS/FAIL)</li>
+      <li>Risk profile (risk level, concentration limits)</li>
+      <li>Sentiment output (per-symbol scores and labels)</li>
+      <li>Research output (market regime, key insights)</li>
+    </ul>
+
+    <h3>Streaming</h3>
+    <p>FastAPI <code>StreamingResponse</code> with SSE. Each token yields:</p>
+<pre><code class="language-json">data: {"type": "token", "content": "..."}</code></pre>
+    <p>Final event:</p>
+<pre><code class="language-json">data: {"type": "done"}</code></pre>
+
+    <h3>System Prompt</h3>
+    <p>Instructs the LLM to answer only from the provided context — no hallucinated market data. Explicitly told it has sentiment and research data and should use it when asked.</p>
+
+    <h3>Frontend</h3>
+    <p>Angular <code>fetch()</code> with <code>ReadableStream</code>. Tokens stream into the last assistant message character by character. Thinking indicator (bouncing dots) shown before first token arrives.</p>
+  </section>
+
+  <!-- ── Section 9: AWS Infrastructure ── -->
+  <section class="section-card" id="s9">
+    <h2><span class="section-num">9</span> AWS Infrastructure</h2>
+
+    <h3>Resources (Terraform-managed)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Resource</th><th>Name</th><th>Region</th></tr></thead>
+        <tbody>
+          <tr><td>API Gateway v2</td><td><code>asset-management-dev-api</code></td><td>us-east-1</td></tr>
+          <tr><td>Backend Lambda</td><td><code>asset-management-dev-backend</code></td><td>us-east-1</td></tr>
+          <tr><td>Research Agent Lambda</td><td><code>asset-management-dev-research-agent</code></td><td>us-east-1</td></tr>
+          <tr><td>Sentiment MCP Lambda</td><td><code>asset-management-dev-sentiment-mcp</code></td><td>us-east-1</td></tr>
+          <tr><td>DynamoDB: approvals</td><td><code>asset-management-dev-approvals</code></td><td>us-east-1</td></tr>
+          <tr><td>DynamoDB: audit-events</td><td><code>asset-management-dev-audit-events</code></td><td>us-east-1</td></tr>
+          <tr><td>DynamoDB: portfolios</td><td><code>asset-management-dev-portfolios</code></td><td>us-east-1</td></tr>
+          <tr><td>DynamoDB: sessions</td><td><code>asset-management-dev-sessions</code></td><td>us-east-1</td></tr>
+          <tr><td>DynamoDB: memory-queue</td><td><code>asset-management-dev-memory-queue</code></td><td>us-east-1</td></tr>
+          <tr><td>DynamoDB: preferences</td><td><code>asset-management-dev-preferences</code></td><td>us-east-1</td></tr>
+          <tr><td>S3 Frontend Bucket</td><td><code>asset-management-dev-frontend-855603407942</code></td><td>us-east-2</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>IAM Permissions</h3>
+    <ul>
+      <li><strong>Backend Lambda</strong>: DynamoDB (GetItem, PutItem, UpdateItem, Scan, Query on all 6 tables) + Bedrock (InvokeModel, InvokeModelWithResponseStream on <code>*</code>)</li>
+      <li><strong>Research Agent Lambda</strong>: Bedrock only (InvokeModel, InvokeModelWithResponseStream on <code>*</code>)</li>
+      <li><strong>Sentiment MCP Lambda</strong>: Bedrock only (InvokeModel, InvokeModelWithResponseStream on <code>*</code>)</li>
+    </ul>
+
+    <h3>Lambda Configuration</h3>
+    <p>All Lambdas use Mangum as the ASGI adapter to handle API Gateway events. Handler: <code>app.lambda_handler.handler</code>.</p>
+    <p>Backend Lambda environment variables (key ones):</p>
+<pre><code class="language-bash">DYNAMODB_MODE=aws
+RESEARCH_AGENT_URL={api_endpoint}/a2a/research
+SENTIMENT_MCP_URL={api_endpoint}/mcp
+MARKET_STREAM_MAX_EVENTS=20
+SEED_DEFAULT_PORTFOLIOS=true
+FEATURE_*_LLM_ENABLED=true (all 6 agents)
+FEATURE_FALLBACK_ON_LLM_FAILURE=true
+API_TOKEN=&lt;secret&gt;</code></pre>
+
+    <h3>Bedrock Models</h3>
+    <p>All models use cross-region inference profiles (required for on-demand throughput):</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Agent</th><th>Model ID</th></tr></thead>
+        <tbody>
+          <tr><td>Memory, Sentiment</td><td><code>us.anthropic.claude-3-5-haiku-20241022-v1:0</code></td></tr>
+          <tr><td>Research, Risk, Trade Proposal, Rebalancing</td><td><code>us.anthropic.claude-sonnet-4-5-20250929-v1:0</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="info-box">
+      <strong>Note:</strong> Direct model IDs (without <code>us.</code> prefix) are not supported for on-demand invocation — they require provisioned throughput.
+    </div>
+
+    <h3>Security</h3>
+    <p><strong>Token gate (FastAPI middleware):</strong></p>
+    <ul>
+      <li>Reads <code>API_TOKEN</code> env var</li>
+      <li>All <code>/api/*</code> routes require <code>x-api-token: &lt;token&gt;</code> header</li>
+      <li><code>/health</code> and OPTIONS preflight are exempt</li>
+      <li>Returns 401 if token missing or wrong</li>
+      <li>Disabled locally (no env var set)</li>
+    </ul>
+    <p><strong>API Gateway throttling:</strong></p>
+    <ul>
+      <li>Burst limit: 20 concurrent requests</li>
+      <li>Rate limit: 10 requests/second sustained</li>
+      <li>Returns 429 when exceeded</li>
+    </ul>
+    <p><strong>Frontend token injection:</strong></p>
+    <ul>
+      <li>Angular <code>HttpInterceptorFn</code> reads token from <code>window.assetManagementConfig.apiToken</code></li>
+      <li>Token baked into <code>app-config.js</code> at S3 deploy time</li>
+      <li>Empty token in local dev → interceptor skips header</li>
+    </ul>
+  </section>
+
+  <!-- ── Section 10: Local Development ── -->
+  <section class="section-card" id="s10">
+    <h2><span class="section-num">10</span> Local Development</h2>
+
+    <h3>Docker Compose Services</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Service</th><th>Port</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Backend</strong></td><td>8000</td><td>FastAPI + LangGraph, all LLMs enabled</td></tr>
+          <tr><td><strong>Research Agent</strong></td><td>8101</td><td>A2A, Bedrock via <code>~/.aws</code> mount</td></tr>
+          <tr><td><strong>Sentiment MCP</strong></td><td>8201</td><td>MCP, Bedrock via <code>~/.aws</code> mount</td></tr>
+          <tr><td><strong>DynamoDB Local</strong></td><td>55000</td><td>In-memory, no token required</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>AWS credentials are mounted read-only: <code>~/.aws:/root/.aws:ro</code>. Region: <code>us-east-2</code>.</p>
+
+    <h3>Frontend Dev Server</h3>
+<pre><code class="language-bash">cd frontend &amp;&amp; npm start  # http://localhost:4200</code></pre>
+    <p>Vite proxies <code>/api/*</code> → <code>http://localhost:8000</code>. No token needed locally.</p>
+
+    <h3>Feature Flags</h3>
+    <p>All LLM features are enabled by default in <code>docker-compose.yml</code>. To disable:</p>
+<pre><code class="language-yaml">FEATURE_MEMORY_AGENT_LLM_ENABLED=false</code></pre>
+  </section>
+
+  <!-- ── Section 11: Deployment ── -->
+  <section class="section-card" id="s11">
+    <h2><span class="section-num">11</span> Deployment</h2>
+
+    <h3>Package and Deploy</h3>
+<pre><code class="language-bash"># 1. Package Lambda zips (uses Docker SAM image)
+./infra/scripts/package_lambda.sh
+
+# 2. Deploy infrastructure
+cd infra/terraform/environments/dev
+terraform apply -auto-approve -var-file=dev.tfvars
+
+# 3. Deploy frontend with token
+./infra/scripts/publish_frontend.sh \
+  "https://r62c0mmp4i.execute-api.us-east-1.amazonaws.com" \
+  "asset-management-dev-frontend-855603407942" \
+  "&lt;api_token&gt;"</code></pre>
+
+    <p>The <code>publish_frontend.sh</code> script builds Angular, writes <code>app-config.js</code> with the API URL and token, then syncs to S3.</p>
+
+    <h3>Live URLs</h3>
+    <div class="info-box">
+      <div class="kv-list">
+        <span class="kv-key">Frontend</span>
+        <span class="kv-val"><code>http://asset-management-dev-frontend-855603407942.s3-website.us-east-2.amazonaws.com</code></span>
+        <span class="kv-key">API</span>
+        <span class="kv-val"><code>https://r62c0mmp4i.execute-api.us-east-1.amazonaws.com</code></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Section 12: Key Design Decisions ── -->
+  <section class="section-card" id="s12">
+    <h2><span class="section-num">12</span> Key Design Decisions</h2>
+
+    <h3>Why LangGraph instead of Bedrock native supervisor?</h3>
+    <p>LangGraph gives explicit control over the state machine — conditional routing, parallel fan-out, and the human-in-the-loop node are all first-class graph constructs. Bedrock native supervisor mode abstracts these away, making it harder to enforce the "no autonomous execution" constraint.</p>
+
+    <h3>Why A2A for Research, MCP for Sentiment?</h3>
+    <p>These protocols demonstrate different integration patterns:</p>
+    <ul>
+      <li><strong>A2A</strong> (Agent-to-Agent): The Research Agent is a standalone service that receives a structured task envelope and returns a structured response. It can be deployed independently and scaled separately.</li>
+      <li><strong>MCP</strong> (Model Context Protocol): The Sentiment Agent exposes a JSON-RPC 2.0 tool interface. Any MCP-compatible client can call it, making it reusable across different orchestrators.</li>
+    </ul>
+
+    <h3>Why deterministic-first for policy evaluation?</h3>
+    <p>The concentration check and drift calculation are always deterministic. LLMs enhance the explanation and rationale but never override the deterministic verdict. This ensures the system is auditable and the policy outcome is reproducible.</p>
+
+    <h3>Why <code>Decimal</code> instead of <code>float</code> for financial values?</h3>
+    <p>Floating-point arithmetic introduces rounding errors that compound in financial calculations. <code>Decimal</code> provides exact decimal arithmetic. All Pydantic models enforce this via type annotations.</p>
+
+    <h3>Why recommendation hash verification?</h3>
+    <p>The <code>expected_recommendation_hash</code> in approval actions prevents approving a stale artifact. If the recommendation changes between when the user sees it and when they click Approve, the hash won't match and the action is rejected. This is a critical safety control.</p>
+
+    <h3>Why feature flags per agent?</h3>
+    <p>Each LLM integration can be toggled independently without code changes. This allows gradual rollout, cost control, and safe fallback to deterministic logic if a model is unavailable or produces poor results.</p>
+  </section>
+
+</main>
+
+<!-- Back to top button -->
+<button id="back-to-top" aria-label="Back to top" title="Back to top">&#8679;</button>
+
+<script>
+  // highlight.js init
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('pre code').forEach(block => {
+      hljs.highlightElement(block);
+    });
+  });
+
+  // Back to top visibility
+  const btn = document.getElementById('back-to-top');
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > 400);
+  });
+  btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  // Mobile sidebar toggle
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const menuToggle = document.getElementById('menuToggle');
+
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('open');
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+  });
+
+  // Close sidebar on nav link click (mobile)
+  sidebar.querySelectorAll('.nav-item').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 900) {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('open');
+      }
+    });
+  });
+
+  // Active nav highlight on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navItems = document.querySelectorAll('.nav-item');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navItems.forEach(item => item.classList.remove('active'));
+        const active = document.querySelector(`.nav-item[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
 </body>
 </html>

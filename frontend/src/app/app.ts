@@ -217,17 +217,15 @@ export class App implements OnDestroy {
 
     this.submitting.set(true);
     this.rebalanceError.set(null);
-    
+
     // Fetch latest preferences before submitting
     const clientId = this.selectedPortfolio()?.client_profile.client_id ?? 'client_demo';
     this.preferenceService.getPreferences(clientId).subscribe({
       next: (preferences) => {
-        // Build request with latest preferences
         const request = this.buildRequestWithPreferences(preferences);
         this.submitRebalanceRequest(request);
       },
       error: () => {
-        // Fallback to building request without preferences
         this.rebalanceError.set('Warning: Could not load preferences. Using default values.');
         const request = this.buildRequest();
         this.submitRebalanceRequest(request);
@@ -240,7 +238,7 @@ export class App implements OnDestroy {
       next: (response) => {
         this.recommendation.set(response);
         this.approvalMessage.set(null);
-        this.chatMessages.set([]); // clear chat for new recommendation
+        this.chatMessages.set([]);
         this.setAccountBalanced(this.selectedAccountId(), false);
         this.clearForcedDriftForAccount(this.selectedAccountId());
         this.clearAutoRecommendForAccount(this.selectedAccountId());
@@ -313,6 +311,7 @@ export class App implements OnDestroy {
           this.setAccountBalanced(this.selectedAccountId(), false);
           this.updateApprovalStatus(result.next_status);
           this.recommendation.set(null); // Clear the blocked recommendation
+          this.hasAutoSubmittedByAccount.update(m => ({ ...m, [this.selectedAccountId()]: false }));
           const event = this.marketEvent();
           if (event) {
             this.syncFormToMarket(event);
@@ -670,26 +669,24 @@ export class App implements OnDestroy {
 
     const current = this.recommendation();
 
-    // If any recommendation exists (regardless of status), don't auto-generate.
-    // The user or simulateDriftAgain() must explicitly clear it first.
-    // Exception: stale NO_ACTION_NEEDED while market says REBALANCE_NEEDED.
     if (current !== null) {
       const proposalStatus = current.recommendation_package?.proposal?.proposal_status;
       const approvalStatus = current.approval_artifact?.approval_status;
 
+      // Stale: no-action while market says rebalance needed — clear and refresh
       if (proposalStatus === 'NO_ACTION_NEEDED' && approvalStatus === 'PENDING') {
-        // Stale: generated when balanced, market has since drifted — clear and refresh
         this.recommendation.set(null);
         this.approvalMessage.set(null);
+        // Reset gate so we submit once for this new cycle
+        this.hasAutoSubmittedByAccount.update(m => ({ ...m, [accountId]: false }));
         // Fall through to submit
       } else {
-        // Any other state (PENDING with trades, REJECTED, APPROVED, BLOCKED) — leave alone
+        // PENDING with trades, REJECTED, APPROVED, BLOCKED — leave alone
         return;
       }
     }
 
-    // Hard gate: only submit once per drift cycle.
-    // Reset by simulateDriftAgain() and selectPortfolio().
+    // Gate: submit exactly once per drift cycle
     if (this.hasAutoSubmittedByAccount()[accountId]) return;
     this.hasAutoSubmittedByAccount.update(m => ({ ...m, [accountId]: true }));
     this.submitRebalance();

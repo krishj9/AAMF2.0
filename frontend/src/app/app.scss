@@ -1542,3 +1542,11 @@ $color-purple: #a855f7;
 
   &:hover { text-decoration: underline; }
 }
+
+// ─── Arch Strip Header ────────────────────────────────────────────────────────
+.arch-strip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}

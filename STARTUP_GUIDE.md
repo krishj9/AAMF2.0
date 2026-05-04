@@ -1,336 +1,300 @@
-# Startup Guide - LLM-LangGraph Integration
+# Startup Guide
 
-This guide explains how to start all services (Backend, Research Agent A2A, Sentiment Agent MCP) for the LLM-LangGraph integration.
+AI-powered portfolio rebalancing platform with LangGraph orchestration, AWS Bedrock LLMs, A2A and MCP agent protocols, and human-in-the-loop approval workflows.
 
-## Quick Start (Recommended)
+---
 
-### Option 1: Docker Compose (Easiest)
+## Prerequisites
 
-```bash
-# Start all services with Docker Compose
-docker-compose up
+| Tool | Version | Purpose |
+|------|---------|---------|
+| Docker + Docker Compose | Latest | Local backend services |
+| Node.js + npm | 18+ | Frontend dev server |
+| Python | 3.12+ | Backend (via uv) |
+| AWS CLI | Latest | Deployment only |
+| Terraform | 1.5+ | Deployment only |
 
-# In another terminal, verify services are running
-curl http://localhost:8000/health
-curl http://localhost:8101/health
-curl http://localhost:8201/health
-```
+AWS credentials with access to **Bedrock** (Claude models) and **DynamoDB** are required for LLM features and AWS deployment.
 
-**Advantages:**
-- All services in isolated containers
-- Automatic dependency management
-- Easy cleanup with `docker-compose down`
+---
 
-**Requirements:**
-- Docker and Docker Compose installed
+## Running Locally
 
-### Option 2: Bash Script (Development)
+### 1. Start Backend Services
 
 ```bash
-# Make script executable
-chmod +x backend/scripts/run_all_services.sh
-
-# Start all services
-./backend/scripts/run_all_services.sh local
-
-# Press Ctrl+C to stop all services
+docker compose up --build
 ```
 
-**Advantages:**
-- Direct access to logs
-- Easy to modify for development
-- No Docker required
-
-**Requirements:**
-- Python 3.11+
-- uv package manager
-- Bash shell
-
-### Option 3: Manual (Full Control)
-
-Start each service in a separate terminal:
-
-**Terminal 1 - Research Agent A2A:**
-```bash
-cd remote-agents/research-agent
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python main.py
-```
-
-**Terminal 2 - Sentiment Agent MCP:**
-```bash
-cd mcp-servers/sentiment
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python server.py
-```
-
-**Terminal 3 - Backend:**
-```bash
-cd backend
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-## Service Endpoints
-
-Once all services are running:
+This starts four containers:
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| Backend | http://localhost:8000 | Main API |
-| Research Agent A2A | http://localhost:8101 | Market research via A2A protocol |
-| Sentiment Agent MCP | http://localhost:8201 | Sentiment analysis via MCP protocol |
+| Backend API | http://localhost:8000 | FastAPI + LangGraph orchestrator |
+| Research Agent | http://localhost:8101 | A2A remote research agent |
+| Sentiment Agent | http://localhost:8201 | MCP sentiment tool server |
+| DynamoDB Local | http://localhost:55000 | Local persistence |
 
-## Health Checks
-
-Verify all services are running:
+Verify all services are healthy:
 
 ```bash
-# Backend health
 curl http://localhost:8000/health
-
-# Research Agent health
 curl http://localhost:8101/health
-
-# Sentiment Agent health
 curl http://localhost:8201/health
 ```
 
-Expected response:
-```json
-{
-  "status": "healthy",
-  "timestamp": "2024-01-15T10:00:00Z"
-}
-```
-
-## Configuration
-
-### Environment Variables
-
-Create `backend/.env` to configure the backend:
+### 2. Start Frontend
 
 ```bash
-# AWS Configuration
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your_key
-AWS_SECRET_ACCESS_KEY=your_secret
-
-# Feature Flags (all disabled by default for safety)
-FEATURE_MEMORY_AGENT_LLM_ENABLED=false
-FEATURE_RESEARCH_AGENT_LLM_ENABLED=false
-FEATURE_SENTIMENT_AGENT_LLM_ENABLED=false
-FEATURE_REBALANCING_AGENT_LLM_ENABLED=false
-FEATURE_RISK_AGENT_LLM_ENABLED=false
-FEATURE_TRADE_PROPOSAL_AGENT_LLM_ENABLED=false
-
-# LLM Configuration
-LLM_BEDROCK_REGION=us-east-1
-LLM_MEMORY_AGENT_MODEL=anthropic.claude-3-haiku-20240307-v1:0
-LLM_RESEARCH_AGENT_MODEL=anthropic.claude-3-5-sonnet-20240620-v1:0
-LLM_SENTIMENT_AGENT_MODEL=anthropic.claude-3-haiku-20240307-v1:0
-LLM_REBALANCING_AGENT_MODEL=anthropic.claude-3-sonnet-20240229-v1:0
-LLM_RISK_AGENT_MODEL=anthropic.claude-3-5-sonnet-20240620-v1:0
-LLM_TRADE_PROPOSAL_AGENT_MODEL=anthropic.claude-3-5-sonnet-20240620-v1:0
-
-# Remote Agent URLs
-RESEARCH_AGENT_URL=http://localhost:8101/a2a/research
-SENTIMENT_MCP_URL=http://localhost:8201/mcp
-
-# Cost Management
-COST_DAILY_TOKEN_BUDGET=1000000
-COST_ALERT_THRESHOLD_USD=100.0
-
-# Tracing
-TRACE_PROVIDER=bedrock_agentcore
+cd frontend
+npm install
+npm start
 ```
 
-### Enabling LLM Features
+Open **http://localhost:4200**
 
-To enable LLM for specific agents, set the corresponding feature flag:
+The dev server proxies `/api/*` to `http://localhost:8000` automatically. No token is required locally — the API token gate is disabled when `API_TOKEN` is not set.
+
+### 3. Stop Services
 
 ```bash
-export FEATURE_MEMORY_AGENT_LLM_ENABLED=true
-export FEATURE_RESEARCH_AGENT_LLM_ENABLED=true
-export FEATURE_SENTIMENT_AGENT_LLM_ENABLED=true
+docker compose down
 ```
 
-Then restart the backend service.
+---
 
-## Testing
+## LLM Features
 
-### Run Property Tests
+All LLM features are **enabled by default** in `docker-compose.yml`. They require:
+- AWS credentials mounted at `~/.aws` (already configured in docker-compose)
+- AWS region set to `us-east-2` (matches your AWS config)
+- Bedrock model access for Claude models in your account
+
+### Models Used
+
+| Agent | Model | Notes |
+|-------|-------|-------|
+| Memory | `us.anthropic.claude-3-5-haiku-20241022-v1:0` | Fast, semantic queries |
+| Research | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` | Market analysis |
+| Sentiment | `us.anthropic.claude-3-5-haiku-20241022-v1:0` | Sentiment classification |
+| Risk | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` | Policy decisions |
+| Trade Proposal | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` | Trade rationale |
+
+> **Note:** These are cross-region inference profile IDs (prefixed `us.`). Direct model IDs without the `us.` prefix are not supported for on-demand invocation.
+
+### Disabling LLMs
+
+To run without LLM calls (faster, no AWS cost), edit `docker-compose.yml` and set all `FEATURE_*_LLM_ENABLED` to `false`, then restart:
 
 ```bash
-cd backend
-pytest tests/property/ -v
+docker compose down && docker compose up --build
 ```
 
-### Test Individual Services
+---
 
-**Test Research Agent A2A:**
+## Application Walkthrough
+
+### What the app does
+
+1. **Portfolio Monitor** — streams simulated market data showing allocation drift
+2. **Auto-generates recommendations** — when drift exceeds 5% threshold, LangGraph runs 7 agents in sequence (Memory → Research → Sentiment → Rebalancing → Risk → Trade Proposal → Approval)
+3. **Recommendation Review** — shows AI market intelligence (sentiment, research) before the decision
+4. **Human approval** — Approve to apply trades, Reject to dismiss
+5. **System Intelligence** — view the full agent workflow trace, memory timeline, and audit trail
+
+### Key interactions
+
+| Action | What happens |
+|--------|-------------|
+| Page loads | Portfolio starts drifted (67.5% equity vs 60% target) → auto-generates recommendation |
+| Approve | Portfolio rebalanced, marked as balanced |
+| Reject | Recommendation dismissed, portfolio stays drifted |
+| ↺ Simulate Market Drift | Forces drift, generates new recommendation |
+| ⚙ Preferences | 4-step wizard to set risk profile and allocation targets |
+| ⬡ View Agent Workflow | System Intelligence page — workflow trace, memory, audit trail |
+
+---
+
+## Deploying to AWS
+
+### Prerequisites
+
+1. AWS CLI configured: `aws configure list`
+2. Terraform installed: `terraform -version`
+3. Docker available (for Lambda packaging)
+
+### One-time setup
+
 ```bash
-curl -X POST http://localhost:8101/a2a/research \
-  -H "Content-Type: application/json" \
-  -d '{
-    "task": "portfolio_research",
-    "request_id": "test-123",
-    "symbols": ["AAPL", "MSFT"],
-    "portfolio_request": {
-      "portfolio_id": "PORT-001"
-    }
-  }'
+# Copy example tfvars (already done — dev.tfvars exists)
+# Edit if needed:
+cat infra/terraform/environments/dev/dev.tfvars
 ```
 
-**Test Sentiment Agent MCP:**
-```bash
-curl -X POST http://localhost:8201/mcp \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": "test-123",
-    "method": "analyze_symbol_news_sentiment",
-    "params": {
-      "symbol": "AAPL"
-    }
-  }'
+Current values:
 ```
+aws_region           = "us-east-2"
+project_name         = "asset-management"
+environment          = "dev"
+lambda_runtime       = "python3.13"
+frontend_bucket_name = "asset-management-dev-frontend-855603407942"
+api_token            = "aIJ3WTclVQs6xIGhm9d-s89aBR0aq3wqB1GE4hM0TNw"
+```
+
+> **Security:** `api_token` is the shared secret that gates all API access. Keep `dev.tfvars` out of version control (it's in `.gitignore`).
+
+### Deploy backend
+
+```bash
+# 1. Package Lambda functions
+./infra/scripts/package_lambda.sh
+
+# 2. Deploy infrastructure
+cd infra/terraform/environments/dev
+terraform init
+terraform apply -var-file=dev.tfvars
+```
+
+### Deploy frontend
+
+```bash
+./infra/scripts/publish_frontend.sh \
+  "https://r62c0mmp4i.execute-api.us-east-1.amazonaws.com" \
+  "asset-management-dev-frontend-855603407942" \
+  "aIJ3WTclVQs6xIGhm9d-s89aBR0aq3wqB1GE4hM0TNw"
+```
+
+### Live URLs
+
+| Resource | URL |
+|----------|-----|
+| Frontend | http://asset-management-dev-frontend-855603407942.s3-website.us-east-2.amazonaws.com |
+| API | https://r62c0mmp4i.execute-api.us-east-1.amazonaws.com |
+
+### Verify deployment
+
+```bash
+# Health check (no token needed)
+curl https://r62c0mmp4i.execute-api.us-east-1.amazonaws.com/health
+
+# API check (token required)
+curl -H "x-api-token: aIJ3WTclVQs6xIGhm9d-s89aBR0aq3wqB1GE4hM0TNw" \
+  https://r62c0mmp4i.execute-api.us-east-1.amazonaws.com/api/portfolios
+```
+
+---
+
+## Security
+
+### API Token Gate
+
+All `/api/*` routes require the `x-api-token` header. The frontend sends it automatically via an Angular HTTP interceptor. The token is baked into `app-config.js` at deploy time.
+
+- Without token → `401 Unauthorized`
+- With wrong token → `401 Unauthorized`
+- `/health` → always open (no token needed)
+
+### Rate Limiting
+
+API Gateway stage throttling:
+- **Burst**: 20 concurrent requests
+- **Rate**: 10 requests/second sustained
+
+Requests exceeding limits receive `429 Too Many Requests`.
+
+### Local development
+
+The token gate is **disabled locally** — `API_TOKEN` is not set in `docker-compose.yml`, so the middleware skips validation. No token is needed when running `npm start` against `localhost:8000`.
+
+---
+
+## AWS Infrastructure
+
+All resources are in `us-east-1` (Lambda, API Gateway, DynamoDB) except the S3 frontend bucket which is in `us-east-2`.
+
+| Resource | Name |
+|----------|------|
+| Backend Lambda | `asset-management-dev-backend` |
+| Research Agent Lambda | `asset-management-dev-research-agent` |
+| Sentiment MCP Lambda | `asset-management-dev-sentiment-mcp` |
+| API Gateway | `asset-management-dev-api` |
+| DynamoDB tables | `asset-management-dev-{approvals,portfolios,preferences,...}` |
+| S3 bucket | `asset-management-dev-frontend-855603407942` |
+
+### Monitor logs
+
+```bash
+# Backend logs (live)
+aws logs tail /aws/lambda/asset-management-dev-backend --follow --region us-east-1
+
+# Check for errors
+aws logs tail /aws/lambda/asset-management-dev-backend --region us-east-1 | grep -i error
+```
+
+### Teardown
+
+```bash
+cd infra/terraform/environments/dev
+terraform destroy -var-file=dev.tfvars
+```
+
+---
 
 ## Troubleshooting
 
-### Port Already in Use
+### Frontend can't reach backend (ECONNREFUSED)
 
-If you get "Address already in use" error:
+Docker containers aren't running. Start them:
+```bash
+docker compose up --build
+```
+
+### LLM calls failing (ResourceNotFoundException)
+
+The model ID is deprecated. Check `backend/app/core/config.py` — all models must use the `us.` prefix (cross-region inference profiles).
+
+### LLM calls failing (ValidationException: on-demand throughput not supported)
+
+Same issue — use `us.anthropic.*` model IDs, not `anthropic.*` directly.
+
+### Preferences not saving (400 error)
+
+All financial values must be `Decimal` on the backend. The preferences route converts strings to `Decimal` — if you see 400, check that the request body has numeric strings, not floats.
+
+### CORS errors on AWS
+
+Both API Gateway CORS config and FastAPI middleware must allow the same methods. Current config allows: `GET, POST, PUT, DELETE, OPTIONS`.
+
+### Docker build fails
+
+Force a clean rebuild:
+```bash
+docker compose build --no-cache
+docker compose up
+```
+
+### Port already in use
 
 ```bash
-# Find process using the port
-lsof -i :8000  # Backend
-lsof -i :8101  # Research Agent
-lsof -i :8201  # Sentiment Agent
-
-# Kill the process
+lsof -i :8000   # find what's using port 8000
 kill -9 <PID>
 ```
 
-Or use different ports:
+---
 
-```bash
-PORT=8001 RESEARCH_AGENT_PORT=8102 SENTIMENT_MCP_PORT=8202 ./backend/scripts/run_all_services.sh local
+## Project Structure
+
+```
+/
+├── frontend/          # Angular 19 SPA (npm start → localhost:4200)
+├── backend/           # FastAPI + LangGraph (port 8000)
+├── remote-agents/     # A2A Research Agent (port 8101)
+├── mcp-servers/       # MCP Sentiment Server (port 8201)
+├── infra/
+│   ├── scripts/       # package_lambda.sh, publish_frontend.sh
+│   └── terraform/     # AWS infrastructure as code
+├── docker-compose.yml # Local dev: all 4 services
+└── AGENT_CONTEXT.md   # Full technical context for AI coding agents
 ```
 
-### Virtual Environment Issues
-
-If you get Python version errors:
-
-```bash
-# Ensure Python 3.11+ is installed
-python3 --version
-
-# Create fresh virtual environments
-rm -rf remote-agents/research-agent/venv
-rm -rf mcp-servers/sentiment/venv
-
-# Restart services
-./backend/scripts/run_all_services.sh local
-```
-
-### Import Errors
-
-If you get import errors in remote agents:
-
-```bash
-# Ensure backend is in Python path
-export PYTHONPATH="${PYTHONPATH}:$(pwd)/backend"
-
-# Restart services
-./backend/scripts/run_all_services.sh local
-```
-
-### Docker Issues
-
-If Docker Compose fails:
-
-```bash
-# Rebuild images
-docker-compose build --no-cache
-
-# Start services
-docker-compose up
-```
-
-## Logs
-
-### Docker Compose Logs
-
-```bash
-# View all logs
-docker-compose logs -f
-
-# View specific service logs
-docker-compose logs -f backend
-docker-compose logs -f research-agent
-docker-compose logs -f sentiment-mcp
-```
-
-### Bash Script Logs
-
-Logs are printed to stdout. To save logs to files:
-
-```bash
-./backend/scripts/run_all_services.sh local > services.log 2>&1 &
-```
-
-## Stopping Services
-
-### Docker Compose
-
-```bash
-# Stop all services
-docker-compose down
-
-# Stop and remove volumes
-docker-compose down -v
-```
-
-### Bash Script
-
-```bash
-# Press Ctrl+C in the terminal running the script
-# Or kill the process
-pkill -f "run_all_services.sh"
-```
-
-### Manual
-
-```bash
-# Kill each service in its terminal
-# Press Ctrl+C in each terminal
-```
-
-## Next Steps
-
-1. **Enable LLM Features**: Set feature flags to enable LLM for specific agents
-2. **Configure AWS Credentials**: Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-3. **Run Tests**: Execute property tests to verify functionality
-4. **Monitor Logs**: Watch logs for any errors or warnings
-5. **Test Workflows**: Send requests to the backend API
-
-## Additional Resources
-
-- [README_LLM_INTEGRATION.md](README_LLM_INTEGRATION.md) - Quick start guide
-- [backend/README.md](backend/README.md) - Backend documentation
-- [remote-agents/research-agent/README.md](remote-agents/research-agent/README.md) - Research Agent documentation
-- [mcp-servers/sentiment/README.md](mcp-servers/sentiment/README.md) - Sentiment Agent documentation
-
-## Support
-
-For issues or questions:
-
-1. Check the troubleshooting section above
-2. Review service logs for error messages
-3. Verify all dependencies are installed
-4. Ensure ports are not in use
-5. Check environment variables are set correctly
+For deep technical context (architecture, data contracts, agent implementations, known issues), see **[AGENT_CONTEXT.md](AGENT_CONTEXT.md)**.
